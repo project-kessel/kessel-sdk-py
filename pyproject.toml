@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools >= 77.0.3", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kessel-sdk"
+version = "0.1.0"
+description = "Client SDK for Kessel."
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "protovalidate",
+    "protobuf~=6.31.0",
+    "types-protobuf~=6.30",
+    "grpcio",
+]
+
+[project.urls]
+Homepage = "https://project-kessel.github.io"
+Issues = "https://github.com/project-kessel/kessel-sdk-py"
+
+[project.optional-dependencies]
+dev = [
+    "flake8>=6.0.0",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["kessel"]
