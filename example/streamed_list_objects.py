@@ -1,4 +1,4 @@
-import grpc
+from kessel import grpc
 from kessel.inventory.v1beta2 import (
     inventory_service_pb2_grpc,
     streamed_list_objects_request_pb2,
@@ -8,7 +8,7 @@ from kessel.rbac import v1beta2_resources
 
 
 def run():
-    channel = grpc.insecure_channel("localhost:9000")
+    channel = grpc.ChannelBuilder.with_defaults_insecure("localhost:9000").build()
     stub = inventory_service_pb2_grpc.KesselInventoryServiceStub(channel)
 
     object_type = representation_type_pb2.RepresentationType(
