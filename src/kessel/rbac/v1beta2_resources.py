@@ -5,9 +5,7 @@ from kessel.rbac import REPORTER
 
 def principal_resource_for_user_id(id: str, domain: str) -> ResourceReference:
     return ResourceReference(
-        resource_type="principal",
-        reporter=REPORTER,
-        resource_id=f"{domain}/{id}"
+        resource_type="principal", reporter=REPORTER, resource_id=f"{domain}/{id}"
     )
 
 

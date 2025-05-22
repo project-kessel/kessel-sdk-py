@@ -26,8 +26,13 @@ Issues = "https://github.com/project-kessel/kessel-sdk-py"
 [project.optional-dependencies]
 dev = [
     "flake8>=6.0.0",
+    "black",
 ]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
 packages = ["kessel"]
+
+[tool.black]
+line-length = 100
+target-version = ["py313"]

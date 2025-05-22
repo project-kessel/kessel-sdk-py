@@ -6,7 +6,7 @@ from kessel.inventory.v1beta2 import (
     check_for_update_request_pb2,
     subject_reference_pb2,
     resource_reference_pb2,
-    reporter_reference_pb2
+    reporter_reference_pb2,
 )
 
 
@@ -19,9 +19,7 @@ def run():
         resource=resource_reference_pb2.ResourceReference(
             resource_id="bob",
             resource_type="principal",
-            reporter=reporter_reference_pb2.ReporterReference(
-                type="rbac"
-            )
+            reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
         )
     )
 
@@ -29,9 +27,7 @@ def run():
     resource_ref = resource_reference_pb2.ResourceReference(
         resource_id="bob_club",
         resource_type="group",
-        reporter=reporter_reference_pb2.ReporterReference(
-            type="rbac"
-        )
+        reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
     )
 
     checkforupdate_request = check_for_update_request_pb2.CheckForUpdateRequest(
