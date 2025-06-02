@@ -1,27 +1,19 @@
 import grpc
 
-import kessel.grpc as ksl_channels
+import kessel.inventory.v1beta2 as v1beta2
 from kessel.inventory.v1beta2 import (
-    inventory_service_pb2_grpc,
     check_for_update_request_pb2,
-    subject_reference_pb2,
+    rbac,
     resource_reference_pb2,
     reporter_reference_pb2,
 )
 
 
 def run():
-    channel = ksl_channels.insecure("localhost:9000")
-    stub = inventory_service_pb2_grpc.KesselInventoryServiceStub(channel)
+    stub = v1beta2.ClientBuilder.with_defaults_localhost(9000).build_inventory_stub()
 
     # Prepare the subject reference object
-    subject = subject_reference_pb2.SubjectReference(
-        resource=resource_reference_pb2.ResourceReference(
-            resource_id="bob",
-            resource_type="principal",
-            reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
-        )
-    )
+    subject = rbac.principal_subject_for_user_id("bob", "localhost")
 
     # Prepare the resource reference object
     resource_ref = resource_reference_pb2.ResourceReference(
