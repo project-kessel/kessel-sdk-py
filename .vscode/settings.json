@@ -4,5 +4,9 @@
   },
   "black-formatter.interpreter": [".venv/bin/python"],
   "black-formatter.cwd": "${workspaceFolder}",
-  "black-formatter.args": ["--config", "${workspaceFolder}/pyproject.toml"]
+  "black-formatter.args": [
+    "--config",
+    "${workspaceFolder}/pyproject.toml"
+  ],
+  "python.languageServer": "None"
 }

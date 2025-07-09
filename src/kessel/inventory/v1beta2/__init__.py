@@ -17,6 +17,7 @@ def close_cached_channels() -> None | CoroutineType:
         else:
             channel.close()  # For synchronous channels
     _global_channel_cache.clear()
+    _global_stub_cache.clear()
 
 
 T = TypeVar("T")
