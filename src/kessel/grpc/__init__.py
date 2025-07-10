@@ -23,7 +23,7 @@ T = TypeVar("T")
 
 class BaseClientBuilder:
     """
-    A builder for creating a Inventory gRPC client (sync or asyncio variants).
+    A builder for creating a generic gRPC client (sync or asyncio variants).
 
     Constructors "with defaults" provide a convenient way
     to set up the client with common, recommended defaults.
