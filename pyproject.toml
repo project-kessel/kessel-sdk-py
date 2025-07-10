@@ -7,14 +7,14 @@ name = "kessel-sdk"
 version = "0.1.0"
 description = "Client SDK for Kessel."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
 dependencies = [
     "protovalidate",
-    "protobuf~=6.31.0",
+    "protobuf~=6.31.1",
     "types-protobuf~=6.30",
     "grpcio",
 ]
