@@ -11,7 +11,6 @@ from kessel.inventory.v1beta2 import (
 
 def run():
     stub = v1beta2.ClientBuilder.with_defaults_localhost(9000).build_inventory_stub()
-
     # Prepare the subject reference object
     subject = rbac.principal_subject_for_user_id("bob", "localhost")
 
@@ -40,3 +39,4 @@ def run():
 
 if __name__ == "__main__":
     run()
+
