@@ -71,7 +71,9 @@ except grpc.RpcError as e:
 
 ## Client Builder
 
-The SDK uses a builder pattern to create gRPC channels and service stubs. `BaseClientBuilder` provides:
+The Kessel SDK uses a builder pattern to create gRPC channels and service stubs. You should reuse the same channel and stub instances for multiple API calls, as creating
+a channel is expensive. 
+`BaseClientBuilder` provides:
 
 * **Channel and Stub caching** – reuse connections automatically
 * **Reasonable defaults** – keep-alive tuned for production & development
