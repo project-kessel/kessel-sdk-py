@@ -101,7 +101,7 @@ root_certs = Path("root.pem").read_bytes()
 call_creds = grpc.access_token_call_credentials("TOKEN")
 
 builder = (
-    ClientBuilder("kessel.example.com:443")
+    ClientBuilder()
     .with_defaults(
         target="kessel.example.com:443",
         call_credentials=call_creds,
@@ -150,7 +150,6 @@ python -m examples.check
 | `build_or_get_existing_stub(cacheKey, factory)` | `cacheKey: Hashable`, `Callable` | gRPC Stub | Cached stub convenience |
 | `build_inventory_stub()` | - | `KesselInventoryServiceStub` | Convenience for inventory service |
 
-
 ## Error Handling
 
 The SDK uses standard gRPC status codes:
@@ -161,28 +160,38 @@ try:
 except grpc.RpcError as err:
     if err.code() == grpc.StatusCode.PERMISSION_DENIED:
         ...
-    if err.code() == grpc.StatusCode.UNAVAILABLE:
+    elif err.code() == grpc.StatusCode.UNAVAILABLE:
         ...
 ```
 
 ## Need Help?
 
 - Check the [GitHub Issues](https://github.com/project-kessel/kessel-sdk-py/issues)
-- Look at the [examples](./example) directory
+- Browse the [examples](./examples) directory
 
 ## Development
 
+First, install dev tools:
+
 ```bash
-# Clone and install dependencies
-pip install -e .
+pip install "kessel-sdk[dev]"
 ```
 
-Generated protobuf/gRPC code is kept under `src/kessel/...`. Regenerate with:
+Format and lint **excluding generated gRPC files** (`*_pb2.py` and `*_pb2_grpc.py`):
+
+```bash
+# Auto-format source & examples
+black --exclude '.*_pb2(_grpc)?\.py' src/ examples/
+
+# Lint source & examples
+flake8 --exclude '*_pb2.py,*_pb2_grpc.py' src/ examples/
+```
+
+Regenerate protobuf & gRPC stubs (requires latest [buf CLI](https://github.com/bufbuild/buf)):
 
 ```bash
 buf generate buf.build/project-kessel/inventory-api
 ```
-***latest [buf cli](https://github.com/bufbuild/buf) required***
 
 ## License
 
