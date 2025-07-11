@@ -75,7 +75,7 @@ The SDK uses a builder pattern to create gRPC channels and service stubs. `BaseC
 
 * **Channel and Stub caching** – reuse connections automatically
 * **Reasonable defaults** – keep-alive tuned for production & development
-* **AsyncIO support** – `with_asyncio()` switches to `grpc.aio`
+* **AsyncIO support** – Switch to `grpc.aio` for asynchronous tasks by calling `with_asyncio()` on the ClientBuilder
 
 
 ## Configuration
@@ -87,6 +87,7 @@ The only required value is the target address (host:port):
 ```python
 ClientBuilder.with_defaults_insecure("localhost:9000")
 ClientBuilder.with_defaults_localhost(9000)
+ClientBuilder.with_defaults(target="kessel.example.com:443", call_creds=...)
 ```
 
 ### Credentials
@@ -133,6 +134,29 @@ Run an example:
 
 ```bash
 python -m examples.check
+```
+
+The SDK also provides some helper functions in the `kessel.inventory.v1beta2.rbac` package.
+
+### Listing workspaces
+Easily list all workspaces a user has a speciifc relation to using the `list_workspaces` function.
+
+```python
+import grpc
+from kessel.inventory.v1beta2 import ClientBuilder, rbac
+
+stub = ClientBuilder.with_defaults_localhost(9000).build_inventory_stub()
+
+# Create a subject reference for the user
+subject = rbac.principal_subject_for_user_id("alice", "localhost")
+
+# Call the helper to list workspaces where the user is a "member"
+print("Workspaces where 'alice' is a 'member':")
+try:
+    for response in rbac.list_workspaces(subject=subject, relation="member", inventory=stub):
+        print(response)
+except grpc.RpcError as e:
+    print(f"gRPC error occurred: {e.details()}")
 ```
 
 ## API Reference
