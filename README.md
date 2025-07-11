@@ -123,7 +123,7 @@ builder.with_keep_alive(time_ms=30000, timeout_ms=10000, max_pings=5, permit_wit
 
 ## Authentication
 
-Version `1.1.0` will support OAuth 2.0 Client Credentials for authentication.
+OAuth 2.0 Client Credentials support is on our development roadmap and is planned for a future update.
 
 ## Examples
 
