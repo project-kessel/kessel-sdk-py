@@ -1,3 +1,5 @@
+import datetime
+
 from google.api import field_behavior_pb2 as _field_behavior_pb2
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from kessel.inventory.v1beta1.resources import resource_label_pb2 as _resource_label_pb2
