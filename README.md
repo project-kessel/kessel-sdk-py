@@ -31,10 +31,10 @@ import grpc
 
 from kessel.inventory.v1beta2 import (
     ClientBuilder, 
+    CheckRequest,
+    ResourceReference,
+    ReporterReference,
     rbac, 
-    check_request_pb2,
-    resource_reference_pb2, 
-    reporter_reference_pb2
 )
 
 # Build a stub pointing at a local instance
@@ -46,13 +46,13 @@ stub = (
 
 # Build helper objects
 subject = rbac.principal_subject_for_user_id("alice", "localhost")
-resource_ref = resource_reference_pb2.ResourceReference(
+resource_ref = ResourceReference(
     resource_id="alice_club",
     resource_type="group",
-    reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
+    reporter=ReporterReference(type="rbac"),
 )
 
-check_request = check_request_pb2.CheckRequest(
+check_request = CheckRequest(
    subject=subject,
    relation="member",
    object=resource_ref,

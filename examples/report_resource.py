@@ -2,9 +2,9 @@ import grpc
 from google.protobuf import struct_pb2
 from kessel.inventory import v1beta2
 from kessel.inventory.v1beta2 import (
-    resource_representations_pb2,
-    representation_metadata_pb2,
-    report_resource_request_pb2,
+    ResourceRepresentations,
+    RepresentationMetadata,
+    ReportResourceRequest,
 )
 
 
@@ -25,18 +25,18 @@ def run():
         }
     )
 
-    metadata = representation_metadata_pb2.RepresentationMetadata(
+    metadata = RepresentationMetadata(
         local_resource_id="854589f0-3be7-4cad-8bcd-45e18f33cb81",
         api_href="https://apiHref.com/",
         console_href="https://www.consoleHref.com/",
         reporter_version="0.2.11",
     )
 
-    representations = resource_representations_pb2.ResourceRepresentations(
+    representations = ResourceRepresentations(
         metadata=metadata, common=common_struct, reporter=reporter_struct
     )
 
-    request = report_resource_request_pb2.ReportResourceRequest(
+    request = ReportResourceRequest(
         type="host",
         reporter_type="hbi",
         reporter_instance_id="0a2a430e-1ad9-4304-8e75-cc6fd3b5441a",

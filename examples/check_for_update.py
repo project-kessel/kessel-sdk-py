@@ -2,10 +2,10 @@ import grpc
 
 import kessel.inventory.v1beta2 as v1beta2
 from kessel.inventory.v1beta2 import (
-    check_for_update_request_pb2,
+    CheckForUpdateRequest,
+    ResourceReference,
+    ReporterReference,
     rbac,
-    resource_reference_pb2,
-    reporter_reference_pb2,
 )
 
 
@@ -16,13 +16,13 @@ def run():
     subject = rbac.principal_subject_for_user_id("bob", "localhost")
 
     # Prepare the resource reference object
-    resource_ref = resource_reference_pb2.ResourceReference(
+    resource_ref = ResourceReference(
         resource_id="bob_club",
         resource_type="group",
-        reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
+        reporter=ReporterReference(type="rbac"),
     )
 
-    checkforupdate_request = check_for_update_request_pb2.CheckForUpdateRequest(
+    checkforupdate_request = CheckForUpdateRequest(
         subject=subject,
         relation="member",
         object=resource_ref,
