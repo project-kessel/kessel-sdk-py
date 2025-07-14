@@ -1,19 +1,25 @@
 from collections.abc import Callable, Hashable
-from types import CoroutineType
 from typing import Any, Self, TypeVar
+import asyncio
 import grpc
 
 _global_channel_cache: dict[Hashable, grpc.aio.Channel | grpc.Channel] = {}
 _global_stub_cache: dict[Hashable, Any] = {}
 
 
-def close_cached_channels() -> None | CoroutineType:
+async def close_cached_channels() -> None:
     """Close all cached channels."""
+    async_close_tasks = []
     for channel in _global_channel_cache.values():
         if isinstance(channel, grpc.aio.Channel):
-            return channel.close()
+            async_close_tasks.append(channel.close())
         else:
             channel.close()  # For synchronous channels
+
+    # Run all the async close tasks concurrently
+    if async_close_tasks:
+        await asyncio.gather(*async_close_tasks)
+
     _global_channel_cache.clear()
     _global_stub_cache.clear()
 
