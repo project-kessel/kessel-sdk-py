@@ -10,16 +10,12 @@ from kessel.inventory.v1beta2 import (
 
 
 def run():
-    stub = v1beta2.KesselInventoryServiceStub(
-        grpc.insecure_channel("localhost:9000")
-    )
+    stub = v1beta2.KesselInventoryServiceStub(grpc.insecure_channel("localhost:9000"))
 
     # Prepare the subject reference object
     subject = SubjectReference(
         resource=ResourceReference(
-            reporter=ReporterReference(type="rbac"),
-            resource_id="bob",
-            resource_type="principal"
+            reporter=ReporterReference(type="rbac"), resource_id="bob", resource_type="principal"
         )
     )
 

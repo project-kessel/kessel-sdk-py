@@ -7,22 +7,22 @@ from kessel.inventory.v1beta2 import (
     RepresentationMetadata,
 )
 
-stub = KesselInventoryServiceStub(
-    grpc.insecure_channel("localhost:9000")
-)
+stub = KesselInventoryServiceStub(grpc.insecure_channel("localhost:9000"))
 
 # Build protobuf Struct for common metadata
 common_struct = struct_pb2.Struct()
 common_struct.update({"workspace_id": "6eb10953-4ec9-4feb-838f-ba43a60880bf"})
 
-# Build protobuf Struct for reporter-specific data  
+# Build protobuf Struct for reporter-specific data
 reporter_struct = struct_pb2.Struct()
-reporter_struct.update({
-    "satellite_id": "ca234d8f-9861-4659-a033-e80460b2801c",
-    "sub_manager_id": "e9b7d65f-3f81-4c26-b86c-2db663376eed",
-    "insights_inventory_id": "c4b9b5e7-a82a-467a-b382-024a2f18c129",
-    "ansible_host": "host-1",
-})
+reporter_struct.update(
+    {
+        "satellite_id": "ca234d8f-9861-4659-a033-e80460b2801c",
+        "sub_manager_id": "e9b7d65f-3f81-4c26-b86c-2db663376eed",
+        "insights_inventory_id": "c4b9b5e7-a82a-467a-b382-024a2f18c129",
+        "ansible_host": "host-1",
+    }
+)
 
 # Create metadata for the resource representation
 metadata = RepresentationMetadata(
@@ -34,9 +34,7 @@ metadata = RepresentationMetadata(
 
 # Build the resource representations
 representations = ResourceRepresentations(
-    metadata=metadata,
-    common=common_struct,
-    reporter=reporter_struct
+    metadata=metadata, common=common_struct, reporter=reporter_struct
 )
 
 # Create the report request

@@ -9,9 +9,7 @@ from kessel.inventory.v1beta2 import (
 
 
 def run():
-    stub = v1beta2.KesselInventoryServiceStub(
-        grpc.insecure_channel("localhost:9000")
-    )
+    stub = v1beta2.KesselInventoryServiceStub(grpc.insecure_channel("localhost:9000"))
 
     delete_request = DeleteResourceRequest(
         reference=ResourceReference(
