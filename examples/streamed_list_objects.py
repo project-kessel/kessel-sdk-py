@@ -1,21 +1,31 @@
 import grpc
 from kessel.inventory import v1beta2
 from kessel.inventory.v1beta2 import (
-    streamed_list_objects_request_pb2,
-    rbac,
-    representation_type_pb2,
+    RepresentationType,
+    ReporterReference,
+    ResourceReference,
+    StreamedListObjectsRequest,
+    SubjectReference,
 )
 
 
 def run():
-    stub = v1beta2.ClientBuilder.with_defaults_localhost(9000).build_inventory_stub()
+    stub = v1beta2.KesselInventoryServiceStub(
+        grpc.insecure_channel("localhost:9000")
+    )
 
-    object_type = representation_type_pb2.RepresentationType(
+    object_type = RepresentationType(
         resource_type="host",
         reporter_type="hbi",
     )
-    subject = rbac.principal_subject_for_user_id("1", "localhost")
-    request = streamed_list_objects_request_pb2.StreamedListObjectsRequest(
+    subject = SubjectReference(
+        resource=ResourceReference(
+            reporter=ReporterReference(type="rbac"),
+            resource_id="1",
+            resource_type="principal"
+        )
+    )
+    request = StreamedListObjectsRequest(
         object_type=object_type,
         relation="view",
         subject=subject,
