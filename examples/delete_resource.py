@@ -1,7 +1,7 @@
 import grpc
 
-from kessel.inventory import v1beta2
 from kessel.inventory.v1beta2 import (
+    inventory_service_pb2_grpc,
     delete_resource_request_pb2,
     resource_reference_pb2,
     reporter_reference_pb2,
@@ -9,7 +9,9 @@ from kessel.inventory.v1beta2 import (
 
 
 def run():
-    stub = v1beta2.ClientBuilder.with_defaults_localhost(9000).build_inventory_stub()
+    stub = inventory_service_pb2_grpc.KesselInventoryServiceStub(
+        grpc.insecure_channel("localhost:9000")
+    )
 
     delete_request = delete_resource_request_pb2.DeleteResourceRequest(
         reference=resource_reference_pb2.ResourceReference(

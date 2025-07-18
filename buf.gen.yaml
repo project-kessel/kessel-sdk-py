@@ -1,9 +1,9 @@
 version: v2
 inputs:
   - module: buf.build/project-kessel/inventory-api
-  - module: buf.build/bufbuild/protovalidate
+  - module: buf.build/bufbuild/protovalidate:v0.14.1
 plugins:
-  - remote: buf.build/protocolbuffers/pyi:v31.0
+  - remote: buf.build/protocolbuffers/pyi:v31.1
     out: src
     # Include imports so that buf.validate protos are compiled also.
     # This is necessary because while buf publishes packages for these,
@@ -11,9 +11,9 @@ plugins:
     # pyproject.toml has no standard way to import from external indexes
     # for setuptools.
     include_imports: true
-  - remote: buf.build/protocolbuffers/python
+  - remote: buf.build/protocolbuffers/python:v31.1
     out: src
     include_imports: true
-  - remote: buf.build/grpc/python
+  - remote: buf.build/grpc/python:v1.73.1
     out: src
     include_imports: true
