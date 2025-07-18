@@ -19,38 +19,38 @@ This library provides direct access to Kessel Inventory API gRPC services. All g
 ```python
 import grpc
 from kessel.inventory.v1beta2 import (
-    CheckRequest,
-    ResourceReference,
-    ReporterReference,
-    SubjectReference,
-    KesselInventoryServiceStub,
+    inventory_service_pb2_grpc,
+    check_request_pb2,
+    resource_reference_pb2,
+    reporter_reference_pb2,
+    subject_reference_pb2,
 )
 
 # Create gRPC client (insecure for development)
-stub = KesselInventoryServiceStub(
+stub = inventory_service_pb2_grpc.KesselInventoryServiceStub(
     grpc.insecure_channel("localhost:9000")
 )
 
 # Create subject reference
-subject = SubjectReference(
-    resource=ResourceReference(
-        reporter=ReporterReference(type="rbac"),
+subject = subject_reference_pb2.SubjectReference(
+    resource=resource_reference_pb2.ResourceReference(
+        reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
         resource_id="alice",
         resource_type="principal"
     )
 )
 
 # Create resource reference
-resource_ref = ResourceReference(
+resource_ref = resource_reference_pb2.ResourceReference(
     resource_id="alice_club",
     resource_type="group",
-    reporter=ReporterReference(type="rbac"),
+    reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
 )
 
 # Check permissions
 try:
     response = stub.Check(
-        CheckRequest(
+        check_request_pb2.CheckRequest(
             subject=subject,
             relation="member",
             object=resource_ref,
@@ -67,13 +67,13 @@ except grpc.RpcError as e:
 import grpc
 from google.protobuf import struct_pb2
 from kessel.inventory.v1beta2 import (
-    KesselInventoryServiceStub,
-    ReportResourceRequest,
-    ResourceRepresentations,
-    RepresentationMetadata,
+    inventory_service_pb2_grpc,
+    report_resource_request_pb2,
+    resource_representations_pb2,
+    representation_metadata_pb2,
 )
 
-stub = KesselInventoryServiceStub(
+stub = inventory_service_pb2_grpc.KesselInventoryServiceStub(
     grpc.insecure_channel("localhost:9000")
 )
 
@@ -91,7 +91,7 @@ reporter_struct.update({
 })
 
 # Create metadata for the resource representation
-metadata = RepresentationMetadata(
+metadata = representation_metadata_pb2.RepresentationMetadata(
     local_resource_id="854589f0-3be7-4cad-8bcd-45e18f33cb81",
     api_href="https://apiHref.com/",
     console_href="https://www.consoleHref.com/",
@@ -99,14 +99,14 @@ metadata = RepresentationMetadata(
 )
 
 # Build the resource representations
-representations = ResourceRepresentations(
+representations = resource_representations_pb2.ResourceRepresentations(
     metadata=metadata,
     common=common_struct,
     reporter=reporter_struct
 )
 
 # Create the report request
-request = ReportResourceRequest(
+request = report_resource_request_pb2.ReportResourceRequest(
     type="host",
     reporter_type="hbi",
     reporter_instance_id="0a2a430e-1ad9-4304-8e75-cc6fd3b5441a",

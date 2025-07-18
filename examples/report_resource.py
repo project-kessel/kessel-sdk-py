@@ -1,13 +1,15 @@
 import grpc
 from google.protobuf import struct_pb2
 from kessel.inventory.v1beta2 import (
-    KesselInventoryServiceStub,
-    ReportResourceRequest,
-    ResourceRepresentations,
-    RepresentationMetadata,
+    inventory_service_pb2_grpc,
+    report_resource_request_pb2,
+    resource_representations_pb2,
+    representation_metadata_pb2,
 )
 
-stub = KesselInventoryServiceStub(grpc.insecure_channel("localhost:9000"))
+stub = inventory_service_pb2_grpc.KesselInventoryServiceStub(
+    grpc.insecure_channel("localhost:9000")
+)
 
 # Build protobuf Struct for common metadata
 common_struct = struct_pb2.Struct()
@@ -25,7 +27,7 @@ reporter_struct.update(
 )
 
 # Create metadata for the resource representation
-metadata = RepresentationMetadata(
+metadata = representation_metadata_pb2.RepresentationMetadata(
     local_resource_id="854589f0-3be7-4cad-8bcd-45e18f33cb81",
     api_href="https://apiHref.com/",
     console_href="https://www.consoleHref.com/",
@@ -33,12 +35,12 @@ metadata = RepresentationMetadata(
 )
 
 # Build the resource representations
-representations = ResourceRepresentations(
+representations = resource_representations_pb2.ResourceRepresentations(
     metadata=metadata, common=common_struct, reporter=reporter_struct
 )
 
 # Create the report request
-request = ReportResourceRequest(
+request = report_resource_request_pb2.ReportResourceRequest(
     type="host",
     reporter_type="hbi",
     reporter_instance_id="0a2a430e-1ad9-4304-8e75-cc6fd3b5441a",

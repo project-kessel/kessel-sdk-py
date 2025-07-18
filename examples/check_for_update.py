@@ -1,32 +1,36 @@
 import grpc
 
-import kessel.inventory.v1beta2 as v1beta2
 from kessel.inventory.v1beta2 import (
-    CheckForUpdateRequest,
-    ResourceReference,
-    ReporterReference,
-    SubjectReference,
+    inventory_service_pb2_grpc,
+    check_for_update_request_pb2,
+    resource_reference_pb2,
+    reporter_reference_pb2,
+    subject_reference_pb2,
 )
 
 
 def run():
-    stub = v1beta2.KesselInventoryServiceStub(grpc.insecure_channel("localhost:9000"))
+    stub = inventory_service_pb2_grpc.KesselInventoryServiceStub(
+        grpc.insecure_channel("localhost:9081")
+    )
 
     # Prepare the subject reference object
-    subject = SubjectReference(
-        resource=ResourceReference(
-            reporter=ReporterReference(type="rbac"), resource_id="bob", resource_type="principal"
+    subject = subject_reference_pb2.SubjectReference(
+        resource=resource_reference_pb2.ResourceReference(
+            reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
+            resource_id="bob",
+            resource_type="principal",
         )
     )
 
     # Prepare the resource reference object
-    resource_ref = ResourceReference(
+    resource_ref = resource_reference_pb2.ResourceReference(
         resource_id="bob_club",
         resource_type="group",
-        reporter=ReporterReference(type="rbac"),
+        reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
     )
 
-    checkforupdate_request = CheckForUpdateRequest(
+    checkforupdate_request = check_for_update_request_pb2.CheckForUpdateRequest(
         subject=subject,
         relation="member",
         object=resource_ref,
