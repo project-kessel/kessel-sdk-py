@@ -11,7 +11,7 @@ from kessel.inventory.v1beta2 import (
 
 def run():
     stub = inventory_service_pb2_grpc.KesselInventoryServiceStub(
-        grpc.insecure_channel("localhost:9081")
+        grpc.insecure_channel("localhost:9000")
     )
 
     # Prepare the subject reference object
