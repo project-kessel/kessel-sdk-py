@@ -89,4 +89,4 @@ class ClientCredentials(google.auth.credentials.Credentials):
 
         self.token = token_data.get("access_token")
         expires_in = token_data.get("expires_in", 0)
-        self.expiry = datetime.datetime.now() + datetime.timedelta(seconds=expires_in)
+        self.expiry = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=expires_in)
