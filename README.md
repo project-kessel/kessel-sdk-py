@@ -254,7 +254,8 @@ flake8 --exclude '*_pb2.py,*_pb2_grpc.py' src/ examples/
 
 The `examples/` directory contains working examples:
 
-- `auth.py` - OAuth 2.0 authentication
+- `auth.py` - OAuth 2.0 authentication via a secure connection
+- `auth_insecure.py` - OAuth 2.0 authentication via an insecure connection
 - `check.py` - Permission checking
 - `report_resource.py` - Reporting resource state
 - `delete_resource.py` - Deleting resources
