@@ -24,6 +24,11 @@ Homepage = "https://project-kessel.github.io"
 Issues = "https://github.com/project-kessel/kessel-sdk-py"
 
 [project.optional-dependencies]
+auth = [
+    "google-auth",
+    "requests-oauthlib",
+    "requests",
+]
 dev = [
     "flake8>=6.0.0",
     "black",
