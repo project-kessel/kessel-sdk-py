@@ -41,7 +41,7 @@ class ClientCredentials(google.auth.credentials.Credentials):
         self._session = OAuth2Session(client=client)
 
         self.token = None
-        self._expiry = None
+        self.expiry = None
 
     def _discover_token_endpoint(self, issuer_url: str) -> str:
         """
@@ -87,4 +87,4 @@ class ClientCredentials(google.auth.credentials.Credentials):
 
         self.token = token_data.get("access_token")
         expires_in = token_data.get("expires_in", 0)
-        self._expiry = datetime.datetime.now() + datetime.timedelta(seconds=expires_in)
+        self.expiry = datetime.datetime.now() + datetime.timedelta(seconds=expires_in)
