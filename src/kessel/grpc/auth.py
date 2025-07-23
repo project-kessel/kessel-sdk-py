@@ -66,7 +66,9 @@ class ClientCredentials(google.auth.credentials.Credentials):
         except requests.exceptions.RequestException as e:
             raise IOError(f"Failed to retrieve OIDC discovery document from {discovery_url}") from e
         except (ValueError, KeyError) as e:
-            raise ValueError("Failed to parse OIDC discovery document or find 'token_endpoint'") from e
+            raise ValueError(
+                "Failed to parse OIDC discovery document or find 'token_endpoint'"
+            ) from e
 
     def refresh(self, request: google.auth.transport.requests.Request) -> None:
         """

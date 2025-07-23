@@ -147,6 +147,8 @@ See the `examples/` directory for complete working examples.
 
 The SDK supports OAuth 2.0 Client Credentials flow for authentication with Kessel services. The `ClientCredentials` class provides automatic token management with built-in refreshing.
 
+**Note**: To use authentication features, install the SDK with auth dependencies: `pip install "kessel-sdk[auth]"`
+
 ### Basic OAuth Configuration
 
 ```python
@@ -208,7 +210,7 @@ curl -sSL "https://github.com/bufbuild/buf/releases/latest/download/buf-$(uname 
 ### Setup
 
 ```bash
-# Install development dependencies
+# Install additional development dependencies
 pip install "kessel-sdk[dev]"
 
 # Generate gRPC code from Kessel Inventory API
