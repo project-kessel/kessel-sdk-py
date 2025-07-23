@@ -143,6 +143,50 @@ All protobuf message classes are generated and available. Key classes include:
 
 See the `examples/` directory for complete working examples.
 
+## Authentication
+
+The SDK supports OAuth 2.0 Client Credentials flow for authentication with Kessel services. The `ClientCredentials` class provides automatic token management with built-in refreshing.
+
+### Basic OAuth Configuration
+
+```python
+import grpc
+import google.auth.transport.requests
+import google.auth.transport.grpc
+from kessel.grpc.auth import ClientCredentials
+
+# Configure OAuth credentials
+auth_credentials = ClientCredentials(
+    issuer_url="https://auth.example.com",
+    client_id="your-client-id",
+    client_secret="your-client-secret",
+)
+
+# Create authentication plugin
+auth_plugin = google.auth.transport.grpc.AuthMetadataPlugin(
+    credentials=auth_credentials, 
+    request=google.auth.transport.requests.Request()
+)
+call_credentials = grpc.metadata_call_credentials(auth_plugin)
+
+# Combine with TLS for secure channel
+ssl_credentials = grpc.ssl_channel_credentials()
+channel_credentials = grpc.composite_channel_credentials(ssl_credentials, call_credentials)
+
+# Create secure authenticated channel
+with grpc.secure_channel("localhost:9000", channel_credentials) as channel:
+    stub = inventory_service_pb2_grpc.KesselInventoryServiceStub(channel)
+    # authentication is handled automatically
+    response = stub.Check(request)
+```
+
+### OAuth Features
+
+- **Automatic Token Management**: Tokens are automatically fetched and refreshed
+- **Discovery Integration**: Automatically discovers token endpoint from OIDC provider
+- **Token Caching**: Tokens are cached and reused until expiration
+- **Error Handling**: Automatic retry on authentication failures
+
 ## Development
 
 ### Prerequisites
@@ -208,6 +252,7 @@ flake8 --exclude '*_pb2.py,*_pb2_grpc.py' src/ examples/
 
 The `examples/` directory contains working examples:
 
+- `auth.py` - OAuth 2.0 authentication
 - `check.py` - Permission checking
 - `report_resource.py` - Reporting resource state
 - `delete_resource.py` - Deleting resources
@@ -241,7 +286,6 @@ except grpc.RpcError as err:
 This is the foundational gRPC library. Future releases will include:
 
 - **High-level SDK**: Fluent client builder API
-- **Authentication**: OAuth 2.0 Client Credentials flow
 - **Convenience Methods**: Simplified APIs for common operations
 
 ## Contributing
