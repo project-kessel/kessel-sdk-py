@@ -4,7 +4,7 @@ import grpc
 import google.auth.transport.requests
 import google.auth.transport.grpc
 
-from kessel.grpc.auth import ClientCredentials
+from kessel.grpc.auth import OAuth2ClientCredentials
 from kessel.inventory.v1beta2 import (
     check_request_pb2,
     inventory_service_pb2_grpc,
@@ -21,7 +21,7 @@ CLIENT_SECRET = os.environ.get("AUTH_CLIENT_SECRET", "")
 
 def run():
     try:
-        auth_credentials = ClientCredentials(
+        auth_credentials = OAuth2ClientCredentials(
             issuer_url=ISSUER_URL,
             client_id=CLIENT_ID,
             client_secret=CLIENT_SECRET,

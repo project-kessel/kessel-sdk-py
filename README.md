@@ -145,7 +145,7 @@ See the `examples/` directory for complete working examples.
 
 ## Authentication
 
-The SDK supports OAuth 2.0 Client Credentials flow for authentication with Kessel services. The `ClientCredentials` class provides automatic token management with built-in refreshing.
+The SDK supports OAuth 2.0 Client Credentials flow for authentication with Kessel services. The `OAuth2ClientCredentials` class provides automatic token management with built-in refreshing.
 
 **Note**: To use authentication features, install the SDK with auth dependencies: `pip install "kessel-sdk[auth]"`
 
@@ -155,10 +155,10 @@ The SDK supports OAuth 2.0 Client Credentials flow for authentication with Kesse
 import grpc
 import google.auth.transport.requests
 import google.auth.transport.grpc
-from kessel.grpc.auth import ClientCredentials
+from kessel.grpc.auth import OAuth2ClientCredentials
 
 # Configure OAuth credentials
-auth_credentials = ClientCredentials(
+auth_credentials = OAuth2ClientCredentials(
     issuer_url="https://auth.example.com",
     client_id="your-client-id",
     client_secret="your-client-secret",

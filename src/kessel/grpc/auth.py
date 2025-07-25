@@ -7,9 +7,9 @@ from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
 
 
-class ClientCredentials(google.auth.credentials.Credentials):
+class OAuth2ClientCredentials(google.auth.credentials.Credentials):
     """
-    Client credentials class for handling the OAuth 2.0 Client Credentials flow.
+    OAuth2ClientCredentials class for handling the OAuth 2.0 Client Credentials flow.
 
     Integrates with the google-auth and requests-oauthlib library to fetch an access token
     from a specified issuer url with automatic refreshing.
@@ -22,7 +22,7 @@ class ClientCredentials(google.auth.credentials.Credentials):
         client_secret: str,
     ):
         """
-        Initializes the ClientCredentials.
+        Initializes the OAuth2ClientCredentials.
 
         Args:
             issuer_url: The issuer URL of the OAuth 2.0 provider.
