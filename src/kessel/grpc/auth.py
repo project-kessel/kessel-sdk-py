@@ -30,18 +30,30 @@ class OAuth2ClientCredentials(google.auth.credentials.Credentials):
             client_secret: The client secret for the application.
         """
         super().__init__()
-        self._issuer_url = issuer_url
         self._client_id = client_id
         self._client_secret = client_secret
+        self._issuer_url = issuer_url
+        self._token_url = None
 
-        self._token_url = self._discover_token_endpoint(issuer_url)
-
-        client = BackendApplicationClient(client_id=self._client_id)
-
-        self._session = OAuth2Session(client=client)
+        self._initialized = False
+        self._session = None
 
         self.token = None
         self.expiry = None
+
+    def initialize(self) -> None:
+        """
+        Initializes the OAuth2ClientCredentials.
+        """
+        if self._initialized:
+            return
+        
+        self._token_url = self._discover_token_endpoint(self._issuer_url)
+
+        client = BackendApplicationClient(client_id=self._client_id)
+        self._session = OAuth2Session(client=client)
+
+        self._initialized = True
 
     def _discover_token_endpoint(self, issuer_url: str) -> str:
         """
@@ -81,6 +93,8 @@ class OAuth2ClientCredentials(google.auth.credentials.Credentials):
             request: A google-auth transport request object (not used in this flow, but required
             by the interface).
         """
+        self.initialize()
+        
         token_data = self._session.fetch_token(
             token_url=self._token_url,
             client_id=self._client_id,
