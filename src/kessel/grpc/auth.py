@@ -13,27 +13,44 @@ class OAuth2ClientCredentials(google.auth.credentials.Credentials):
 
     Integrates with the google-auth and requests-oauthlib library to fetch an access token
     from a specified issuer url with automatic refreshing.
+
+    Supports two approaches:
+    
+    1. OIDC Discovery: Provide issuer_url and the token endpoint will be discovered automatically
+    2. Direct Token URL: Provide token_url directly to skip discovery
     """
 
     def __init__(
         self,
-        issuer_url: str,
         client_id: str,
         client_secret: str,
+        issuer_url: str = None,
+        token_url: str = None,
     ):
         """
         Initializes the OAuth2ClientCredentials.
 
         Args:
-            issuer_url: The issuer URL of the OAuth 2.0 provider.
             client_id: The client ID for the application.
             client_secret: The client secret for the application.
+            issuer_url: The issuer URL for OIDC discovery (used if token_url not provided).
+            token_url: Direct token endpoint URL (takes precedence over issuer_url).
+        
+        Note: If both issuer_url and token_url are provided, token_url takes precedence.
+        At least one must be provided.
+                
+        Raises:
+            ValueError: If neither issuer_url nor token_url are provided.
         """
         super().__init__()
+
+        if issuer_url is None and token_url is None:
+            raise ValueError("Either 'issuer_url' or 'token_url' must be provided")
+
         self._client_id = client_id
         self._client_secret = client_secret
         self._issuer_url = issuer_url
-        self._token_url = None
+        self._token_url = token_url
 
         self._initialized = False
         self._session = None
@@ -48,7 +65,8 @@ class OAuth2ClientCredentials(google.auth.credentials.Credentials):
         if self._initialized:
             return
         
-        self._token_url = self._discover_token_endpoint(self._issuer_url)
+        if self._token_url is None:
+            self._token_url = self._discover_token_endpoint(self._issuer_url)
 
         client = BackendApplicationClient(client_id=self._client_id)
         self._session = OAuth2Session(client=client)

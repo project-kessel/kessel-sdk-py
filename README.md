@@ -149,7 +149,13 @@ The SDK supports OAuth 2.0 Client Credentials flow for authentication with Kesse
 
 **Note**: To use authentication features, install the SDK with auth dependencies: `pip install "kessel-sdk[auth]"`
 
-### Basic OAuth Configuration
+### OAuth Configuration Options
+
+The SDK supports two ways to configure OAuth 2.0 authentication:
+
+#### Option 1: OIDC Discovery
+
+Use this approach when your OAuth provider supports OIDC discovery. The SDK will automatically discover the token endpoint:
 
 ```python
 import grpc
@@ -157,13 +163,34 @@ import google.auth.transport.requests
 import google.auth.transport.grpc
 from kessel.grpc.auth import OAuth2ClientCredentials
 
-# Configure OAuth credentials
+# Configure OAuth credentials with OIDC discovery
 auth_credentials = OAuth2ClientCredentials(
-    issuer_url="https://auth.example.com",
     client_id="your-client-id",
     client_secret="your-client-secret",
+    issuer_url="https://auth.example.com",  # Will auto-discover token endpoint
 )
+```
 
+#### Option 2: Direct Token URL
+
+Use this approach when your OAuth provider doesn't support OIDC discovery, or when you want explicit control over the token endpoint:
+
+```python
+from kessel.grpc.auth import OAuth2ClientCredentials
+
+# Configure OAuth credentials with direct token URL
+auth_credentials = OAuth2ClientCredentials(
+    client_id="your-client-id", 
+    client_secret="your-client-secret",
+    token_url="https://auth.example.com/oauth/token",  # Direct token endpoint
+)
+```
+
+#### Using OAuth Credentials with gRPC
+
+Once you have your credentials configured (using either approach above), create an authenticated gRPC channel:
+
+```python
 # Create authentication plugin
 auth_plugin = google.auth.transport.grpc.AuthMetadataPlugin(
     credentials=auth_credentials, 
@@ -185,7 +212,8 @@ with grpc.secure_channel("localhost:9000", channel_credentials) as channel:
 ### OAuth Features
 
 - **Automatic Token Management**: Tokens are automatically fetched and refreshed
-- **Discovery Integration**: Automatically discovers token endpoint from OIDC provider
+- **Flexible Configuration**: Support for both OIDC discovery and direct token URLs
+- **Lazy Initialization**: Network calls are deferred until the first token request
 - **Token Caching**: Tokens are cached and reused until expiration
 - **Error Handling**: Automatic retry on authentication failures
 
