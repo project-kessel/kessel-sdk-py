@@ -22,8 +22,8 @@ def get_auth_metadata(credentials):
     # refresh before sending request
     if not credentials.valid:
         credentials.refresh(google.auth.transport.requests.Request())
-    
-    return [('authorization', f'Bearer {credentials.token}')]
+
+    return [("authorization", f"Bearer {credentials.token}")]
 
 
 def run():
@@ -58,7 +58,7 @@ def run():
             )
 
             metadata = get_auth_metadata(auth_credentials)
-            
+
             # add authorization header to request
             response = stub.Check(request, metadata=metadata)
             print("Check response received successfully")

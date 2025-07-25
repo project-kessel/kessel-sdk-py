@@ -15,7 +15,7 @@ class OAuth2ClientCredentials(google.auth.credentials.Credentials):
     from a specified issuer url with automatic refreshing.
 
     Supports two approaches:
-    
+
     1. OIDC Discovery: Provide issuer_url and the token endpoint will be discovered automatically
     2. Direct Token URL: Provide token_url directly to skip discovery
     """
@@ -35,10 +35,10 @@ class OAuth2ClientCredentials(google.auth.credentials.Credentials):
             client_secret: The client secret for the application.
             issuer_url: The issuer URL for OIDC discovery (used if token_url not provided).
             token_url: Direct token endpoint URL (takes precedence over issuer_url).
-        
+
         Note: If both issuer_url and token_url are provided, token_url takes precedence.
         At least one must be provided.
-                
+
         Raises:
             ValueError: If neither issuer_url nor token_url are provided.
         """
@@ -64,7 +64,7 @@ class OAuth2ClientCredentials(google.auth.credentials.Credentials):
         """
         if self._initialized:
             return
-        
+
         if self._token_url is None:
             self._token_url = self._discover_token_endpoint(self._issuer_url)
 
@@ -112,7 +112,7 @@ class OAuth2ClientCredentials(google.auth.credentials.Credentials):
             by the interface).
         """
         self.initialize()
-        
+
         token_data = self._session.fetch_token(
             token_url=self._token_url,
             client_id=self._client_id,
@@ -121,4 +121,6 @@ class OAuth2ClientCredentials(google.auth.credentials.Credentials):
 
         self.token = token_data.get("access_token")
         expires_in = token_data.get("expires_in", 0)
-        self.expiry = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=expires_in)
+        self.expiry = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
+            seconds=expires_in
+        )
