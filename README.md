@@ -161,13 +161,18 @@ Use this approach when your OAuth provider supports OIDC discovery. The SDK will
 import grpc
 import google.auth.transport.requests
 import google.auth.transport.grpc
-from kessel.grpc.auth import OAuth2ClientCredentials
+from kessel.grpc.auth import OIDCDiscovery, OAuth2ClientCredentials
 
 # Configure OAuth credentials with OIDC discovery
+discovery = OIDCDiscovery(ISSUER_URL)
+token_endpoint = discovery.fetch_oidc_discovery()   # Will auto-discover token endpoint
+
+# Create OAuth2 credentials with the discovered token endpoint
+# Lazily instantiated, network call made at request time
 auth_credentials = OAuth2ClientCredentials(
     client_id="your-client-id",
     client_secret="your-client-secret",
-    issuer_url="https://auth.example.com",  # Will auto-discover token endpoint
+    token_url=token_endpoint,
 )
 ```
 

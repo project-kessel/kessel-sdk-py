@@ -4,7 +4,7 @@ import grpc
 import google.auth.transport.requests
 import google.auth.transport.grpc
 
-from kessel.grpc.auth import OAuth2ClientCredentials
+from kessel.grpc.auth import OIDCDiscovery, OAuth2ClientCredentials
 from kessel.inventory.v1beta2 import (
     check_request_pb2,
     inventory_service_pb2_grpc,
@@ -21,10 +21,15 @@ CLIENT_SECRET = os.environ.get("AUTH_CLIENT_SECRET", "")
 
 def run():
     try:
+        discovery = OIDCDiscovery(ISSUER_URL)
+        token_endpoint = discovery.fetch_oidc_discovery()  # Network call occurs here
+
+        # Create OAuth2 credentials with the discovered token endpoint
+        # Lazily instantiated, network call at request time
         auth_credentials = OAuth2ClientCredentials(
-            issuer_url=ISSUER_URL,
             client_id=CLIENT_ID,
             client_secret=CLIENT_SECRET,
+            token_url=token_endpoint,
         )
 
         auth_plugin = google.auth.transport.grpc.AuthMetadataPlugin(
