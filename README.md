@@ -168,7 +168,6 @@ discovery = fetchOIDCDiscovery(ISSUER_URL)
 token_endpoint = discovery.token_endpoint
 
 # Create OAuth2 credentials with the discovered token endpoint
-# Lazily instantiated, network call made at request time
 auth_credentials = OAuth2ClientCredentials(
     client_id="your-client-id",
     client_secret="your-client-secret",

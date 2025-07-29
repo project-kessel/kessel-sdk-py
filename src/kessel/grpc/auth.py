@@ -76,23 +76,11 @@ class OAuth2ClientCredentials(google.auth.credentials.Credentials):
         self._client_id = client_id
         self._client_secret = client_secret
 
-        self._initialized = False
-        self._session = None
-
-        self.token = None
-        self.expiry = None
-
-    def initialize(self) -> None:
-        """
-        Initializes the OAuth2ClientCredentials.
-        """
-        if self._initialized:
-            return
-
         client = BackendApplicationClient(client_id=self._client_id)
         self._session = OAuth2Session(client=client)
 
-        self._initialized = True
+        self.token = None
+        self.expiry = None
 
     def refresh(self, request: google.auth.transport.requests.Request) -> None:
         """
@@ -105,8 +93,6 @@ class OAuth2ClientCredentials(google.auth.credentials.Credentials):
             request: A google-auth transport request object (not used in this flow, but required
             by the interface).
         """
-        self.initialize()
-
         token_data = self._session.fetch_token(
             token_url=self._token_url,
             client_id=self._client_id,

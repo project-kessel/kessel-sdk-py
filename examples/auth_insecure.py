@@ -33,7 +33,6 @@ def run():
         token_endpoint = discovery.token_endpoint
 
         # Create OAuth2 credentials with the discovered token endpoint
-        # Lazily instantiated, network call made at request time
         auth_credentials = OAuth2ClientCredentials(
             client_id=CLIENT_ID,
             client_secret=CLIENT_SECRET,
