@@ -155,7 +155,7 @@ The SDK supports two ways to configure OAuth 2.0 authentication:
 
 #### Option 1: OIDC Discovery
 
-Use this approach when your OAuth provider supports OIDC discovery. The SDK will automatically discover the token endpoint:
+Use this approach when your OAuth provider supports OIDC discovery. The SDK provides a `OIDCDiscovery` class to discover the token endpoint:
 
 ```python
 import grpc
@@ -165,7 +165,7 @@ from kessel.grpc.auth import OIDCDiscovery, OAuth2ClientCredentials
 
 # Configure OAuth credentials with OIDC discovery
 discovery = OIDCDiscovery(ISSUER_URL)
-token_endpoint = discovery.fetch_oidc_discovery()   # Will auto-discover token endpoint
+token_endpoint = discovery.fetch_oidc_discovery()
 
 # Create OAuth2 credentials with the discovered token endpoint
 # Lazily instantiated, network call made at request time
