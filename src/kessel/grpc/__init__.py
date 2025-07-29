@@ -1,3 +1,3 @@
-from .auth import OIDCDiscovery, OAuth2ClientCredentials
+from .auth import fetchOIDCDiscovery, OIDCDiscoveryMetadata, OAuth2ClientCredentials
 
-__all__ = ["OIDCDiscovery", "OAuth2ClientCredentials"]
+__all__ = ["fetchOIDCDiscovery", "OIDCDiscoveryMetadata", "OAuth2ClientCredentials"]

@@ -7,57 +7,42 @@ from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
 
 
-class OIDCDiscovery:
+class OIDCDiscoveryMetadata:
     """
-    OIDC Discovery class for discovering OAuth 2.0 endpoints from an OIDC provider.
-
-    Handles the OIDC discovery process to find the token endpoint from the provider's discovery document.
+    Represents OIDC discovery metadata.
     """
 
-    def __init__(self, issuer_url: str):
-        """
-        Initializes the OIDCDiscovery.
+    def __init__(self, discovery_document: dict):
+        self._document = discovery_document
 
-        Args:
-            issuer_url: The base URL of the OIDC provider.
-        """
-        self.issuer_url = issuer_url
-        self._token_endpoint = None
+    @property
+    def token_endpoint(self) -> str:
+        return self._document["token_endpoint"]
 
-    def fetch_oidc_discovery(self) -> str:
-        """
-        Fetches the OIDC discovery token endpoint.
 
-        This method makes a network request to the OIDC provider's discovery endpoint.
+def fetchOIDCDiscovery(issuer_url: str) -> OIDCDiscoveryMetadata:
+    """
+    Fetches OIDC discovery metadata from the provider.
 
-        Returns:
-            The URL of the token endpoint.
-        """
-        if self._token_endpoint is None:
-            self._discover_token_endpoint()
+    This function makes a network request to the OIDC provider's discovery endpoint
+    to retrieve the provider's metadata including the token endpoint.
 
-        return self._token_endpoint
+    Args:
+        issuer_url: The base URL of the OIDC provider.
 
-    def _discover_token_endpoint(self) -> None:
-        """
-        Discovers and caches the token endpoint from the OIDC discovery document.
-        """
-        discovery_url = f"{self.issuer_url.rstrip('/')}/.well-known/openid-configuration"
-        try:
-            response = requests.get(discovery_url, timeout=10)
-            response.raise_for_status()
-            config = response.json()
-            token_endpoint = config.get("token_endpoint")
-            if not token_endpoint:
-                raise ValueError("'token_endpoint' not found in OIDC discovery document")
+    Returns:
+        OIDCDiscoveryMetadata containing the discovered endpoints.
 
-            self._token_endpoint = token_endpoint
-        except requests.exceptions.RequestException as e:
-            raise IOError(f"Failed to retrieve OIDC discovery document from {discovery_url}") from e
-        except (ValueError, KeyError) as e:
-            raise ValueError(
-                "Failed to parse OIDC discovery document or find 'token_endpoint'"
-            ) from e
+    Raises:
+        requests.exceptions.RequestException: If the discovery document cannot be retrieved.
+        ValueError: If the response is not valid JSON.
+    """
+    discovery_url = f"{issuer_url.rstrip('/')}/.well-known/openid-configuration"
+    response = requests.get(discovery_url, timeout=10)
+    response.raise_for_status()
+    config = response.json()
+
+    return OIDCDiscoveryMetadata(config)
 
 
 class OAuth2ClientCredentials(google.auth.credentials.Credentials):
@@ -68,7 +53,7 @@ class OAuth2ClientCredentials(google.auth.credentials.Credentials):
     from a specified token endpoint with automatic refreshing.
 
     This class only accepts a direct token URL. For OIDC discovery, use the
-    OIDCDiscovery class to obtain the token endpoint first.
+    fetchOIDCDiscovery function to obtain the token endpoint first.
     """
 
     def __init__(
