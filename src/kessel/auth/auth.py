@@ -1,6 +1,7 @@
 import datetime
 
 import google.auth.credentials
+from google.auth.credentials import TokenState
 import google.auth.transport.requests
 import requests
 from oauthlib.oauth2 import BackendApplicationClient
@@ -101,6 +102,18 @@ class OAuth2ClientCredentials(google.auth.credentials.Credentials):
 
         self.token = token_data.get("access_token")
         expires_in = token_data.get("expires_in", 0)
-        self.expiry = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
+        self.expiry = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None) + datetime.timedelta(
             seconds=expires_in
         )
+
+    def get_token(self) -> str:
+        """
+        Get a valid access token, refreshing if necessary.
+
+        Returns:
+            A valid access token.
+        """
+        if self.token_state in (TokenState.STALE, TokenState.INVALID):
+            self.refresh(google.auth.transport.requests.Request())
+
+        return self.token
