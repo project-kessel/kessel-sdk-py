@@ -161,7 +161,7 @@ Use this approach when your OAuth provider supports OIDC discovery. The SDK prov
 import grpc
 import google.auth.transport.requests
 import google.auth.transport.grpc
-from kessel.grpc.auth import fetchOIDCDiscovery, OAuth2ClientCredentials
+from kessel.auth import fetchOIDCDiscovery, OAuth2ClientCredentials
 
 # network call occurs here
 discovery = fetchOIDCDiscovery(ISSUER_URL)
@@ -180,7 +180,7 @@ auth_credentials = OAuth2ClientCredentials(
 Use this approach when your OAuth provider doesn't support OIDC discovery, or when you want explicit control over the token endpoint:
 
 ```python
-from kessel.grpc.auth import OAuth2ClientCredentials
+from kessel.auth import OAuth2ClientCredentials
 
 # Configure OAuth credentials with direct token URL
 auth_credentials = OAuth2ClientCredentials(

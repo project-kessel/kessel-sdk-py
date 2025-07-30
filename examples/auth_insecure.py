@@ -3,7 +3,7 @@ import os
 import grpc
 import google.auth.transport.requests
 
-from kessel.grpc.auth import fetchOIDCDiscovery, OAuth2ClientCredentials
+from kessel.auth import fetchOIDCDiscovery, OAuth2ClientCredentials
 from kessel.inventory.v1beta2 import (
     check_request_pb2,
     inventory_service_pb2_grpc,
