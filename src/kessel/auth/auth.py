@@ -20,7 +20,7 @@ class OIDCDiscoveryMetadata:
         return self._document["token_endpoint"]
 
 
-def fetchOIDCDiscovery(issuer_url: str) -> OIDCDiscoveryMetadata:
+def fetch_oidc_discovery(issuer_url: str) -> OIDCDiscoveryMetadata:
     """
     Fetches OIDC discovery metadata from the provider.
 
@@ -53,7 +53,7 @@ class OAuth2ClientCredentials(google.auth.credentials.Credentials):
     from a specified token endpoint with automatic refreshing.
 
     This class only accepts a direct token URL. For OIDC discovery, use the
-    fetchOIDCDiscovery function to obtain the token endpoint first.
+    fetch_oidc_discovery function to obtain the token endpoint first.
     """
 
     def __init__(

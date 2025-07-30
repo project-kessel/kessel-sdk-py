@@ -3,7 +3,7 @@ import os
 import grpc
 import google.auth.transport.requests
 
-from kessel.auth import fetchOIDCDiscovery, OAuth2ClientCredentials
+from kessel.auth import fetch_oidc_discovery, OAuth2ClientCredentials
 from kessel.inventory.v1beta2 import (
     check_request_pb2,
     inventory_service_pb2_grpc,
@@ -29,7 +29,7 @@ def get_auth_metadata(credentials):
 def run():
     try:
         # network call occurs here
-        discovery = fetchOIDCDiscovery(ISSUER_URL)
+        discovery = fetch_oidc_discovery(ISSUER_URL)
         token_endpoint = discovery.token_endpoint
 
         # Create OAuth2 credentials with the discovered token endpoint
