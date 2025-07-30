@@ -2,6 +2,7 @@ import os
 
 import grpc
 import google.auth.transport.requests
+import google.auth.transport.grpc
 
 from kessel.auth import fetch_oidc_discovery, OAuth2ClientCredentials
 from kessel.inventory.v1beta2 import (
@@ -18,14 +19,6 @@ CLIENT_ID = os.environ.get("AUTH_CLIENT_ID", "")
 CLIENT_SECRET = os.environ.get("AUTH_CLIENT_SECRET", "")
 
 
-def get_auth_metadata(credentials):
-    # refresh before sending request
-    if not credentials.valid:
-        credentials.refresh(google.auth.transport.requests.Request())
-
-    return [("authorization", f"Bearer {credentials.token}")]
-
-
 def run():
     try:
         # network call occurs here
@@ -39,7 +32,18 @@ def run():
             token_url=token_endpoint,
         )
 
-        with grpc.insecure_channel(KESSEL_ENDPOINT) as channel:
+        auth_plugin = google.auth.transport.grpc.AuthMetadataPlugin(
+            credentials=auth_credentials, request=google.auth.transport.requests.Request()
+        )
+
+        call_credentials = grpc.metadata_call_credentials(auth_plugin)
+
+        channel_credentials = grpc.composite_channel_credentials(
+            grpc.local_channel_credentials(),
+            call_credentials,
+        )
+
+        with grpc.secure_channel(KESSEL_ENDPOINT, channel_credentials) as channel:
             stub = inventory_service_pb2_grpc.KesselInventoryServiceStub(channel)
 
             subject = subject_reference_pb2.SubjectReference(
@@ -62,10 +66,7 @@ def run():
                 object=resource_ref,
             )
 
-            metadata = get_auth_metadata(auth_credentials)
-
-            # add authorization header to request
-            response = stub.Check(request, metadata=metadata)
+            response = stub.Check(request)
             print("Check response received successfully")
             print(response)
 

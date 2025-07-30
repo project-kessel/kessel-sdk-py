@@ -101,6 +101,29 @@ class OAuth2ClientCredentials(google.auth.credentials.Credentials):
 
         self.token = token_data.get("access_token")
         expires_in = token_data.get("expires_in", 0)
-        self.expiry = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
+        # Use timezone-aware UTC datetime, then make it naive for google-auth compatibility
+        # This avoids the utcnow() deprecation warning while maintaining compatibility
+        self.expiry = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None) + datetime.timedelta(
             seconds=expires_in
         )
+
+    def get_token(self, request: google.auth.transport.requests.Request = None) -> str:
+        """
+        Get a valid access token, refreshing if necessary.
+
+        Args:
+            request: A google-auth transport request object. If None, one will be created automatically.
+
+        Returns:
+            A valid access token.
+        """
+        # Create request object if not provided
+        if request is None:
+            request = google.auth.transport.requests.Request()
+            
+        # Use token_state instead of deprecated valid property
+        # Refresh if token is STALE (close to expiry) or INVALID (expired/missing)
+        if self.token_state.name in ('STALE', 'INVALID'):
+            self.refresh(request)
+
+        return self.token
