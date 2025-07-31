@@ -33,7 +33,8 @@ def run():
         )
 
         auth_plugin = google.auth.transport.grpc.AuthMetadataPlugin(
-            credentials=auth_credentials, request=google.auth.transport.requests.Request()
+            credentials=auth_credentials._get_credentials(),
+            request=google.auth.transport.requests.Request(),
         )
         call_credentials = grpc.metadata_call_credentials(auth_plugin)
 

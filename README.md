@@ -197,7 +197,7 @@ Once you have your credentials configured (using either approach above), create 
 ```python
 # Create authentication plugin
 auth_plugin = google.auth.transport.grpc.AuthMetadataPlugin(
-    credentials=auth_credentials, 
+    credentials=auth_credentials._get_credentials(), 
     request=google.auth.transport.requests.Request()
 )
 call_credentials = grpc.metadata_call_credentials(auth_plugin)

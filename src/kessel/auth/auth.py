@@ -1,4 +1,5 @@
 import datetime
+from typing import Dict, Any
 
 import google.auth.credentials
 from google.auth.credentials import TokenState
@@ -46,7 +47,7 @@ def fetch_oidc_discovery(issuer_url: str) -> OIDCDiscoveryMetadata:
     return OIDCDiscoveryMetadata(config)
 
 
-class OAuth2ClientCredentials(google.auth.credentials.Credentials):
+class OAuth2ClientCredentials:
     """
     OAuth2ClientCredentials class for handling the OAuth 2.0 Client Credentials flow.
 
@@ -71,8 +72,6 @@ class OAuth2ClientCredentials(google.auth.credentials.Credentials):
             client_secret: The client secret for the application.
             token_url: The direct token endpoint URL.
         """
-        super().__init__()
-
         self._token_url = token_url
         self._client_id = client_id
         self._client_secret = client_secret
@@ -83,16 +82,14 @@ class OAuth2ClientCredentials(google.auth.credentials.Credentials):
         self.token = None
         self.expiry = None
 
-    def refresh(self, request: google.auth.transport.requests.Request) -> None:
+    def refresh(self) -> Dict[str, Any]:
         """
         Refreshes the access token.
 
-        This method is called automatically by google-auth
-        when it determines the token is expired or missing.
+        Use this method when you want to control token refresh yourself.
 
-        Args:
-            request: A google-auth transport request object (not used in this flow, but required
-            by the interface).
+        Returns:
+            Dictionary containing the token response.
         """
         token_data = self._session.fetch_token(
             token_url=self._token_url,
@@ -102,18 +99,63 @@ class OAuth2ClientCredentials(google.auth.credentials.Credentials):
 
         self.token = token_data.get("access_token")
         expires_in = token_data.get("expires_in", 0)
-        self.expiry = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None) + datetime.timedelta(
-            seconds=expires_in
-        )
+        self.expiry = datetime.datetime.now(datetime.timezone.utc).replace(
+            tzinfo=None
+        ) + datetime.timedelta(seconds=expires_in)
+
+        return {
+            "access_token": self.token,
+            "expires_in": expires_in,
+        }
 
     def get_token(self) -> str:
         """
         Get a valid access token, refreshing if necessary.
 
+        Use this method when you want automatic token handling.
+
         Returns:
             A valid access token.
         """
-        if self.token_state in (TokenState.STALE, TokenState.INVALID):
-            self.refresh(google.auth.transport.requests.Request())
+        if (
+            self.token is None
+            or self.expiry is None
+            or self.expiry <= datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+        ):
+            self.refresh()
 
         return self.token
+
+    def _get_credentials(self) -> google.auth.credentials.Credentials:
+        """
+        Get a google.auth.credentials.Credentials adapter for this OAuth2ClientCredentials client.
+
+        Returns:
+            A credentials object compatible with google-auth.
+        """
+        oauth2_client = self
+
+        class CredentialsAdapter(google.auth.credentials.Credentials):
+            def __init__(self):
+                super().__init__()
+
+            @property
+            def token(self) -> str:
+                return oauth2_client.token
+
+            @token.setter
+            def token(self, value: str) -> None:
+                oauth2_client.token = value
+
+            @property
+            def expiry(self) -> datetime.datetime:
+                return oauth2_client.expiry
+
+            @expiry.setter
+            def expiry(self, value: datetime.datetime) -> None:
+                oauth2_client.expiry = value
+
+            def refresh(self, request: google.auth.transport.requests.Request) -> None:
+                oauth2_client.refresh()
+
+        return CredentialsAdapter()
