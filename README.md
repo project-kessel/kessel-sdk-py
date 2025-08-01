@@ -195,12 +195,7 @@ auth_credentials = OAuth2ClientCredentials(
 Once you have your credentials configured (using either approach above), create an authenticated gRPC channel:
 
 ```python
-# Create authentication plugin
-auth_plugin = google.auth.transport.grpc.AuthMetadataPlugin(
-    credentials=auth_credentials._get_credentials(), 
-    request=google.auth.transport.requests.Request()
-)
-call_credentials = grpc.metadata_call_credentials(auth_plugin)
+call_credentials = oauth2_call_credentials(auth_credentials)
 
 # Combine with TLS for secure channel
 ssl_credentials = grpc.ssl_channel_credentials()

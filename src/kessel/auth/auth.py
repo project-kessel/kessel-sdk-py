@@ -126,7 +126,7 @@ class OAuth2ClientCredentials:
         return self.token
 
 
-class GoogleAuthCredentialsAdapter(google.auth.credentials.Credentials):
+class GoogleOAuth2ClientCredentials(google.auth.credentials.Credentials):
     """
     Adapter class that implements google.auth.credentials.Credentials interface
     for OAuth2ClientCredentials.
