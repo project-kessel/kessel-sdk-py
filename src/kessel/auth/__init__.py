@@ -1,3 +1,13 @@
-from .auth import OAuth2ClientCredentials, OIDCDiscoveryMetadata, fetch_oidc_discovery
+from .auth import (
+    OAuth2ClientCredentials,
+    GoogleAuthCredentialsAdapter,
+    OIDCDiscoveryMetadata,
+    fetch_oidc_discovery,
+)
 
-__all__ = ["OAuth2ClientCredentials", "OIDCDiscoveryMetadata", "fetch_oidc_discovery"]
+__all__ = [
+    "OAuth2ClientCredentials",
+    "GoogleAuthCredentialsAdapter",
+    "OIDCDiscoveryMetadata",
+    "fetch_oidc_discovery",
+]

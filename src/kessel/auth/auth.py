@@ -2,7 +2,6 @@ import datetime
 from typing import Dict, Any
 
 import google.auth.credentials
-from google.auth.credentials import TokenState
 import google.auth.transport.requests
 import requests
 from oauthlib.oauth2 import BackendApplicationClient
@@ -126,36 +125,38 @@ class OAuth2ClientCredentials:
 
         return self.token
 
-    def _get_credentials(self) -> google.auth.credentials.Credentials:
+
+class GoogleAuthCredentialsAdapter(google.auth.credentials.Credentials):
+    """
+    Adapter class that implements google.auth.credentials.Credentials interface
+    for OAuth2ClientCredentials.
+    """
+
+    def __init__(self, oauth2_client):
         """
-        Get a google.auth.credentials.Credentials adapter for this OAuth2ClientCredentials client.
+        Initialize the credentials adapter.
 
-        Returns:
-            A credentials object compatible with google-auth.
+        Args:
+            oauth2_client: The OAuth2ClientCredentials instance to adapt.
         """
-        oauth2_client = self
+        self._oauth2_client = oauth2_client
+        super().__init__()
 
-        class CredentialsAdapter(google.auth.credentials.Credentials):
-            def __init__(self):
-                super().__init__()
+    @property
+    def token(self) -> str:
+        return self._oauth2_client.token
 
-            @property
-            def token(self) -> str:
-                return oauth2_client.token
+    @token.setter
+    def token(self, value: str) -> None:
+        self._oauth2_client.token = value
 
-            @token.setter
-            def token(self, value: str) -> None:
-                oauth2_client.token = value
+    @property
+    def expiry(self) -> datetime.datetime:
+        return self._oauth2_client.expiry
 
-            @property
-            def expiry(self) -> datetime.datetime:
-                return oauth2_client.expiry
+    @expiry.setter
+    def expiry(self, value: datetime.datetime) -> None:
+        self._oauth2_client.expiry = value
 
-            @expiry.setter
-            def expiry(self, value: datetime.datetime) -> None:
-                oauth2_client.expiry = value
-
-            def refresh(self, request: google.auth.transport.requests.Request) -> None:
-                oauth2_client.refresh()
-
-        return CredentialsAdapter()
+    def refresh(self, request: google.auth.transport.requests.Request) -> None:
+        self._oauth2_client.refresh()

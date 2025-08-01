@@ -4,7 +4,7 @@ import grpc
 import google.auth.transport.requests
 import google.auth.transport.grpc
 
-from kessel.auth import fetch_oidc_discovery, OAuth2ClientCredentials
+from kessel.auth import fetch_oidc_discovery, OAuth2ClientCredentials, GoogleAuthCredentialsAdapter
 from kessel.inventory.v1beta2 import (
     check_request_pb2,
     inventory_service_pb2_grpc,
@@ -33,7 +33,7 @@ def run():
         )
 
         auth_plugin = google.auth.transport.grpc.AuthMetadataPlugin(
-            credentials=auth_credentials._get_credentials(),
+            credentials=GoogleAuthCredentialsAdapter(auth_credentials),
             request=google.auth.transport.requests.Request(),
         )
 
