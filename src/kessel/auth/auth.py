@@ -91,7 +91,7 @@ class OAuth2ClientCredentials:
         Returns:
             Tuple containing (access_token, expires_in).
         """
-        current_time = datetime.datetime.now(datetime.timezone.utc)
+        current_time = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
 
         if (
             force_refresh
@@ -110,7 +110,11 @@ class OAuth2ClientCredentials:
             expires_in = token_data.get("expires_in", 0)
             self.expiry = current_time + datetime.timedelta(seconds=expires_in)
 
-        remaining_seconds = int((self.expiry - datetime.datetime.now(datetime.timezone.utc)).total_seconds())
+        remaining_seconds = int(
+            (
+                self.expiry - datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+            ).total_seconds()
+        )
         return (self.token, remaining_seconds)
 
 
@@ -140,16 +144,11 @@ class GoogleOAuth2ClientCredentials(google.auth.credentials.Credentials):
 
     @property
     def expiry(self) -> datetime.datetime:
-        if self._credentials.expiry is None:
-            return None
-        return self._credentials.expiry.replace(tzinfo=None)
+        return self._credentials.expiry
 
     @expiry.setter
     def expiry(self, value: datetime.datetime) -> None:
-        if value is None:
-            self._credentials.expiry = None
-        else:
-            self._credentials.expiry = value.replace(tzinfo=datetime.timezone.utc)
+        self._credentials.expiry = value
 
     def refresh(self, request: google.auth.transport.requests.Request) -> None:
         self._credentials.get_token(force_refresh=True)
