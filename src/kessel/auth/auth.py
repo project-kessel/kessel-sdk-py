@@ -1,5 +1,4 @@
 import datetime
-import time
 from typing import Tuple
 
 import google.auth.credentials
@@ -92,13 +91,13 @@ class OAuth2ClientCredentials:
         Returns:
             Tuple containing (access_token, expires_in).
         """
-        current_time = time.time()
+        current_time = datetime.datetime.now(datetime.timezone.utc)
 
         if (
             force_refresh
             or self.token is None
             or self.expiry is None
-            or current_time + 300 >= self.expiry
+            or self.expiry <= current_time + datetime.timedelta(seconds=300)
         ):
             # Refresh the token
             token_data = self._session.fetch_token(
@@ -109,9 +108,9 @@ class OAuth2ClientCredentials:
 
             self.token = token_data.get("access_token")
             expires_in = token_data.get("expires_in", 0)
-            self.expiry = current_time + expires_in
+            self.expiry = current_time + datetime.timedelta(seconds=expires_in)
 
-        remaining_seconds = int(self.expiry - time.time())
+        remaining_seconds = int((self.expiry - datetime.datetime.now(datetime.timezone.utc)).total_seconds())
         return (self.token, remaining_seconds)
 
 
@@ -143,18 +142,14 @@ class GoogleOAuth2ClientCredentials(google.auth.credentials.Credentials):
     def expiry(self) -> datetime.datetime:
         if self._credentials.expiry is None:
             return None
-        # get time as utc timezone, but google auth expects a naive datetime object
-        return datetime.datetime.fromtimestamp(
-            self._credentials.expiry, 
-            tz=datetime.timezone.utc
-        ).replace(tzinfo=None)
+        return self._credentials.expiry.replace(tzinfo=None)
 
     @expiry.setter
     def expiry(self, value: datetime.datetime) -> None:
         if value is None:
             self._credentials.expiry = None
         else:
-            self._credentials.expiry = value.replace(tzinfo=datetime.timezone.utc).timestamp()
+            self._credentials.expiry = value.replace(tzinfo=datetime.timezone.utc)
 
     def refresh(self, request: google.auth.transport.requests.Request) -> None:
         self._credentials.get_token(force_refresh=True)
