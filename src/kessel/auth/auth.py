@@ -1,5 +1,5 @@
 import datetime
-from typing import Dict, Any
+from typing import Tuple
 
 import google.auth.credentials
 import google.auth.transport.requests
@@ -81,49 +81,38 @@ class OAuth2ClientCredentials:
         self.token = None
         self.expiry = None
 
-    def refresh(self) -> Dict[str, Any]:
+    def get_token(self, force_refresh: bool = False) -> Tuple[str, datetime.datetime]:
         """
-        Refreshes the access token.
+        Get a valid access token, refreshing if necessary or forced.
 
-        Use this method when you want to control token refresh yourself.
+        Args:
+            force_refresh: If True, forces token refresh regardless of expiry.
 
         Returns:
-            Dictionary containing the token response.
-        """
-        token_data = self._session.fetch_token(
-            token_url=self._token_url,
-            client_id=self._client_id,
-            client_secret=self._client_secret,
-        )
-
-        self.token = token_data.get("access_token")
-        expires_in = token_data.get("expires_in", 0)
-        self.expiry = datetime.datetime.now(datetime.timezone.utc).replace(
-            tzinfo=None
-        ) + datetime.timedelta(seconds=expires_in)
-
-        return {
-            "access_token": self.token,
-            "expires_in": expires_in,
-        }
-
-    def get_token(self) -> str:
-        """
-        Get a valid access token, refreshing if necessary.
-
-        Use this method when you want automatic token handling.
-
-        Returns:
-            A valid access token.
+            Tuple containing (access_token, expiry).
         """
         if (
-            self.token is None
+            force_refresh
+            or self.token is None
             or self.expiry is None
-            or self.expiry <= datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+            or self.expiry
+            <= datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+            + datetime.timedelta(seconds=300)
         ):
-            self.refresh()
+            # Refresh the token
+            token_data = self._session.fetch_token(
+                token_url=self._token_url,
+                client_id=self._client_id,
+                client_secret=self._client_secret,
+            )
 
-        return self.token
+            self.token = token_data.get("access_token")
+            expires_in = token_data.get("expires_in", 0)
+            self.expiry = datetime.datetime.now(datetime.timezone.utc).replace(
+                tzinfo=None
+            ) + datetime.timedelta(seconds=expires_in)
+
+        return (self.token, self.expiry)
 
 
 class GoogleOAuth2ClientCredentials(google.auth.credentials.Credentials):
@@ -159,4 +148,4 @@ class GoogleOAuth2ClientCredentials(google.auth.credentials.Credentials):
         self._oauth2_client.expiry = value
 
     def refresh(self, request: google.auth.transport.requests.Request) -> None:
-        self._oauth2_client.refresh()
+        self._oauth2_client.get_token(force_refresh=True)
