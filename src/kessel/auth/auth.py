@@ -1,4 +1,5 @@
 import datetime
+import time
 from typing import Tuple
 
 import google.auth.credentials
@@ -61,7 +62,7 @@ class OAuth2ClientCredentials:
         self,
         client_id: str,
         client_secret: str,
-        token_url: str,
+        token_endpoint: str,
     ):
         """
         Initializes the OAuth2ClientCredentials.
@@ -69,9 +70,9 @@ class OAuth2ClientCredentials:
         Args:
             client_id: The client ID for the application.
             client_secret: The client secret for the application.
-            token_url: The direct token endpoint URL.
+            token_endpoint: The direct token endpoint URL.
         """
-        self._token_url = token_url
+        self._token_endpoint = token_endpoint
         self._client_id = client_id
         self._client_secret = client_secret
 
@@ -81,7 +82,7 @@ class OAuth2ClientCredentials:
         self.token = None
         self.expiry = None
 
-    def get_token(self, force_refresh: bool = False) -> Tuple[str, datetime.datetime]:
+    def get_token(self, force_refresh: bool = False) -> Tuple[str, int]:
         """
         Get a valid access token, refreshing if necessary or forced.
 
@@ -89,30 +90,29 @@ class OAuth2ClientCredentials:
             force_refresh: If True, forces token refresh regardless of expiry.
 
         Returns:
-            Tuple containing (access_token, expiry).
+            Tuple containing (access_token, expires_in).
         """
+        current_time = time.time()
+
         if (
             force_refresh
             or self.token is None
             or self.expiry is None
-            or self.expiry
-            <= datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-            + datetime.timedelta(seconds=300)
+            or current_time + 300 >= self.expiry
         ):
             # Refresh the token
             token_data = self._session.fetch_token(
-                token_url=self._token_url,
+                token_url=self._token_endpoint,
                 client_id=self._client_id,
                 client_secret=self._client_secret,
             )
 
             self.token = token_data.get("access_token")
             expires_in = token_data.get("expires_in", 0)
-            self.expiry = datetime.datetime.now(datetime.timezone.utc).replace(
-                tzinfo=None
-            ) + datetime.timedelta(seconds=expires_in)
+            self.expiry = current_time + expires_in
 
-        return (self.token, self.expiry)
+        remaining_seconds = int(self.expiry - time.time())
+        return (self.token, remaining_seconds)
 
 
 class GoogleOAuth2ClientCredentials(google.auth.credentials.Credentials):
@@ -121,31 +121,40 @@ class GoogleOAuth2ClientCredentials(google.auth.credentials.Credentials):
     for OAuth2ClientCredentials.
     """
 
-    def __init__(self, oauth2_client):
+    def __init__(self, credentials: OAuth2ClientCredentials):
         """
         Initialize the credentials adapter.
 
         Args:
-            oauth2_client: The OAuth2ClientCredentials instance to adapt.
+            credentials: The OAuth2ClientCredentials instance to adapt.
         """
-        self._oauth2_client = oauth2_client
+        self._credentials = credentials
         super().__init__()
 
     @property
     def token(self) -> str:
-        return self._oauth2_client.token
+        return self._credentials.token
 
     @token.setter
     def token(self, value: str) -> None:
-        self._oauth2_client.token = value
+        self._credentials.token = value
 
     @property
     def expiry(self) -> datetime.datetime:
-        return self._oauth2_client.expiry
+        if self._credentials.expiry is None:
+            return None
+        # get time as utc timezone, but google auth expects a naive datetime object
+        return datetime.datetime.fromtimestamp(
+            self._credentials.expiry, 
+            tz=datetime.timezone.utc
+        ).replace(tzinfo=None)
 
     @expiry.setter
     def expiry(self, value: datetime.datetime) -> None:
-        self._oauth2_client.expiry = value
+        if value is None:
+            self._credentials.expiry = None
+        else:
+            self._credentials.expiry = value.replace(tzinfo=datetime.timezone.utc).timestamp()
 
     def refresh(self, request: google.auth.transport.requests.Request) -> None:
-        self._oauth2_client.get_token(force_refresh=True)
+        self._credentials.get_token(force_refresh=True)

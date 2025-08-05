@@ -28,7 +28,7 @@ def run():
         auth_credentials = OAuth2ClientCredentials(
             client_id=CLIENT_ID,
             client_secret=CLIENT_SECRET,
-            token_url=token_endpoint,
+            token_endpoint=token_endpoint,
         )
 
         call_credentials = oauth2_call_credentials(auth_credentials)
