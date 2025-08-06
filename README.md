@@ -143,6 +143,12 @@ All protobuf message classes are generated and available. Key classes include:
 
 See the `examples/` directory for complete working examples.
 
+## Authentication
+
+The SDK supports OAuth 2.0 Client Credentials flow for authentication with Kessel services. The `OAuth2ClientCredentials` class provides automatic token management with built-in refreshing.
+
+**Note**: To use authentication features, install the SDK with auth dependencies: `pip install "kessel-sdk[auth]"`
+
 ## Development
 
 ### Prerequisites
@@ -164,7 +170,7 @@ curl -sSL "https://github.com/bufbuild/buf/releases/latest/download/buf-$(uname 
 ### Setup
 
 ```bash
-# Install development dependencies
+# Install additional development dependencies
 pip install "kessel-sdk[dev]"
 
 # Generate gRPC code from Kessel Inventory API
@@ -208,6 +214,8 @@ flake8 --exclude '*_pb2.py,*_pb2_grpc.py' src/ examples/
 
 The `examples/` directory contains working examples:
 
+- `auth.py` - OAuth 2.0 authentication via a secure connection
+- `auth_insecure.py` - OAuth 2.0 authentication via an insecure connection
 - `check.py` - Permission checking
 - `report_resource.py` - Reporting resource state
 - `delete_resource.py` - Deleting resources
@@ -241,7 +249,6 @@ except grpc.RpcError as err:
 This is the foundational gRPC library. Future releases will include:
 
 - **High-level SDK**: Fluent client builder API
-- **Authentication**: OAuth 2.0 Client Credentials flow
 - **Convenience Methods**: Simplified APIs for common operations
 
 ## Contributing
