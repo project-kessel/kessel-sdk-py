@@ -146,6 +146,4 @@ class GoogleOAuth2ClientCredentials(google.auth.credentials.Credentials):
         self._credentials._expiry = value
 
     def refresh(self, request: google.auth.transport.requests.Request) -> None:
-        token, expiry = self._credentials.get_token(force_refresh=True)
-        self.token = token
-        self.expiry = expiry
+        self._credentials.get_token(force_refresh=True)
