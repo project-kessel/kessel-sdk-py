@@ -1,15 +1,16 @@
 import grpc
+import os
 from google.protobuf import struct_pb2
 from kessel.inventory.v1beta2 import (
-    inventory_service_pb2_grpc,
     report_resource_request_pb2,
     resource_representations_pb2,
     representation_metadata_pb2,
+    ClientBuilder,
 )
 
-stub = inventory_service_pb2_grpc.KesselInventoryServiceStub(
-    grpc.insecure_channel("localhost:9000")
-)
+KESSEL_ENDPOINT = os.environ.get("KESSEL_ENDPOINT", "localhost:9000")
+
+stub = ClientBuilder(KESSEL_ENDPOINT).insecure().build()
 
 # Build protobuf Struct for common metadata
 common_struct = struct_pb2.Struct()

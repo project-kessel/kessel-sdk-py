@@ -3,13 +3,12 @@ import os
 import grpc
 
 from kessel.auth import fetch_oidc_discovery, OAuth2ClientCredentials
-from kessel.grpc import oauth2_call_credentials
 from kessel.inventory.v1beta2 import (
     check_request_pb2,
-    inventory_service_pb2_grpc,
     reporter_reference_pb2,
     resource_reference_pb2,
     subject_reference_pb2,
+    ClientBuilder,
 )
 
 KESSEL_ENDPOINT = os.environ.get("KESSEL_ENDPOINT", "localhost:9000")
@@ -31,15 +30,13 @@ def run():
             token_endpoint=token_endpoint,
         )
 
-        call_credentials = oauth2_call_credentials(auth_credentials)
-
-        ssl_credentials = grpc.ssl_channel_credentials()
-
-        channel_credentials = grpc.composite_channel_credentials(ssl_credentials, call_credentials)
-
-        with grpc.secure_channel(KESSEL_ENDPOINT, channel_credentials) as channel:
-            stub = inventory_service_pb2_grpc.KesselInventoryServiceStub(channel)
-
+        with (
+            ClientBuilder(KESSEL_ENDPOINT)
+            .oauth2_client_authenticated(auth_credentials)
+            .build() as stub
+        ):
+            # or can be used as stub = ... and use other mechanism to
+            # free resources via `stub.close()`
             subject = subject_reference_pb2.SubjectReference(
                 resource=resource_reference_pb2.ResourceReference(
                     reporter=reporter_reference_pb2.ReporterReference(type="rbac"),

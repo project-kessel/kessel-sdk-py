@@ -1,18 +1,20 @@
 import grpc
+import os
 
 from kessel.inventory.v1beta2 import (
-    inventory_service_pb2_grpc,
     check_for_update_request_pb2,
     resource_reference_pb2,
     reporter_reference_pb2,
     subject_reference_pb2,
+    ClientBuilder,
 )
 
 
+KESSEL_ENDPOINT = os.environ.get("KESSEL_ENDPOINT", "localhost:9000")
+
+
 def run():
-    stub = inventory_service_pb2_grpc.KesselInventoryServiceStub(
-        grpc.insecure_channel("localhost:9000")
-    )
+    stub = ClientBuilder(KESSEL_ENDPOINT).insecure().build()
 
     # Prepare the subject reference object
     subject = subject_reference_pb2.SubjectReference(

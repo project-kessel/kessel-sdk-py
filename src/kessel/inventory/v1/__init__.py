@@ -1,0 +1,4 @@
+from kessel.inventory import service_builder
+from kessel.inventory.v1.health_pb2_grpc import KesselInventoryHealthServiceStub
+
+ClientBuilder = service_builder(KesselInventoryHealthServiceStub)

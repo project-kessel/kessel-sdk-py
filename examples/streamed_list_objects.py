@@ -1,19 +1,21 @@
 import grpc
+import os
 
 from kessel.inventory.v1beta2 import (
-    inventory_service_pb2_grpc,
     representation_type_pb2,
     reporter_reference_pb2,
     resource_reference_pb2,
     streamed_list_objects_request_pb2,
     subject_reference_pb2,
+    ClientBuilder,
 )
 
 
+KESSEL_ENDPOINT = os.environ.get("KESSEL_ENDPOINT", "localhost:9000")
+
+
 def run():
-    stub = inventory_service_pb2_grpc.KesselInventoryServiceStub(
-        grpc.insecure_channel("localhost:9000")
-    )
+    stub = ClientBuilder(KESSEL_ENDPOINT).insecure().build()
 
     object_type = representation_type_pb2.RepresentationType(
         resource_type="host",
