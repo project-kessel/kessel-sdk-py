@@ -13,38 +13,40 @@ KESSEL_ENDPOINT = os.environ.get("KESSEL_ENDPOINT", "localhost:9000")
 
 
 def run():
-    stub = ClientBuilder(KESSEL_ENDPOINT).insecure().build()
+    stub, channel = ClientBuilder(KESSEL_ENDPOINT).insecure().build()
 
-    # Prepare the subject reference object
-    subject = subject_reference_pb2.SubjectReference(
-        resource=resource_reference_pb2.ResourceReference(
-            reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
-            resource_id="bob",
-            resource_type="principal",
+    with channel:
+
+        # Prepare the subject reference object
+        subject = subject_reference_pb2.SubjectReference(
+            resource=resource_reference_pb2.ResourceReference(
+                reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
+                resource_id="bob",
+                resource_type="principal",
+            )
         )
-    )
 
-    # Prepare the resource reference object
-    resource_ref = resource_reference_pb2.ResourceReference(
-        resource_id="bob_club",
-        resource_type="group",
-        reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
-    )
+        # Prepare the resource reference object
+        resource_ref = resource_reference_pb2.ResourceReference(
+            resource_id="bob_club",
+            resource_type="group",
+            reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
+        )
 
-    check_request = check_request_pb2.CheckRequest(
-        subject=subject,
-        relation="member",
-        object=resource_ref,
-    )
+        check_request = check_request_pb2.CheckRequest(
+            subject=subject,
+            relation="member",
+            object=resource_ref,
+        )
 
-    try:
-        check_response = stub.Check(check_request)
-        print("Check response received successfully")
-        print(check_response)
-    except grpc.RpcError as e:
-        print("gRPC error occurred during Check:")
-        print(f"Code: {e.code()}")
-        print(f"Details: {e.details()}")
+        try:
+            check_response = stub.Check(check_request)
+            print("Check response received successfully")
+            print(check_response)
+        except grpc.RpcError as e:
+            print("gRPC error occurred during Check:")
+            print(f"Code: {e.code()}")
+            print(f"Details: {e.details()}")
 
 
 if __name__ == "__main__":

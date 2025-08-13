@@ -30,11 +30,14 @@ def run():
             token_endpoint=token_endpoint,
         )
 
-        with (
+        stub, channel = (
             ClientBuilder(KESSEL_ENDPOINT)
             .oauth2_client_authenticated(auth_credentials, grpc.local_channel_credentials())
-            .build() as stub
-        ):
+            .build()
+        )
+        # channel needs to be closed to free up resources
+
+        with channel:
 
             subject = subject_reference_pb2.SubjectReference(
                 resource=resource_reference_pb2.ResourceReference(

@@ -31,11 +31,14 @@ async def run():
             token_endpoint=token_endpoint,
         )
 
-        async with (
+        stub, channel = (
             ClientBuilder(KESSEL_ENDPOINT)
             .oauth2_client_authenticated(auth_credentials)
-            .build_async() as stub
-        ):
+            .build_async()
+        )
+        # channel needs to be closed to free up resources
+
+        async with channel:
             # or can be used as stub = ... and use other mechanism to
             # free resources via `await stub.close()`
             subject = subject_reference_pb2.SubjectReference(

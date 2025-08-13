@@ -18,42 +18,6 @@ from kessel.grpc import oauth2_call_credentials
 from src.kessel.auth import OAuth2ClientCredentials
 
 
-class ClientWrapper:
-    def __init__(self, client, channel):
-        self._client = client
-        self._channel = channel
-
-    def __getattr__(self, name):
-        return getattr(self._client, name)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
-
-    def close(self):
-        self._channel.close()
-
-
-class AsyncClientWrapper:
-    def __init__(self, client, channel):
-        self._client = client
-        self._channel = channel
-
-    def __getattr__(self, name):
-        return getattr(self._client, name)
-
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, exc_type, exc_value, traceback):
-        await self.close()
-
-    async def close(self):
-        await self._channel.close()
-
-
 class ClientBuilder:
     _service_class = None
 
@@ -99,7 +63,7 @@ class ClientBuilder:
         else:
             channel = secure_channel(self._target, credentials=credentials)
 
-        return ClientWrapper(self._service_class(channel), channel)
+        return self._service_class(channel), channel
 
     def build_async(self):
         credentials = self._build_credentials()
@@ -109,7 +73,7 @@ class ClientBuilder:
         else:
             channel = secure_channel_async(self._target, credentials=credentials)
 
-        return AsyncClientWrapper(self._service_class(channel), channel)
+        return self._service_class(channel), channel
 
     def _build_credentials(self):
         if self._channel_credentials is None:

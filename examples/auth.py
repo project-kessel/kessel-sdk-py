@@ -30,13 +30,12 @@ def run():
             token_endpoint=token_endpoint,
         )
 
-        with (
-            ClientBuilder(KESSEL_ENDPOINT)
-            .oauth2_client_authenticated(auth_credentials)
-            .build() as stub
-        ):
-            # or can be used as stub = ... and use other mechanism to
-            # free resources via `stub.close()`
+        stub, channel = (
+            ClientBuilder(KESSEL_ENDPOINT).oauth2_client_authenticated(auth_credentials).build()
+        )
+        # channel needs to be closed to free up resources
+
+        with channel:
             subject = subject_reference_pb2.SubjectReference(
                 resource=resource_reference_pb2.ResourceReference(
                     reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
