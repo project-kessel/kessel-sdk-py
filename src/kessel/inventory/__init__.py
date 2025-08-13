@@ -19,7 +19,7 @@ from src.kessel.auth import OAuth2ClientCredentials
 
 
 class ClientBuilder:
-    _service_class = None
+    _stub_class = None
 
     def __init__(self, target: str):
         self._target = target
@@ -63,7 +63,7 @@ class ClientBuilder:
         else:
             channel = secure_channel(self._target, credentials=credentials)
 
-        return self._service_class(channel), channel
+        return self._stub_class(channel), channel
 
     def build_async(self):
         credentials = self._build_credentials()
@@ -73,7 +73,7 @@ class ClientBuilder:
         else:
             channel = secure_channel_async(self._target, credentials=credentials)
 
-        return self._service_class(channel), channel
+        return self._stub_class(channel), channel
 
     def _build_credentials(self):
         if self._channel_credentials is None:
@@ -92,8 +92,8 @@ class ClientBuilder:
             raise "Invalid credential configuration: can not authenticate with insecure channel"
 
 
-def service_builder(service_class) -> type[ClientBuilder]:
+def client_builder_for_stub(stub_class) -> type[ClientBuilder]:
     class ConcreteClientBuilder(ClientBuilder):
-        _service_class = service_class
+        _stub_class = stub_class
 
     return ConcreteClientBuilder
