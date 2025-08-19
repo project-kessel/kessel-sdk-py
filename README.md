@@ -259,6 +259,113 @@ This is the foundational gRPC library. Future releases will include:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
+## Release Instructions
+
+This section provides step-by-step instructions for maintainers to release a new version of the Kessel SDK for Python.
+
+### Version Management
+
+This project follows [Semantic Versioning 2.0.0](https://semver.org/). Version numbers use the format `MAJOR.MINOR.PATCH`:
+
+- **MAJOR**: Increment for incompatible API changes
+- **MINOR**: Increment for backward-compatible functionality additions
+- **PATCH**: Increment for backward-compatible bug fixes
+
+**Note**: SDK versions across different languages (Ruby, Python, Go, etc.) do not need to be synchronized. Each language SDK can evolve independently based on its specific requirements and release schedule.
+
+### Prerequisites for Release
+
+- Write access to the GitHub repository
+- PyPI account with publish access to the `kessel-sdk` package
+- Ensure quality checks are passing
+- Review and update CHANGELOG or release notes as needed
+- Python 3.11 or higher
+- Required tools installed:
+  ```bash
+  pip install build twine
+  pip install "kessel-sdk[dev]"
+  ```
+- [buf](https://github.com/bufbuild/buf) for protobuf/gRPC code generation:
+  ```bash
+  # On macOS
+  brew install bufbuild/buf/buf
+  
+  # On Linux
+  curl -sSL "https://github.com/bufbuild/buf/releases/latest/download/buf-$(uname -s)-$(uname -m)" -o "/usr/local/bin/buf" && chmod +x "/usr/local/bin/buf"
+  ```
+
+### Release Process
+
+1. **Update the Version**
+
+```bash
+# Edit pyproject.toml
+# Update the version field to the new version number
+vim pyproject.toml
+```
+
+2. **Update Dependencies (if needed)**
+
+```bash
+# Regenerate gRPC code if there are updates to the Kessel Inventory API
+buf generate
+```
+
+3. **Run Quality Checks**
+
+```bash
+# Format code (excluding generated files)
+black --exclude '.*_pb2(_grpc)?\.py' src/ examples/
+
+# Run linting (excluding generated files)
+flake8 --exclude '*_pb2.py,*_pb2_grpc.py' src/ examples/
+
+# Test that examples can be imported without errors
+python -c "import examples.check"
+python -c "import examples.auth"
+
+# Build the project
+python -m build
+```
+
+4. **Commit and Push Changes**
+
+```bash
+# Commit the version bump and any related changes
+git add pyproject.toml
+git commit -m "chore: bump version to X.Y.Z"
+git push origin main # or git push upstream main
+```
+
+5. **Build and Publish the Package**
+
+```bash
+# Clean any previous build artifacts
+rm -rf dist/ build/
+
+# Build the package
+python -m build
+
+# Publish to PyPI (requires PyPI account and package access)
+twine upload dist/*
+```
+
+6. **Tag the Release**
+
+```bash
+# Create and push a git tag
+git tag -a vX.Y.Z -m "Release version X.Y.Z"
+git push origin vX.Y.Z
+```
+
+7. **Create GitHub Release**
+
+- Go to the [GitHub Releases page](https://github.com/project-kessel/kessel-sdk-py/releases)
+- Click "Create a new release"
+- Select the tag you just created
+- Add release notes describing the changes
+- Publish the release
+
 ## License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
