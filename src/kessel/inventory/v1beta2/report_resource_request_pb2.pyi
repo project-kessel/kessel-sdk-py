@@ -9,17 +9,19 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class ReportResourceRequest(_message.Message):
-    __slots__ = ("inventory_id", "type", "reporter_type", "reporter_instance_id", "representations", "write_visibility")
+    __slots__ = ("inventory_id", "type", "reporter_type", "reporter_instance_id", "representations", "write_visibility", "use_new")
     INVENTORY_ID_FIELD_NUMBER: _ClassVar[int]
     TYPE_FIELD_NUMBER: _ClassVar[int]
     REPORTER_TYPE_FIELD_NUMBER: _ClassVar[int]
     REPORTER_INSTANCE_ID_FIELD_NUMBER: _ClassVar[int]
     REPRESENTATIONS_FIELD_NUMBER: _ClassVar[int]
     WRITE_VISIBILITY_FIELD_NUMBER: _ClassVar[int]
+    USE_NEW_FIELD_NUMBER: _ClassVar[int]
     inventory_id: str
     type: str
     reporter_type: str
     reporter_instance_id: str
     representations: _resource_representations_pb2.ResourceRepresentations
     write_visibility: _write_visibility_pb2.WriteVisibility
-    def __init__(self, inventory_id: _Optional[str] = ..., type: _Optional[str] = ..., reporter_type: _Optional[str] = ..., reporter_instance_id: _Optional[str] = ..., representations: _Optional[_Union[_resource_representations_pb2.ResourceRepresentations, _Mapping]] = ..., write_visibility: _Optional[_Union[_write_visibility_pb2.WriteVisibility, str]] = ...) -> None: ...
+    use_new: bool
+    def __init__(self, inventory_id: _Optional[str] = ..., type: _Optional[str] = ..., reporter_type: _Optional[str] = ..., reporter_instance_id: _Optional[str] = ..., representations: _Optional[_Union[_resource_representations_pb2.ResourceRepresentations, _Mapping]] = ..., write_visibility: _Optional[_Union[_write_visibility_pb2.WriteVisibility, str]] = ..., use_new: bool = ...) -> None: ...
