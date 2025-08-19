@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 import grpc
@@ -17,7 +18,7 @@ CLIENT_ID = os.environ.get("AUTH_CLIENT_ID", "")
 CLIENT_SECRET = os.environ.get("AUTH_CLIENT_SECRET", "")
 
 
-def run():
+async def run():
     try:
         # network call occurs here
         discovery = fetch_oidc_discovery(ISSUER_URL)
@@ -32,13 +33,14 @@ def run():
 
         stub, channel = (
             ClientBuilder(KESSEL_ENDPOINT)
-            .oauth2_client_authenticated(auth_credentials, grpc.local_channel_credentials())
-            .build()
+            .oauth2_client_authenticated(auth_credentials)
+            .build_async()
         )
         # channel needs to be closed to free up resources
 
-        with channel:
-
+        async with channel:
+            # or can be used as stub = ... and use other mechanism to
+            # free resources via `await stub.close()`
             subject = subject_reference_pb2.SubjectReference(
                 resource=resource_reference_pb2.ResourceReference(
                     reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
@@ -59,7 +61,7 @@ def run():
                 object=resource_ref,
             )
 
-            response = stub.Check(request)
+            response = await stub.Check(request)
             print("Check response received successfully")
             print(response)
 
@@ -70,4 +72,4 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    asyncio.run(run())
