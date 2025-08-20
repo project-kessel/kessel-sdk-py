@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://project-kessel.github.io"
+Homepage = "https://project-kessel.github.io/docs/"
 Issues = "https://github.com/project-kessel/kessel-sdk-py"
 
 [project.optional-dependencies]
