@@ -12,7 +12,7 @@ from grpc.aio import (
     insecure_channel as insecure_channel_async,
     secure_channel as secure_channel_async,
 )
-from grpc.experimental import insecure_channel_credentials
+from grpc.experimental import insecure_channel_credentials, ChannelOptions
 from kessel.grpc import oauth2_call_credentials
 
 from src.kessel.auth import OAuth2ClientCredentials
@@ -58,10 +58,13 @@ class ClientBuilder:
     def build(self):
         credentials = self._build_credentials()
 
+        # Enable single-threaded unary streams
+        channel_options = [(ChannelOptions.SingleThreadedUnaryStream, 1)]
+
         if self._channel_credentials is insecure_channel_credentials():
-            channel = insecure_channel(self._target)
+            channel = insecure_channel(self._target, options=channel_options)
         else:
-            channel = secure_channel(self._target, credentials=credentials)
+            channel = secure_channel(self._target, credentials=credentials, options=channel_options)
 
         return self._stub_class(channel), channel
 

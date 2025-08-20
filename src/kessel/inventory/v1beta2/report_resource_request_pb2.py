@@ -27,7 +27,7 @@ from kessel.inventory.v1beta2 import write_visibility_pb2 as kessel_dot_inventor
 from buf.validate import validate_pb2 as buf_dot_validate_dot_validate__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n6kessel/inventory/v1beta2/report_resource_request.proto\x12\x18kessel.inventory.v1beta2\x1a\x37kessel/inventory/v1beta2/resource_representations.proto\x1a/kessel/inventory/v1beta2/write_visibility.proto\x1a\x1b\x62uf/validate/validate.proto\"\xbf\x03\n\x15ReportResourceRequest\x12&\n\x0cinventory_id\x18\x01 \x01(\tH\x00R\x0binventoryId\x88\x01\x01\x12-\n\x04type\x18\x02 \x01(\tB\x19\xbaH\x16r\x14\x10\x01\x32\x10^[A-Za-z0-9_-]+$R\x04type\x12>\n\rreporter_type\x18\x03 \x01(\tB\x19\xbaH\x16r\x14\x10\x01\x32\x10^[A-Za-z0-9_-]+$R\x0creporterType\x12\x39\n\x14reporter_instance_id\x18\x04 \x01(\tB\x07\xbaH\x04r\x02\x10\x01R\x12reporterInstanceId\x12\x63\n\x0frepresentations\x18\x05 \x01(\x0b\x32\x31.kessel.inventory.v1beta2.ResourceRepresentationsB\x06\xbaH\x03\xc8\x01\x01R\x0frepresentations\x12^\n\x10write_visibility\x18\x06 \x01(\x0e\x32).kessel.inventory.v1beta2.WriteVisibilityB\x08\xbaH\x05\x82\x01\x02\x10\x01R\x0fwriteVisibilityB\x0f\n\r_inventory_idBr\n(org.project_kessel.api.inventory.v1beta2P\x01ZDgithub.com/project-kessel/inventory-api/api/kessel/inventory/v1beta2b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n6kessel/inventory/v1beta2/report_resource_request.proto\x12\x18kessel.inventory.v1beta2\x1a\x37kessel/inventory/v1beta2/resource_representations.proto\x1a/kessel/inventory/v1beta2/write_visibility.proto\x1a\x1b\x62uf/validate/validate.proto\"\xd8\x03\n\x15ReportResourceRequest\x12&\n\x0cinventory_id\x18\x01 \x01(\tH\x00R\x0binventoryId\x88\x01\x01\x12-\n\x04type\x18\x02 \x01(\tB\x19\xbaH\x16r\x14\x10\x01\x32\x10^[A-Za-z0-9_-]+$R\x04type\x12>\n\rreporter_type\x18\x03 \x01(\tB\x19\xbaH\x16r\x14\x10\x01\x32\x10^[A-Za-z0-9_-]+$R\x0creporterType\x12\x39\n\x14reporter_instance_id\x18\x04 \x01(\tB\x07\xbaH\x04r\x02\x10\x01R\x12reporterInstanceId\x12\x63\n\x0frepresentations\x18\x05 \x01(\x0b\x32\x31.kessel.inventory.v1beta2.ResourceRepresentationsB\x06\xbaH\x03\xc8\x01\x01R\x0frepresentations\x12^\n\x10write_visibility\x18\x06 \x01(\x0e\x32).kessel.inventory.v1beta2.WriteVisibilityB\x08\xbaH\x05\x82\x01\x02\x10\x01R\x0fwriteVisibility\x12\x17\n\x07use_new\x18\x07 \x01(\x08R\x06useNewB\x0f\n\r_inventory_idBr\n(org.project_kessel.api.inventory.v1beta2P\x01ZDgithub.com/project-kessel/inventory-api/api/kessel/inventory/v1beta2b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -46,5 +46,5 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_REPORTRESOURCEREQUEST'].fields_by_name['write_visibility']._loaded_options = None
   _globals['_REPORTRESOURCEREQUEST'].fields_by_name['write_visibility']._serialized_options = b'\272H\005\202\001\002\020\001'
   _globals['_REPORTRESOURCEREQUEST']._serialized_start=220
-  _globals['_REPORTRESOURCEREQUEST']._serialized_end=667
+  _globals['_REPORTRESOURCEREQUEST']._serialized_end=692
 # @@protoc_insertion_point(module_scope)
