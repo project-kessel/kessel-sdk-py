@@ -15,7 +15,7 @@ from grpc.aio import (
 from grpc.experimental import insecure_channel_credentials, ChannelOptions
 from kessel.grpc import oauth2_call_credentials
 
-from src.kessel.auth import OAuth2ClientCredentials
+from kessel.auth import OAuth2ClientCredentials
 
 
 class ClientBuilder:
@@ -43,17 +43,20 @@ class ClientBuilder:
         self,
         call_credentials: CallCredentials = None,
         channel_credentials: ChannelCredentials = None,
-    ):
+    ) -> Self:
         self._call_credentials = call_credentials
         self._channel_credentials = channel_credentials
+        return self
 
-    def unauthenticated(self, channel_credentials: ChannelCredentials = None):
+    def unauthenticated(self, channel_credentials: ChannelCredentials = None) -> Self:
         self._call_credentials = None
         self._channel_credentials = channel_credentials
+        return self
 
-    def insecure(self):
+    def insecure(self) -> Self:
         self._call_credentials = None
         self._channel_credentials = insecure_channel_credentials()
+        return self
 
     def build(self):
         credentials = self._build_credentials()
