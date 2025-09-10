@@ -26,7 +26,7 @@ from google.api import field_behavior_pb2 as google_dot_api_dot_field__behavior_
 from buf.validate import validate_pb2 as buf_dot_validate_dot_validate__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\nWkessel/inventory/v1beta1/relationships/k8spolicy_ispropagatedto_k8scluster_detail.proto\x12&kessel.inventory.v1beta1.relationships\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1b\x62uf/validate/validate.proto\"\xdf\x02\n\'K8SPolicyIsPropagatedToK8SClusterDetail\x12,\n\rk8s_policy_id\x18\xb8\xb1\xcek \x01(\tB\x03\xe0\x41\x03R\rk8s_policy_id\x12.\n\x0ek8s_cluster_id\x18\x80\xcb\xc9r \x01(\tB\x03\xe0\x41\x03R\x0ek8s_cluster_id\x12\x7f\n\x06status\x18\x8f\xe0\xc8\xa9\x01 \x01(\x0e\x32V.kessel.inventory.v1beta1.relationships.K8SPolicyIsPropagatedToK8SClusterDetail.StatusB\x0b\xbaH\x08\x82\x01\x05\x10\x01\"\x01\x00R\x06status\"U\n\x06Status\x12\x16\n\x12STATUS_UNSPECIFIED\x10\x00\x12\x10\n\x0cSTATUS_OTHER\x10\x01\x12\x0e\n\nVIOLATIONS\x10\x02\x12\x11\n\rNO_VIOLATIONS\x10\x03\x42\xbc\x01\n6org.project_kessel.api.inventory.v1beta1.relationshipsB,K8SPolicyIsPropagatedToK8SClusterDetailProtoP\x01ZRgithub.com/project-kessel/inventory-api/api/kessel/inventory/v1beta1/relationshipsb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\nWkessel/inventory/v1beta1/relationships/k8spolicy_ispropagatedto_k8scluster_detail.proto\x12&kessel.inventory.v1beta1.relationships\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1b\x62uf/validate/validate.proto\"\xde\x02\n\'K8SPolicyIsPropagatedToK8SClusterDetail\x12,\n\rk8s_policy_id\x18\xb8\xb1\xcek \x01(\tB\x03\xe0\x41\x03R\rk8s_policy_id\x12.\n\x0ek8s_cluster_id\x18\x80\xcb\xc9r \x01(\tB\x03\xe0\x41\x03R\x0ek8s_cluster_id\x12~\n\x06status\x18\x8f\xe0\xc8\xa9\x01 \x01(\x0e\x32V.kessel.inventory.v1beta1.relationships.K8SPolicyIsPropagatedToK8SClusterDetail.StatusB\n\xbaH\x07\x82\x01\x04\x10\x01 \x00R\x06status\"U\n\x06Status\x12\x16\n\x12STATUS_UNSPECIFIED\x10\x00\x12\x10\n\x0cSTATUS_OTHER\x10\x01\x12\x0e\n\nVIOLATIONS\x10\x02\x12\x11\n\rNO_VIOLATIONS\x10\x03\x42\xbc\x01\n6org.project_kessel.api.inventory.v1beta1.relationshipsB,K8SPolicyIsPropagatedToK8SClusterDetailProtoP\x01ZRgithub.com/project-kessel/inventory-api/api/kessel/inventory/v1beta1/relationshipsb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -39,9 +39,9 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_K8SPOLICYISPROPAGATEDTOK8SCLUSTERDETAIL'].fields_by_name['k8s_cluster_id']._loaded_options = None
   _globals['_K8SPOLICYISPROPAGATEDTOK8SCLUSTERDETAIL'].fields_by_name['k8s_cluster_id']._serialized_options = b'\340A\003'
   _globals['_K8SPOLICYISPROPAGATEDTOK8SCLUSTERDETAIL'].fields_by_name['status']._loaded_options = None
-  _globals['_K8SPOLICYISPROPAGATEDTOK8SCLUSTERDETAIL'].fields_by_name['status']._serialized_options = b'\272H\010\202\001\005\020\001\"\001\000'
+  _globals['_K8SPOLICYISPROPAGATEDTOK8SCLUSTERDETAIL'].fields_by_name['status']._serialized_options = b'\272H\007\202\001\004\020\001 \000'
   _globals['_K8SPOLICYISPROPAGATEDTOK8SCLUSTERDETAIL']._serialized_start=194
-  _globals['_K8SPOLICYISPROPAGATEDTOK8SCLUSTERDETAIL']._serialized_end=545
-  _globals['_K8SPOLICYISPROPAGATEDTOK8SCLUSTERDETAIL_STATUS']._serialized_start=460
-  _globals['_K8SPOLICYISPROPAGATEDTOK8SCLUSTERDETAIL_STATUS']._serialized_end=545
+  _globals['_K8SPOLICYISPROPAGATEDTOK8SCLUSTERDETAIL']._serialized_end=544
+  _globals['_K8SPOLICYISPROPAGATEDTOK8SCLUSTERDETAIL_STATUS']._serialized_start=459
+  _globals['_K8SPOLICYISPROPAGATEDTOK8SCLUSTERDETAIL_STATUS']._serialized_end=544
 # @@protoc_insertion_point(module_scope)
