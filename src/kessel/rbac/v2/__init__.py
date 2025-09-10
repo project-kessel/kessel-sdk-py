@@ -34,13 +34,11 @@ def fetch_root_workspace(
     GET /api/rbac/v2/workspaces/?type=root
 
     Args:
-        oauth_credentials: OAuth2 client credentials for automatic auth. The function will
-                         internally create the appropriate auth adapter for the HTTP library.
+        oauth_credentials: OAuth2 client credentials for automatic auth.
         rbac_base_endpoint: The RBAC service endpoint URL (stage/prod/ephemeral)
         org_id: Organization ID to use for the request.
         http_client: Optional requests module.
                     If not provided, uses the default requests module.
-                    Allows users to inject custom sessions with additional headers or configuration.
 
     Returns:
         A Workspace object representing the root workspace for the organization.
@@ -87,13 +85,11 @@ def fetch_default_workspace(
     GET /api/rbac/v2/workspaces/?type=default
 
     Args:
-        oauth_credentials: OAuth2 client credentials for automatic auth. The function will
-                         internally create the appropriate auth adapter for the HTTP library.
+        oauth_credentials: OAuth2 client credentials for automatic auth.
         rbac_base_endpoint: The RBAC service endpoint URL (stage/prod/ephemeral)
         org_id: Organization ID to use for the request.
         http_client: Optional requests module.
                     If not provided, uses the default requests module.
-                    Allows users to inject custom sessions with additional headers or configuration.
 
     Returns:
         A Workspace object representing the default workspace for the organization.
