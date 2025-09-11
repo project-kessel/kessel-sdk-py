@@ -1,6 +1,9 @@
 import grpc
 
-def oauth2_call_credentials(credentials: "kessel.auth.OAuth2ClientCredentials") -> grpc.CallCredentials:
+
+def oauth2_call_credentials(
+    credentials: "kessel.auth.OAuth2ClientCredentials",
+) -> grpc.CallCredentials:
     """
     Create gRPC call credentials from an OAuth2 client.
 
