@@ -1,7 +1,5 @@
-from typing import Optional
+from typing import Optional, Any
 import requests
-from kessel.auth import OAuth2ClientCredentials
-from kessel.requests import oauth2_auth
 
 
 class Workspace:
@@ -22,7 +20,7 @@ class Workspace:
 
 
 def fetch_root_workspace(
-    oauth_credentials: OAuth2ClientCredentials,
+    auth: Any,
     rbac_base_endpoint: str,
     org_id: str,
     http_client: Optional[requests] = None,
@@ -34,7 +32,7 @@ def fetch_root_workspace(
     GET /api/rbac/v2/workspaces/?type=root
 
     Args:
-        oauth_credentials: OAuth2 client credentials for automatic auth.
+        auth: Authentication object compatible with requests (e.g. oauth2_auth(credentials)).
         rbac_base_endpoint: The RBAC service endpoint URL (stage/prod/ephemeral)
         org_id: Organization ID to use for the request.
         http_client: Optional requests module.
@@ -51,8 +49,6 @@ def fetch_root_workspace(
         "x-rh-rbac-org-id": org_id,
         "Content-Type": "application/json",
     }
-    # Add auth to the request
-    auth = oauth2_auth(oauth_credentials)
 
     response = client.get(url, params={"type": "root"}, headers=headers, auth=auth)
     response.raise_for_status()
@@ -73,7 +69,7 @@ def fetch_root_workspace(
 
 
 def fetch_default_workspace(
-    oauth_credentials: OAuth2ClientCredentials,
+    auth: Any,
     rbac_base_endpoint: str,
     org_id: str,
     http_client: Optional[requests] = None,
@@ -85,7 +81,7 @@ def fetch_default_workspace(
     GET /api/rbac/v2/workspaces/?type=default
 
     Args:
-        oauth_credentials: OAuth2 client credentials for automatic auth.
+        auth: Authentication object compatible with requests (e.g. oauth2_auth(credentials)).
         rbac_base_endpoint: The RBAC service endpoint URL (stage/prod/ephemeral)
         org_id: Organization ID to use for the request.
         http_client: Optional requests module.
@@ -102,9 +98,6 @@ def fetch_default_workspace(
         "x-rh-rbac-org-id": org_id,
         "Content-Type": "application/json",
     }
-
-    # Add auth to the request
-    auth = oauth2_auth(oauth_credentials)
 
     response = client.get(url, params={"type": "default"}, headers=headers, auth=auth)
     response.raise_for_status()

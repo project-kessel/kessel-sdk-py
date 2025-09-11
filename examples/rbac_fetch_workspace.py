@@ -1,6 +1,7 @@
 import os
 
 from kessel.auth import fetch_oidc_discovery, OAuth2ClientCredentials
+from kessel.requests import oauth2_auth
 from kessel.rbac.v2 import fetch_default_workspace, fetch_root_workspace
 
 RBAC_BASE_ENDPOINT = os.environ.get("RBAC_BASE_ENDPOINT", "")
@@ -20,9 +21,12 @@ def run():
     try:
         print("Fetching workspaces for org_id 12345")
 
+        # Create auth object
+        auth = oauth2_auth(auth_credentials)
+
         # Fetch default workspace
         default_workspace = fetch_default_workspace(
-            oauth_credentials=auth_credentials,
+            auth=auth,
             rbac_base_endpoint=RBAC_BASE_ENDPOINT,
             org_id="12345",
         )
@@ -30,7 +34,7 @@ def run():
 
         # Fetch root workspace
         root_workspace = fetch_root_workspace(
-            oauth_credentials=auth_credentials,
+            auth=auth,
             rbac_base_endpoint=RBAC_BASE_ENDPOINT,
             org_id="12345",
         )
