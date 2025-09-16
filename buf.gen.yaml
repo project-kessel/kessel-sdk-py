@@ -1,7 +1,6 @@
 version: v2
 inputs:
   - module: buf.build/project-kessel/inventory-api
-  - module: buf.build/bufbuild/protovalidate:v0.14.1
 plugins:
   - remote: buf.build/protocolbuffers/pyi:v31.1
     out: src
