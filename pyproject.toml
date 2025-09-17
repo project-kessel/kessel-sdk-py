@@ -13,9 +13,12 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "protobuf~=6.31.1",
-    "types-protobuf~=6.30",
+    "google.auth",
     "grpcio",
+    "oauthlib",
+    "protobuf~=6.31.1",
+    "requests_oauthlib",
+    "types-protobuf~=6.30",
 ]
 
 [project.urls]
