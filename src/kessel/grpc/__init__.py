@@ -1,11 +1,6 @@
 import grpc
-import google.auth.transport.grpc
-import google.auth.transport.requests
 
-from kessel.auth import GoogleOAuth2ClientCredentials, OAuth2ClientCredentials
-
-
-def oauth2_call_credentials(credentials: OAuth2ClientCredentials) -> grpc.CallCredentials:
+def oauth2_call_credentials(credentials: "kessel.auth.OAuth2ClientCredentials") -> grpc.CallCredentials:
     """
     Create gRPC call credentials from an OAuth2 client.
 
@@ -15,6 +10,10 @@ def oauth2_call_credentials(credentials: OAuth2ClientCredentials) -> grpc.CallCr
     Returns:
         grpc.CallCredentials: Call credentials that can be used with gRPC channels.
     """
+    import google.auth.transport.grpc
+    import google.auth.transport.requests
+    from kessel.auth import GoogleOAuth2ClientCredentials
+
     auth_plugin = google.auth.transport.grpc.AuthMetadataPlugin(
         credentials=GoogleOAuth2ClientCredentials(credentials),
         request=google.auth.transport.requests.Request(),
