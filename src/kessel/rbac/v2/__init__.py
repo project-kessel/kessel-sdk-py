@@ -7,6 +7,7 @@ from kessel.inventory.v1beta2.subject_reference_pb2 import SubjectReference
 from kessel.inventory.v1beta2.reporter_reference_pb2 import ReporterReference
 from kessel.inventory.v1beta2.streamed_list_objects_request_pb2 import StreamedListObjectsRequest
 from kessel.inventory.v1beta2.streamed_list_objects_response_pb2 import StreamedListObjectsResponse
+from kessel.inventory.v1beta2.request_pagination_pb2 import RequestPagination
 from kessel.inventory.v1beta2.inventory_service_pb2_grpc import KesselInventoryServiceStub
 
 
@@ -242,12 +243,13 @@ def subject(resource_ref: ResourceReference, relation: Optional[str] = None) -> 
 
 
 def list_workspaces(
-    subject: SubjectReference, relation: str, inventory: KesselInventoryServiceStub
-) -> AsyncIterator[StreamedListObjectsResponse] | Iterable[StreamedListObjectsResponse]:
+    inventory: KesselInventoryServiceStub,
+    subject: SubjectReference,
+    relation: str,
+) -> Iterable[ResourceReference]:
     """
     Lists all workspaces that a subject has a specific relation to.
-    This function queries the inventory service to find workspaces
-    based on the subject's permissions.
+    This function queries the inventory service to find workspaces based on the subject's permissions.
 
     Args:
         subject: The subject to check permissions for
@@ -257,8 +259,77 @@ def list_workspaces(
     Returns:
         An iterator of workspace objects that the subject has the specified relation to
     """
-    request = StreamedListObjectsRequest(
-        object_type=workspace_type(), relation=relation, subject=subject
-    )
+    continuation_token = None
 
-    return inventory.StreamedListObjects(request)
+    while True:
+        pagination = None
+        if continuation_token is not None:
+            pagination = RequestPagination(
+                limit=1000,
+                continuation_token=continuation_token if continuation_token is not None else "",
+            )
+
+        request = StreamedListObjectsRequest(
+            object_type=workspace_type(),
+            relation=relation,
+            subject=subject,
+            pagination=pagination,
+        )
+
+        last_token = None
+        for response in inventory.StreamedListObjects(request):
+            yield response.object
+
+            if response.pagination is not None:
+                last_token = response.pagination.continuation_token
+
+        if not last_token:
+            break
+
+        continuation_token = last_token
+
+
+async def list_workspaces_async(
+    inventory: KesselInventoryServiceStub,
+    subject: SubjectReference,
+    relation: str,
+) -> AsyncIterator[ResourceReference]:
+    """
+    Lists all workspaces that a subject has a specific relation to.
+    This function queries the inventory service to find workspaces based on the subject's permissions.
+
+    Args:
+        inventory: The inventory service client stub for making the request (async channel).
+        subject: The subject to check permissions for.
+        relation: The relationship type to check (e.g. "member", "admin", "viewer").
+
+    Returns:
+        An iterator of workspace objects that the subject has the specified relation to
+    """
+    continuation_token = None
+
+    while True:
+        pagination = None
+        if continuation_token is not None:
+            pagination = RequestPagination(
+                limit=1000,
+                continuation_token=continuation_token if continuation_token is not None else "",
+            )
+
+        request = StreamedListObjectsRequest(
+            object_type=workspace_type(),
+            relation=relation,
+            subject=subject,
+            pagination=pagination,
+        )
+
+        last_token = None
+        async for response in inventory.StreamedListObjects(request):
+            yield response.object
+            if response.pagination is not None:
+                last_token = response.pagination.continuation_token
+
+        if not last_token:
+            break
+
+        continuation_token = last_token
