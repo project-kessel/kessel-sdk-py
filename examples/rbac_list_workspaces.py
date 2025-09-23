@@ -5,12 +5,9 @@ import grpc
 
 from kessel.auth import fetch_oidc_discovery, OAuth2ClientCredentials
 from kessel.inventory.v1beta2 import (
-    reporter_reference_pb2,
-    resource_reference_pb2,
-    subject_reference_pb2,
     ClientBuilder,
 )
-from kessel.rbac.v2 import list_workspaces, list_workspaces_async
+from kessel.rbac.v2 import list_workspaces, list_workspaces_async, principal_subject
 
 
 KESSEL_ENDPOINT = os.environ.get("KESSEL_ENDPOINT", "localhost:9000")
@@ -19,7 +16,9 @@ CLIENT_ID = os.environ.get("AUTH_CLIENT_ID", "")
 CLIENT_SECRET = os.environ.get("AUTH_CLIENT_SECRET", "")
 
 SUBJECT_ID = os.environ.get("RBAC_SUBJECT_ID", "alice")
+SUBJECT_DOMAIN = os.environ.get("RBAC_SUBJECT_DOMAIN", "redhat")
 RELATION = os.environ.get("RBAC_RELATION", "view_document")
+
 
 def run_sync():
     try:
@@ -39,13 +38,7 @@ def run_sync():
         )
 
         with channel:
-            subject = subject_reference_pb2.SubjectReference(
-                resource=resource_reference_pb2.ResourceReference(
-                    reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
-                    resource_id=SUBJECT_ID,
-                    resource_type="principal",
-                )
-            )
+            subject = principal_subject(SUBJECT_ID, SUBJECT_DOMAIN)
             print(f"Listing workspaces (sync) for subject='{SUBJECT_ID}' relation='{RELATION}'")
             for obj in list_workspaces(stub, subject=subject, relation=RELATION):
                 print(f"{obj.resource_id}")
@@ -74,13 +67,7 @@ async def run_async():
         )
 
         async with channel:
-            subject = subject_reference_pb2.SubjectReference(
-                resource=resource_reference_pb2.ResourceReference(
-                    reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
-                    resource_id=SUBJECT_ID,
-                    resource_type="principal",
-                )
-            )
+            subject = principal_subject(SUBJECT_ID, SUBJECT_DOMAIN)
             print(f"Listing workspaces (async) for subject='{SUBJECT_ID}' relation='{RELATION}'")
             async for obj in list_workspaces_async(stub, subject=subject, relation=RELATION):
                 print(f"{obj.resource_id}")
