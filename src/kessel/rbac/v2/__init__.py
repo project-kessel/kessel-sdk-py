@@ -246,7 +246,8 @@ def list_workspaces(
     inventory: KesselInventoryServiceStub,
     subject: SubjectReference,
     relation: str,
-) -> Iterable[ResourceReference]:
+    continuation_token: Optional[str] = None,
+) -> Iterable[StreamedListObjectsResponse]:
     """
     Lists all workspaces that a subject has a specific relation to.
     This function queries the inventory service to find workspaces based on the subject's permissions.
@@ -255,12 +256,11 @@ def list_workspaces(
         subject: The subject to check permissions for
         relation: The relationship type to check "member", "admin", "viewer")
         inventory: The inventory service client stub for making the request
+        continuation_token: Optional token to resume listing from a previous page
 
     Returns:
-        An iterator of workspace objects that the subject has the specified relation to
+        An iterator of StreamedListObjectsResponse messages
     """
-    continuation_token = None
-
     while True:
         pagination = None
         if continuation_token is not None:
@@ -278,8 +278,7 @@ def list_workspaces(
 
         last_token = None
         for response in inventory.StreamedListObjects(request):
-            yield response.object
-
+            yield response
             if response.pagination is not None:
                 last_token = response.pagination.continuation_token
 
@@ -293,7 +292,8 @@ async def list_workspaces_async(
     inventory: KesselInventoryServiceStub,
     subject: SubjectReference,
     relation: str,
-) -> AsyncIterator[ResourceReference]:
+    continuation_token: Optional[str] = None,
+) -> AsyncIterator[StreamedListObjectsResponse]:
     """
     Lists all workspaces that a subject has a specific relation to.
     This function queries the inventory service to find workspaces based on the subject's permissions.
@@ -302,12 +302,11 @@ async def list_workspaces_async(
         inventory: The inventory service client stub for making the request (async channel).
         subject: The subject to check permissions for.
         relation: The relationship type to check (e.g. "member", "admin", "viewer").
+        continuation_token: Optional token to resume listing from a previous page
 
     Returns:
-        An iterator of workspace objects that the subject has the specified relation to
+        An async iterator of StreamedListObjectsResponse messages
     """
-    continuation_token = None
-
     while True:
         pagination = None
         if continuation_token is not None:
@@ -325,7 +324,7 @@ async def list_workspaces_async(
 
         last_token = None
         async for response in inventory.StreamedListObjects(request):
-            yield response.object
+            yield response
             if response.pagination is not None:
                 last_token = response.pagination.continuation_token
 

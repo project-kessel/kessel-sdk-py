@@ -41,7 +41,8 @@ def run_sync():
             subject = principal_subject(SUBJECT_ID, SUBJECT_DOMAIN)
             print(f"Listing workspaces (sync) for subject='{SUBJECT_ID}' relation='{RELATION}'")
             for obj in list_workspaces(stub, subject=subject, relation=RELATION):
-                print(f"{obj.resource_id}")
+                print(f"{obj}")
+                print(f"{obj.pagination.continuation_token}")
 
     except grpc.RpcError as e:
         print("gRPC error occurred during list_workspaces (sync):")
@@ -70,7 +71,8 @@ async def run_async():
             subject = principal_subject(SUBJECT_ID, SUBJECT_DOMAIN)
             print(f"Listing workspaces (async) for subject='{SUBJECT_ID}' relation='{RELATION}'")
             async for obj in list_workspaces_async(stub, subject=subject, relation=RELATION):
-                print(f"{obj.resource_id}")
+                print(f"{obj}")
+                print(f"{obj.pagination.continuation_token}")
 
     except grpc.RpcError as e:
         print("gRPC error occurred during list_workspaces (async):")
