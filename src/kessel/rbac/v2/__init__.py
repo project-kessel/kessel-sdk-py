@@ -1,4 +1,5 @@
-from typing import Optional, Any, AsyncIterator, Iterable
+from typing import Optional, AsyncIterator, Iterable
+from requests.auth import AuthBase
 import requests
 
 from kessel.inventory.v1beta2.representation_type_pb2 import RepresentationType
@@ -29,10 +30,10 @@ class Workspace:
 
 
 def _fetch_workspace_by_type(
-    auth: Any,
     rbac_base_endpoint: str,
     org_id: str,
     workspace_type: str,
+    auth: Optional[AuthBase] = None,
     http_client: Optional[requests] = None,
 ) -> Workspace:
     """
@@ -75,9 +76,9 @@ def _fetch_workspace_by_type(
 
 
 def fetch_root_workspace(
-    auth: Any,
     rbac_base_endpoint: str,
     org_id: str,
+    auth: Optional[AuthBase] = None,
     http_client: Optional[requests] = None,
 ) -> Workspace:
     """
@@ -97,18 +98,18 @@ def fetch_root_workspace(
         A Workspace object representing the root workspace for the organization.
     """
     return _fetch_workspace_by_type(
-        auth=auth,
         rbac_base_endpoint=rbac_base_endpoint,
         org_id=org_id,
         workspace_type="root",
+        auth=auth,
         http_client=http_client,
     )
 
 
 def fetch_default_workspace(
-    auth: Any,
     rbac_base_endpoint: str,
     org_id: str,
+    auth: Optional[AuthBase] = None,
     http_client: Optional[requests] = None,
 ) -> Workspace:
     """
@@ -128,10 +129,10 @@ def fetch_default_workspace(
         A Workspace object representing the default workspace for the organization.
     """
     return _fetch_workspace_by_type(
-        auth=auth,
         rbac_base_endpoint=rbac_base_endpoint,
         org_id=org_id,
         workspace_type="default",
+        auth=auth,
         http_client=http_client,
     )
 
