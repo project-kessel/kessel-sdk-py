@@ -29,9 +29,9 @@ class Workspace:
 
 
 def _fetch_workspace_by_type(
-    auth: Any,
     rbac_base_endpoint: str,
     org_id: str,
+    auth: Any,
     workspace_type: str,
     http_client: Optional[requests] = None,
 ) -> Workspace:
@@ -75,9 +75,9 @@ def _fetch_workspace_by_type(
 
 
 def fetch_root_workspace(
-    auth: Any,
     rbac_base_endpoint: str,
     org_id: str,
+    auth: Any,
     http_client: Optional[requests] = None,
 ) -> Workspace:
     """
@@ -97,18 +97,18 @@ def fetch_root_workspace(
         A Workspace object representing the root workspace for the organization.
     """
     return _fetch_workspace_by_type(
-        auth=auth,
         rbac_base_endpoint=rbac_base_endpoint,
         org_id=org_id,
+        auth=auth,
         workspace_type="root",
         http_client=http_client,
     )
 
 
 def fetch_default_workspace(
-    auth: Any,
     rbac_base_endpoint: str,
     org_id: str,
+    auth: Any,
     http_client: Optional[requests] = None,
 ) -> Workspace:
     """
@@ -128,9 +128,9 @@ def fetch_default_workspace(
         A Workspace object representing the default workspace for the organization.
     """
     return _fetch_workspace_by_type(
-        auth=auth,
         rbac_base_endpoint=rbac_base_endpoint,
         org_id=org_id,
+        auth=auth,
         workspace_type="default",
         http_client=http_client,
     )
