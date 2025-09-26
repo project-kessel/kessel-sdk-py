@@ -179,7 +179,7 @@ class AuthRequest(requests.auth.AuthBase):
         return r
 
 
-def oauth2_auth_request(credentials: OAuth2ClientCredentials) -> AuthRequest:
+def oauth2_auth_request(credentials: OAuth2ClientCredentials) -> requests.auth.AuthBase:
     """
     Create a requests-compatible OAuth2 auth handler.
 
