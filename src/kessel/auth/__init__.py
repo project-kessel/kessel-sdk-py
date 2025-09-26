@@ -3,7 +3,7 @@ from .auth import (
     GoogleOAuth2ClientCredentials,
     OIDCDiscoveryMetadata,
     fetch_oidc_discovery,
-    oauth2_auth_request
+    oauth2_auth_request,
 )
 
 __all__ = [
