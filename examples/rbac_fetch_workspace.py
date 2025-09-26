@@ -25,17 +25,17 @@ def run():
 
         # Fetch default workspace
         default_workspace = fetch_default_workspace(
-            auth=auth,
             rbac_base_endpoint=RBAC_BASE_ENDPOINT,
             org_id="12345",
+            auth=auth,
         )
         print(f"Default workspace: {default_workspace.name} (ID: {default_workspace.id})")
 
         # Fetch root workspace
         root_workspace = fetch_root_workspace(
-            auth=auth,
             rbac_base_endpoint=RBAC_BASE_ENDPOINT,
             org_id="12345",
+            auth=auth,
         )
         print(f"Root workspace: {root_workspace.name} (ID: {root_workspace.id})")
 
