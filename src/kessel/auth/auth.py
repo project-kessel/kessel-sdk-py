@@ -1,11 +1,27 @@
 import datetime
-from typing import Tuple
 
 import google.auth.credentials
 import google.auth.transport.requests
 import requests
 from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
+
+
+class RefreshTokenResponse:
+    """
+    Response object containing OAuth 2.0 token and expiration information.
+    """
+
+    def __init__(self, access_token: str, expires_at: datetime.datetime):
+        """
+        Initialize the RefreshTokenResponse.
+
+        Args:
+            access_token: OAuth 2.0 token
+            expires_at: Token's expiration time
+        """
+        self.access_token = access_token
+        self.expires_at = expires_at
 
 
 class OIDCDiscoveryMetadata:
@@ -81,7 +97,7 @@ class OAuth2ClientCredentials:
         self._token = None
         self._expiry = None
 
-    def get_token(self, force_refresh: bool = False) -> Tuple[str, datetime.datetime]:
+    def get_token(self, force_refresh: bool = False) -> RefreshTokenResponse:
         """
         Get a valid access token, refreshing if necessary or forced.
 
@@ -89,7 +105,7 @@ class OAuth2ClientCredentials:
             force_refresh: If True, forces token refresh regardless of expiry.
 
         Returns:
-            Tuple containing (access_token, expires_at).
+            RefreshTokenResponse object containing access_token and expires_at.
         """
         current_time = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
 
@@ -110,7 +126,7 @@ class OAuth2ClientCredentials:
             expires_in = token_data.get("expires_in", 0)
             self._expiry = current_time + datetime.timedelta(seconds=expires_in)
 
-        return (self._token, self._expiry)
+        return RefreshTokenResponse(access_token=self._token, expires_at=self._expiry)
 
 
 class GoogleOAuth2ClientCredentials(google.auth.credentials.Credentials):
@@ -171,10 +187,10 @@ class AuthRequest(requests.auth.AuthBase):
             The modified request object with auth headers.
         """
         # Get latest token
-        token, _ = self.credentials.get_token()
+        token_response = self.credentials.get_token()
 
         # Add Bearer token to the auth header
-        r.headers["Authorization"] = f"Bearer {token}"
+        r.headers["Authorization"] = f"Bearer {token_response.access_token}"
 
         return r
 
