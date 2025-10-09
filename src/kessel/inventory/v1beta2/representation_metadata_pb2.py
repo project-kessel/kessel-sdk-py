@@ -25,7 +25,7 @@ _sym_db = _symbol_database.Default()
 from buf.validate import validate_pb2 as buf_dot_validate_dot_validate__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n6kessel/inventory/v1beta2/representation_metadata.proto\x12\x18kessel.inventory.v1beta2\x1a\x1b\x62uf/validate/validate.proto\"\xef\x01\n\x16RepresentationMetadata\x12\x33\n\x11local_resource_id\x18\x01 \x01(\tB\x07\xbaH\x04r\x02\x10\x01R\x0flocalResourceId\x12\"\n\x08\x61pi_href\x18\x02 \x01(\tB\x07\xbaH\x04r\x02\x10\x01R\x07\x61piHref\x12&\n\x0c\x63onsole_href\x18\x03 \x01(\tH\x00R\x0b\x63onsoleHref\x88\x01\x01\x12.\n\x10reporter_version\x18\x04 \x01(\tH\x01R\x0freporterVersion\x88\x01\x01\x42\x0f\n\r_console_hrefB\x13\n\x11_reporter_versionBr\n(org.project_kessel.api.inventory.v1beta2P\x01ZDgithub.com/project-kessel/inventory-api/api/kessel/inventory/v1beta2b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n6kessel/inventory/v1beta2/representation_metadata.proto\x12\x18kessel.inventory.v1beta2\x1a\x1b\x62uf/validate/validate.proto\"\xab\x02\n\x16RepresentationMetadata\x12\x33\n\x11local_resource_id\x18\x01 \x01(\tB\x07\xbaH\x04r\x02\x10\x01R\x0flocalResourceId\x12\"\n\x08\x61pi_href\x18\x02 \x01(\tB\x07\xbaH\x04r\x02\x10\x01R\x07\x61piHref\x12&\n\x0c\x63onsole_href\x18\x03 \x01(\tH\x01R\x0b\x63onsoleHref\x88\x01\x01\x12.\n\x10reporter_version\x18\x04 \x01(\tH\x02R\x0freporterVersion\x88\x01\x01\x12\'\n\x0etransaction_id\x18\x05 \x01(\tH\x00R\rtransactionIdB\x11\n\x0fidempotency_keyB\x0f\n\r_console_hrefB\x13\n\x11_reporter_versionBr\n(org.project_kessel.api.inventory.v1beta2P\x01ZDgithub.com/project-kessel/inventory-api/api/kessel/inventory/v1beta2b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -38,5 +38,5 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_REPRESENTATIONMETADATA'].fields_by_name['api_href']._loaded_options = None
   _globals['_REPRESENTATIONMETADATA'].fields_by_name['api_href']._serialized_options = b'\272H\004r\002\020\001'
   _globals['_REPRESENTATIONMETADATA']._serialized_start=114
-  _globals['_REPRESENTATIONMETADATA']._serialized_end=353
+  _globals['_REPRESENTATIONMETADATA']._serialized_end=413
 # @@protoc_insertion_point(module_scope)
