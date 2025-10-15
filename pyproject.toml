@@ -27,6 +27,7 @@ auth = [
     "google-auth",
     "requests-oauthlib",
     "requests",
+    "tenacity",
 ]
 dev = [
     "flake8>=6.0.0",
