@@ -1,4 +1,6 @@
 from typing import Self
+import grpc
+import grpc.aio
 
 from grpc import (
     ChannelCredentials,
@@ -13,7 +15,7 @@ from grpc.aio import (
     secure_channel as secure_channel_async,
 )
 from grpc.experimental import insecure_channel_credentials, ChannelOptions
-from kessel.grpc import oauth2_call_credentials
+from kessel.grpc import oauth2_call_credentials, AuthInterceptor, AsyncAuthInterceptor
 
 
 class ClientBuilder:
@@ -23,6 +25,7 @@ class ClientBuilder:
         self._target = target
         self._call_credentials = None
         self._channel_credentials = None
+        self._oauth2_credentials = None  # For insecure auth with interceptor
 
         if not self._target or type(self._target) is not str:
             raise "Invalid target type"
@@ -34,7 +37,23 @@ class ClientBuilder:
     ) -> Self:
         self._call_credentials = oauth2_call_credentials(oauth2_client_credentials)
         self._channel_credentials = channel_credentials
-        self._validate_credentials()
+        self._oauth2_credentials = None
+        return self
+
+    def oauth2_client_authenticated_insecure(
+        self,
+        oauth2_client_credentials: "kessel.auth.OAuth2ClientCredentials",
+    ) -> Self:
+        """
+        Configure OAuth2 authentication over an insecure channel.
+
+        This method uses a gRPC interceptor to add authentication headers to requests
+        over an insecure channel, as gRPC does not natively support CallCredentials
+        with insecure connections.
+        """
+        self._call_credentials = None  # using interceptor instead of call credentials
+        self._channel_credentials = insecure_channel_credentials()
+        self._oauth2_credentials = oauth2_client_credentials
         return self
 
     def authenticated(
@@ -44,16 +63,19 @@ class ClientBuilder:
     ) -> Self:
         self._call_credentials = call_credentials
         self._channel_credentials = channel_credentials
+        self._oauth2_credentials = None
         return self
 
     def unauthenticated(self, channel_credentials: ChannelCredentials = None) -> Self:
         self._call_credentials = None
         self._channel_credentials = channel_credentials
+        self._oauth2_credentials = None
         return self
 
     def insecure(self) -> Self:
         self._call_credentials = None
         self._channel_credentials = insecure_channel_credentials()
+        self._oauth2_credentials = None
         return self
 
     def build(self):
@@ -64,6 +86,11 @@ class ClientBuilder:
 
         if self._channel_credentials is insecure_channel_credentials():
             channel = insecure_channel(self._target, options=channel_options)
+            
+            # If using insecure auth, apply the interceptor
+            if self._oauth2_credentials is not None:
+                interceptor = AuthInterceptor(self._oauth2_credentials)
+                channel = grpc.intercept_channel(channel, interceptor)
         else:
             channel = secure_channel(self._target, credentials=credentials, options=channel_options)
 
@@ -74,6 +101,14 @@ class ClientBuilder:
 
         if self._channel_credentials is insecure_channel_credentials():
             channel = insecure_channel_async(self._target)
+            
+            # If using insecure auth, apply the interceptor
+            if self._oauth2_credentials is not None:
+                interceptor = AsyncAuthInterceptor(self._oauth2_credentials)
+                channel = grpc.aio.insecure_channel(
+                    self._target,
+                    interceptors=[interceptor]
+                )
         else:
             channel = secure_channel_async(self._target, credentials=credentials)
 
@@ -87,13 +122,6 @@ class ClientBuilder:
             return composite_channel_credentials(self._channel_credentials, self._call_credentials)
 
         return self._channel_credentials
-
-    def _validate_credentials(self):
-        if (
-            self._call_credentials is not None
-            and self._channel_credentials is insecure_channel_credentials()
-        ):
-            raise "Invalid credential configuration: can not authenticate with insecure channel"
 
 
 def client_builder_for_stub(stub_class) -> type[ClientBuilder]:
