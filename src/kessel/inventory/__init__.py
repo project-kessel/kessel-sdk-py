@@ -86,7 +86,7 @@ class ClientBuilder:
 
         if self._channel_credentials is insecure_channel_credentials():
             channel = insecure_channel(self._target, options=channel_options)
-            
+
             # If using insecure auth, apply the interceptor
             if self._oauth2_credentials is not None:
                 interceptor = AuthInterceptor(self._oauth2_credentials)
@@ -101,14 +101,11 @@ class ClientBuilder:
 
         if self._channel_credentials is insecure_channel_credentials():
             channel = insecure_channel_async(self._target)
-            
+
             # If using insecure auth, apply the interceptor
             if self._oauth2_credentials is not None:
                 interceptor = AsyncAuthInterceptor(self._oauth2_credentials)
-                channel = grpc.aio.insecure_channel(
-                    self._target,
-                    interceptors=[interceptor]
-                )
+                channel = grpc.aio.insecure_channel(self._target, interceptors=[interceptor])
         else:
             channel = secure_channel_async(self._target, credentials=credentials)
 

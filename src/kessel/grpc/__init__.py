@@ -4,9 +4,9 @@ from collections import namedtuple
 
 
 _ClientCallDetails = namedtuple(
-    "ClientCallDetails",
-    ("method", "timeout", "metadata", "credentials", "wait_for_ready")
+    "ClientCallDetails", ("method", "timeout", "metadata", "credentials", "wait_for_ready")
 )
+
 
 def oauth2_call_credentials(
     credentials: "kessel.auth.OAuth2ClientCredentials",
