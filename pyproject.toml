@@ -13,7 +13,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "protobuf~=6.31.1",
+    "protobuf>=6.31.1,<6.34.0",
     "types-protobuf~=6.30",
     "grpcio",
 ]
