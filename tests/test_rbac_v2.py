@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import Mock
 
 from kessel.rbac.v2 import (
     workspace_type,
@@ -8,7 +9,10 @@ from kessel.rbac.v2 import (
     workspace_resource,
     principal_subject,
     subject,
+    list_workspaces,
 )
+from kessel.inventory.v1beta2.streamed_list_objects_response_pb2 import StreamedListObjectsResponse
+from kessel.inventory.v1beta2.response_pagination_pb2 import ResponsePagination
 
 
 def test_workspace_type():
@@ -79,4 +83,127 @@ def test_subject(resource_ref, relation, expect_relation, expected_relation):
         assert subj.relation == expected_relation
     else:
         assert not subj.HasField("relation")
+
+
+class TestListWorkspaces:
+    def test_builds_request_with_correct_parameters(self):
+        """Test that list_workspaces builds request with correct parameters"""
+        mock_inventory = Mock()
+        response = StreamedListObjectsResponse(
+            pagination=ResponsePagination(continuation_token="")
+        )
+        mock_inventory.StreamedListObjects.return_value = iter([response])
+        
+        subj = principal_subject("user123", "redhat")
+        
+        responses = list[StreamedListObjectsResponse](list_workspaces(mock_inventory, subj, "member"))
+        
+        assert len(responses) == 1
+        
+        assert mock_inventory.StreamedListObjects.call_count == 1
+        call_args = mock_inventory.StreamedListObjects.call_args[0][0]
+        
+        assert call_args.relation == "member"
+        assert call_args.object_type.resource_type == "workspace"
+        assert call_args.object_type.reporter_type == "rbac"
+        assert call_args.subject == subj
+
+    def test_handles_pagination_with_continuation_token(self):
+        """Test that list_workspaces handles pagination with continuation token"""
+        mock_inventory = Mock()
+        
+        # First call returns a continuation token
+        response1 = StreamedListObjectsResponse(
+            pagination=ResponsePagination(continuation_token="next-page-token")
+        )
+        # Second call returns empty continuation token (end of pagination)
+        response2 = StreamedListObjectsResponse(
+            pagination=ResponsePagination(continuation_token="")
+        )
+        
+        mock_inventory.StreamedListObjects.side_effect = [
+            iter([response1]),
+            iter([response2]),
+        ]
+        
+        subj = principal_subject("user123", "redhat")
+        
+        responses = list(list_workspaces(mock_inventory, subj, "viewer"))
+        
+        assert len(responses) == 2
+        
+        assert mock_inventory.StreamedListObjects.call_count == 2
+        
+        second_call_args = mock_inventory.StreamedListObjects.call_args_list[1][0][0]
+        assert second_call_args.pagination is not None
+        assert second_call_args.pagination.continuation_token == "next-page-token"
+
+    def test_stops_when_no_continuation_token(self):
+        """Test that list_workspaces stops when no continuation token is present"""
+        mock_inventory = Mock()
+        response = StreamedListObjectsResponse(
+            pagination=ResponsePagination(continuation_token="")
+        )
+        mock_inventory.StreamedListObjects.return_value = iter([response])
+        
+        subj = principal_subject("user123", "redhat")
+        
+        responses = list(list_workspaces(mock_inventory, subj, "admin"))
+        
+        assert mock_inventory.StreamedListObjects.call_count == 1
+        assert len(responses) == 1
+
+    def test_handles_stream_errors(self):
+        """Test that list_workspaces properly propagates stream errors"""
+        mock_inventory = Mock()
+        mock_inventory.StreamedListObjects.side_effect = Exception("stream failed")
+        
+        subj = principal_subject("user123", "redhat")
+        
+        with pytest.raises(Exception, match="stream failed"):
+            list(list_workspaces(mock_inventory, subj, "member"))
+
+    def test_uses_provided_continuation_token(self):
+        """Test that list_workspaces uses provided continuation token"""
+        mock_inventory = Mock()
+        response = StreamedListObjectsResponse(
+            pagination=ResponsePagination(continuation_token="")
+        )
+        mock_inventory.StreamedListObjects.return_value = iter([response])
+        
+        subj = principal_subject("user123", "redhat")
+        
+        responses = list(list_workspaces(
+            mock_inventory, 
+            subj, 
+            "member", 
+            continuation_token="resume-from-here"
+        ))
+        
+        assert len(responses) == 1
+        
+        call_args = mock_inventory.StreamedListObjects.call_args[0][0]
+        assert call_args.pagination is not None
+        assert call_args.pagination.continuation_token == "resume-from-here"
+
+    def test_handles_none_continuation_token_initial_request(self):
+        """Test that list_workspaces handles None continuation token correctly"""
+        mock_inventory = Mock()
+        response = StreamedListObjectsResponse(
+            pagination=ResponsePagination(continuation_token="")
+        )
+        mock_inventory.StreamedListObjects.return_value = iter([response])
+        
+        subj = principal_subject("user123", "redhat")
+        
+        responses = list(list_workspaces(mock_inventory, subj, "member", continuation_token=None))
+        
+        assert len(responses) == 1
+        
+        # Verify the request had no pagination field set 
+        call_args = mock_inventory.StreamedListObjects.call_args[0][0]
+        if hasattr(call_args, 'HasField'):
+            assert not call_args.HasField("pagination")
+        else:
+            assert call_args.pagination is None
 
