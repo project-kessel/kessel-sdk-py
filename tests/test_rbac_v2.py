@@ -10,6 +10,7 @@ from kessel.rbac.v2 import (
     principal_subject,
     subject,
     list_workspaces,
+    list_workspaces_async,
 )
 from kessel.inventory.v1beta2.streamed_list_objects_response_pb2 import StreamedListObjectsResponse
 from kessel.inventory.v1beta2.response_pagination_pb2 import ResponsePagination
@@ -201,6 +202,162 @@ class TestListWorkspaces:
         assert len(responses) == 1
         
         # Verify the request had no pagination field set 
+        call_args = mock_inventory.StreamedListObjects.call_args[0][0]
+        if hasattr(call_args, 'HasField'):
+            assert not call_args.HasField("pagination")
+        else:
+            assert call_args.pagination is None
+
+
+class TestListWorkspacesAsync:
+    @pytest.mark.asyncio
+    async def test_builds_request_with_correct_parameters(self):
+        """Test that list_workspaces_async builds request with correct parameters"""
+        mock_inventory = Mock()
+        response = StreamedListObjectsResponse(
+            pagination=ResponsePagination(continuation_token="")
+        )
+        
+        async def async_iter():
+            yield response
+        
+        mock_inventory.StreamedListObjects.return_value = async_iter()
+        
+        subj = principal_subject("user123", "redhat")
+        
+        responses = []
+        async for resp in list_workspaces_async(mock_inventory, subj, "member"):
+            responses.append(resp)
+        
+        assert len(responses) == 1
+        
+        assert mock_inventory.StreamedListObjects.call_count == 1
+        call_args = mock_inventory.StreamedListObjects.call_args[0][0]
+        
+        assert call_args.relation == "member"
+        assert call_args.object_type.resource_type == "workspace"
+        assert call_args.object_type.reporter_type == "rbac"
+        assert call_args.subject == subj
+
+    @pytest.mark.asyncio
+    async def test_handles_pagination_with_continuation_token(self):
+        """Test that list_workspaces_async handles pagination with continuation token"""
+        mock_inventory = Mock()
+        
+        response1 = StreamedListObjectsResponse(
+            pagination=ResponsePagination(continuation_token="next-page-token")
+        )
+        response2 = StreamedListObjectsResponse(
+            pagination=ResponsePagination(continuation_token="")
+        )
+        
+        async def async_iter1():
+            yield response1
+        
+        async def async_iter2():
+            yield response2
+        
+        mock_inventory.StreamedListObjects.side_effect = [async_iter1(), async_iter2()]
+        
+        subj = principal_subject("user123", "redhat")
+        
+        responses = []
+        async for resp in list_workspaces_async(mock_inventory, subj, "viewer"):
+            responses.append(resp)
+        
+        assert len(responses) == 2
+        
+        assert mock_inventory.StreamedListObjects.call_count == 2
+        
+        second_call_args = mock_inventory.StreamedListObjects.call_args_list[1][0][0]
+        assert second_call_args.pagination is not None
+        assert second_call_args.pagination.continuation_token == "next-page-token"
+
+    @pytest.mark.asyncio
+    async def test_stops_when_no_continuation_token(self):
+        """Test that list_workspaces_async stops when no continuation token is present"""
+        mock_inventory = Mock()
+        response = StreamedListObjectsResponse(
+            pagination=ResponsePagination(continuation_token="")
+        )
+        
+        async def async_iter():
+            yield response
+        
+        mock_inventory.StreamedListObjects.return_value = async_iter()
+        
+        subj = principal_subject("user123", "redhat")
+        
+        responses = []
+        async for resp in list_workspaces_async(mock_inventory, subj, "admin"):
+            responses.append(resp)
+        
+        assert mock_inventory.StreamedListObjects.call_count == 1
+        assert len(responses) == 1
+
+    @pytest.mark.asyncio
+    async def test_handles_stream_errors(self):
+        """Test that list_workspaces_async properly propagates stream errors"""
+        mock_inventory = Mock()
+        mock_inventory.StreamedListObjects.side_effect = Exception("stream failed")
+        
+        subj = principal_subject("user123", "redhat")
+        
+        with pytest.raises(Exception, match="stream failed"):
+            async for _ in list_workspaces_async(mock_inventory, subj, "member"):
+                pass
+
+    @pytest.mark.asyncio
+    async def test_uses_provided_continuation_token(self):
+        """Test that list_workspaces_async uses provided continuation token"""
+        mock_inventory = Mock()
+        response = StreamedListObjectsResponse(
+            pagination=ResponsePagination(continuation_token="")
+        )
+        
+        async def async_iter():
+            yield response
+        
+        mock_inventory.StreamedListObjects.return_value = async_iter()
+        
+        subj = principal_subject("user123", "redhat")
+        
+        responses = []
+        async for resp in list_workspaces_async(
+            mock_inventory, 
+            subj, 
+            "member", 
+            continuation_token="resume-from-here"
+        ):
+            responses.append(resp)
+        
+        assert len(responses) == 1
+        
+        call_args = mock_inventory.StreamedListObjects.call_args[0][0]
+        assert call_args.pagination is not None
+        assert call_args.pagination.continuation_token == "resume-from-here"
+
+    @pytest.mark.asyncio
+    async def test_handles_none_continuation_token_initial_request(self):
+        """Test that list_workspaces_async handles None continuation token correctly"""
+        mock_inventory = Mock()
+        response = StreamedListObjectsResponse(
+            pagination=ResponsePagination(continuation_token="")
+        )
+        
+        async def async_iter():
+            yield response
+        
+        mock_inventory.StreamedListObjects.return_value = async_iter()
+        
+        subj = principal_subject("user123", "redhat")
+        
+        responses = []
+        async for resp in list_workspaces_async(mock_inventory, subj, "member", continuation_token=None):
+            responses.append(resp)
+        
+        assert len(responses) == 1
+        
         call_args = mock_inventory.StreamedListObjects.call_args[0][0]
         if hasattr(call_args, 'HasField'):
             assert not call_args.HasField("pagination")
