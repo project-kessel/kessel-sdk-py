@@ -31,6 +31,7 @@ auth = [
 dev = [
     "flake8>=6.0.0",
     "black",
+    "pytest",
 ]
 
 [tool.setuptools]

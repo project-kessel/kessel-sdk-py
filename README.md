@@ -210,6 +210,15 @@ black --exclude '.*_pb2(_grpc)?\.py' src/ examples/
 flake8 --exclude '*_pb2.py,*_pb2_grpc.py' src/ examples/
 ```
 
+### Testing
+
+Run tests using pytest:
+
+```bash
+# Run all tests
+pytest
+```
+
 ## Examples
 
 The `examples/` directory contains working examples:
