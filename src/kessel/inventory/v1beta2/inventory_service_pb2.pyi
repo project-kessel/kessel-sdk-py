@@ -9,6 +9,8 @@ from kessel.inventory.v1beta2 import delete_resource_request_pb2 as _delete_reso
 from kessel.inventory.v1beta2 import delete_resource_response_pb2 as _delete_resource_response_pb2
 from kessel.inventory.v1beta2 import streamed_list_objects_request_pb2 as _streamed_list_objects_request_pb2
 from kessel.inventory.v1beta2 import streamed_list_objects_response_pb2 as _streamed_list_objects_response_pb2
+from kessel.inventory.v1beta2 import check_bulk_request_pb2 as _check_bulk_request_pb2
+from kessel.inventory.v1beta2 import check_bulk_response_pb2 as _check_bulk_response_pb2
 from google.protobuf import descriptor as _descriptor
 from typing import ClassVar as _ClassVar
 
