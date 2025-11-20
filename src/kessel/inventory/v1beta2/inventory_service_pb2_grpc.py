@@ -2,6 +2,8 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
+from kessel.inventory.v1beta2 import check_bulk_request_pb2 as kessel_dot_inventory_dot_v1beta2_dot_check__bulk__request__pb2
+from kessel.inventory.v1beta2 import check_bulk_response_pb2 as kessel_dot_inventory_dot_v1beta2_dot_check__bulk__response__pb2
 from kessel.inventory.v1beta2 import check_for_update_request_pb2 as kessel_dot_inventory_dot_v1beta2_dot_check__for__update__request__pb2
 from kessel.inventory.v1beta2 import check_for_update_response_pb2 as kessel_dot_inventory_dot_v1beta2_dot_check__for__update__response__pb2
 from kessel.inventory.v1beta2 import check_request_pb2 as kessel_dot_inventory_dot_v1beta2_dot_check__request__pb2
@@ -34,6 +36,11 @@ class KesselInventoryServiceStub(object):
                 '/kessel.inventory.v1beta2.KesselInventoryService/CheckForUpdate',
                 request_serializer=kessel_dot_inventory_dot_v1beta2_dot_check__for__update__request__pb2.CheckForUpdateRequest.SerializeToString,
                 response_deserializer=kessel_dot_inventory_dot_v1beta2_dot_check__for__update__response__pb2.CheckForUpdateResponse.FromString,
+                _registered_method=True)
+        self.CheckBulk = channel.unary_unary(
+                '/kessel.inventory.v1beta2.KesselInventoryService/CheckBulk',
+                request_serializer=kessel_dot_inventory_dot_v1beta2_dot_check__bulk__request__pb2.CheckBulkRequest.SerializeToString,
+                response_deserializer=kessel_dot_inventory_dot_v1beta2_dot_check__bulk__response__pb2.CheckBulkResponse.FromString,
                 _registered_method=True)
         self.ReportResource = channel.unary_unary(
                 '/kessel.inventory.v1beta2.KesselInventoryService/ReportResource',
@@ -83,6 +90,25 @@ class KesselInventoryServiceServicer(object):
 
         It is intended to be used just prior to sensitive operation (e.g., update, delete)
         which depend on the current state of the relationship.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def CheckBulk(self, request, context):
+        """Performs bulk permission checks for multiple resource-subject-relation combinations.
+
+        This API is more efficient than making individual Check calls when verifying permissions
+        for multiple items. It answers questions like:
+        "Which of these resources can subject *X* perform action *Y* on?"
+
+        Common use cases include:
+        - Filtering lists based on user permissions
+        - Batch authorization checks before performing bulk operations
+        - Dashboard rendering with multiple permission checks
+        - Pre-authorization for UI components
+
+        The response includes a result for each item in the request, maintaining the same order.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -168,6 +194,11 @@ def add_KesselInventoryServiceServicer_to_server(servicer, server):
                     request_deserializer=kessel_dot_inventory_dot_v1beta2_dot_check__for__update__request__pb2.CheckForUpdateRequest.FromString,
                     response_serializer=kessel_dot_inventory_dot_v1beta2_dot_check__for__update__response__pb2.CheckForUpdateResponse.SerializeToString,
             ),
+            'CheckBulk': grpc.unary_unary_rpc_method_handler(
+                    servicer.CheckBulk,
+                    request_deserializer=kessel_dot_inventory_dot_v1beta2_dot_check__bulk__request__pb2.CheckBulkRequest.FromString,
+                    response_serializer=kessel_dot_inventory_dot_v1beta2_dot_check__bulk__response__pb2.CheckBulkResponse.SerializeToString,
+            ),
             'ReportResource': grpc.unary_unary_rpc_method_handler(
                     servicer.ReportResource,
                     request_deserializer=kessel_dot_inventory_dot_v1beta2_dot_report__resource__request__pb2.ReportResourceRequest.FromString,
@@ -240,6 +271,33 @@ class KesselInventoryService(object):
             '/kessel.inventory.v1beta2.KesselInventoryService/CheckForUpdate',
             kessel_dot_inventory_dot_v1beta2_dot_check__for__update__request__pb2.CheckForUpdateRequest.SerializeToString,
             kessel_dot_inventory_dot_v1beta2_dot_check__for__update__response__pb2.CheckForUpdateResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def CheckBulk(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/kessel.inventory.v1beta2.KesselInventoryService/CheckBulk',
+            kessel_dot_inventory_dot_v1beta2_dot_check__bulk__request__pb2.CheckBulkRequest.SerializeToString,
+            kessel_dot_inventory_dot_v1beta2_dot_check__bulk__response__pb2.CheckBulkResponse.FromString,
             options,
             channel_credentials,
             insecure,
