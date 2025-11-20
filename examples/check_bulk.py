@@ -5,9 +5,9 @@ from kessel.inventory.v1beta2 import (
     check_bulk_request_pb2,
     resource_reference_pb2,
     reporter_reference_pb2,
-    subject_reference_pb2,
     ClientBuilder,
 )
+from kessel.rbac.v2 import principal_subject, workspace_resource
 
 KESSEL_ENDPOINT = os.environ.get("KESSEL_ENDPOINT", "localhost:9000")
 
@@ -16,55 +16,29 @@ def run():
     stub, channel = ClientBuilder(KESSEL_ENDPOINT).insecure().build()
 
     with channel:
-        # Item 1: Check if bob is a member of bob_club
+        # Item 1: Check if bob can view widgets in workspace_123
         item1 = check_bulk_request_pb2.CheckBulkRequestItem(
-            object=resource_reference_pb2.ResourceReference(
-                resource_id="bob_club",
-                resource_type="group",
-                reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
-            ),
-            relation="member",
-            subject=subject_reference_pb2.SubjectReference(
-                resource=resource_reference_pb2.ResourceReference(
-                    reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
-                    resource_id="bob",
-                    resource_type="principal",
-                )
-            ),
+            object=workspace_resource("workspace_123"),
+            relation="view_widget",
+            subject=principal_subject(id="bob", domain="redhat"),
         )
 
-        # Item 2: Check if bob is a member of alice_club
+        # Item 2: Check if bob can use widgets in workspace_456
         item2 = check_bulk_request_pb2.CheckBulkRequestItem(
-            object=resource_reference_pb2.ResourceReference(
-                resource_id="alice_club",
-                resource_type="group",
-                reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
-            ),
-            relation="member",
-            subject=subject_reference_pb2.SubjectReference(
-                resource=resource_reference_pb2.ResourceReference(
-                    reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
-                    resource_id="bob",
-                    resource_type="principal",
-                )
-            ),
+            object=workspace_resource("workspace_456"),
+            relation="use_widget",
+            subject=principal_subject(id="bob", domain="redhat"),
         )
 
-        # Item 3: Check if alice is an admin of alice_club
+        # Item 3: Check with invalid resource type to demonstrate error handling
         item3 = check_bulk_request_pb2.CheckBulkRequestItem(
             object=resource_reference_pb2.ResourceReference(
-                resource_id="alice_club",
-                resource_type="group",
+                resource_type="not_a_valid_type",
+                resource_id="invalid_resource",
                 reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
             ),
-            relation="admin",
-            subject=subject_reference_pb2.SubjectReference(
-                resource=resource_reference_pb2.ResourceReference(
-                    reporter=reporter_reference_pb2.ReporterReference(type="rbac"),
-                    resource_id="alice",
-                    resource_type="principal",
-                )
-            ),
+            relation="view_widget",
+            subject=principal_subject(id="alice", domain="redhat"),
         )
 
         check_bulk_request = check_bulk_request_pb2.CheckBulkRequest(items=[item1, item2, item3])
