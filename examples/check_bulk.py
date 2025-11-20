@@ -3,11 +3,9 @@ import os
 
 from kessel.inventory.v1beta2 import (
     check_bulk_request_pb2,
-    check_bulk_response_pb2,
     resource_reference_pb2,
     reporter_reference_pb2,
     subject_reference_pb2,
-    allowed_pb2,
     ClientBuilder,
 )
 
@@ -17,7 +15,7 @@ KESSEL_ENDPOINT = os.environ.get("KESSEL_ENDPOINT", "localhost:9000")
 def run():
     stub, channel = ClientBuilder(KESSEL_ENDPOINT).insecure().build()
 
-    with channel:        
+    with channel:
         # Item 1: Check if bob is a member of bob_club
         item1 = check_bulk_request_pb2.CheckBulkRequestItem(
             object=resource_reference_pb2.ResourceReference(
@@ -69,9 +67,7 @@ def run():
             ),
         )
 
-        check_bulk_request = check_bulk_request_pb2.CheckBulkRequest(
-            items=[item1, item2, item3]
-        )
+        check_bulk_request = check_bulk_request_pb2.CheckBulkRequest(items=[item1, item2, item3])
 
         try:
             check_bulk_response = stub.CheckBulk(check_bulk_request)
@@ -80,18 +76,18 @@ def run():
 
             for idx, pair in enumerate(check_bulk_response.pairs):
                 print(f"--- Result {idx + 1} ---")
-                
+
                 req = pair.request
-                print(f"Request: subject={req.subject.resource.resource_id} "
-                      f"relation={req.relation} "
-                      f"object={req.object.resource_id}")
-                
+                print(
+                    f"Request: subject={req.subject.resource.resource_id} "
+                    f"relation={req.relation} "
+                    f"object={req.object.resource_id}"
+                )
+
                 if pair.HasField("item"):
                     print(pair.item)
                 elif pair.HasField("error"):
                     print(f"Error: Code={pair.error.code}, Message={pair.error.message}")
-                
-                print()
 
         except grpc.RpcError as e:
             print("gRPC error occurred during CheckBulk:")
@@ -101,4 +97,3 @@ def run():
 
 if __name__ == "__main__":
     run()
-
