@@ -5,6 +5,7 @@ import google.auth.transport.requests
 import requests
 from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
+from tenacity import retry, wait_random_exponential, stop_after_attempt
 
 
 class RefreshTokenResponse:
@@ -37,6 +38,10 @@ class OIDCDiscoveryMetadata:
         return self._document["token_endpoint"]
 
 
+@retry(
+    wait=wait_random_exponential(multiplier=0.1, max=2),
+    stop=stop_after_attempt(5)
+)
 def fetch_oidc_discovery(issuer_url: str) -> OIDCDiscoveryMetadata:
     """
     Fetches OIDC discovery metadata from the provider.
@@ -97,6 +102,10 @@ class OAuth2ClientCredentials:
         self._token = None
         self._expiry = None
 
+    @retry(
+        wait=wait_random_exponential(multiplier=0.1, max=2),
+        stop=stop_after_attempt(5)
+    )
     def get_token(self, force_refresh: bool = False) -> RefreshTokenResponse:
         """
         Get a valid access token, refreshing if necessary or forced.
