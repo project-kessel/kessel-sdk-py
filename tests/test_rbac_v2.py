@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from kessel.rbac.v2 import (
     workspace_type,
@@ -11,6 +11,8 @@ from kessel.rbac.v2 import (
     subject,
     list_workspaces,
     list_workspaces_async,
+    fetch_root_workspace,
+    fetch_default_workspace,
 )
 from kessel.inventory.v1beta2.streamed_list_objects_response_pb2 import StreamedListObjectsResponse
 from kessel.inventory.v1beta2.response_pagination_pb2 import ResponsePagination
@@ -363,4 +365,237 @@ class TestListWorkspacesAsync:
             assert not call_args.HasField("pagination")
         else:
             assert call_args.pagination is None
+
+
+class TestFetchDefaultWorkspace:
+    @patch('kessel.rbac.v2.requests')
+    def test_successful_default_workspace_fetch(self, mock_requests):
+        """Test successful fetch of default workspace"""
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "data": [{
+                "id": "default-ws-123",
+                "name": "Default Workspace",
+                "type": "default",
+                "description": "Organization default workspace"
+            }]
+        }
+        mock_response.raise_for_status = Mock()
+        mock_requests.get.return_value = mock_response
+        
+        result = fetch_default_workspace(
+            rbac_base_endpoint="http://example.com",
+            org_id="org123"
+        )
+        
+        assert result is not None
+        assert result.id == "default-ws-123"
+        assert result.name == "Default Workspace"
+        assert result.type == "default"
+        assert result.description == "Organization default workspace"
+        
+        mock_requests.get.assert_called_once()
+        call_kwargs = mock_requests.get.call_args
+        assert call_kwargs[1]["params"]["type"] == "default"
+        assert call_kwargs[1]["headers"]["x-rh-rbac-org-id"] == "org123"
+
+    @patch('kessel.rbac.v2.requests')
+    def test_server_error_response(self, mock_requests):
+        """Test handling of server error response"""
+        mock_response = Mock()
+        mock_response.raise_for_status.side_effect = Exception("Internal Server Error")
+        mock_requests.get.return_value = mock_response
+        
+        with pytest.raises(Exception, match="Internal Server Error"):
+            fetch_default_workspace(
+                rbac_base_endpoint="http://example.com",
+                org_id="org123"
+            )
+
+    @patch('kessel.rbac.v2.requests')
+    def test_empty_workspace_response(self, mock_requests):
+        """Test handling of empty workspace response"""
+        mock_response = Mock()
+        mock_response.json.return_value = {"data": []}
+        mock_response.raise_for_status = Mock()
+        mock_requests.get.return_value = mock_response
+        
+        with pytest.raises(ValueError, match="No default workspace found"):
+            fetch_default_workspace(
+                rbac_base_endpoint="http://example.com",
+                org_id="org123"
+            )
+
+    @patch('kessel.rbac.v2.requests')
+    def test_rbac_endpoint_with_trailing_slash(self, mock_requests):
+        """Test that trailing slashes are handled correctly"""
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "data": [{"id": "ws1", "name": "WS1", "type": "default", "description": ""}]
+        }
+        mock_response.raise_for_status = Mock()
+        mock_requests.get.return_value = mock_response
+        
+        result = fetch_default_workspace(
+            rbac_base_endpoint="http://example.com/",
+            org_id="org123"
+        )
+        
+        assert result is not None
+        assert result.id == "ws1"
+        
+        call_args = mock_requests.get.call_args[0][0]
+        assert "/api/rbac/v2/workspaces/" in call_args
+        assert "//api/rbac" not in call_args
+
+    @patch('kessel.rbac.v2.requests')
+    def test_with_custom_http_client(self, mock_requests):
+        """Test using custom HTTP client"""
+        mock_http_client = Mock()
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "data": [{"id": "ws1", "name": "WS1", "type": "default", "description": ""}]
+        }
+        mock_response.raise_for_status = Mock()
+        mock_http_client.get.return_value = mock_response
+        
+        result = fetch_default_workspace(
+            rbac_base_endpoint="http://example.com",
+            org_id="org123",
+            http_client=mock_http_client
+        )
+        
+        assert result is not None
+        mock_http_client.get.assert_called_once()
+        mock_requests.get.assert_not_called()
+
+    @patch('kessel.rbac.v2.requests')
+    def test_with_auth(self, mock_requests):
+        """Test fetch with authentication"""
+        mock_auth = Mock()
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "data": [{"id": "ws1", "name": "WS1", "type": "default", "description": ""}]
+        }
+        mock_response.raise_for_status = Mock()
+        mock_requests.get.return_value = mock_response
+        
+        result = fetch_default_workspace(
+            rbac_base_endpoint="http://example.com",
+            org_id="org123",
+            auth=mock_auth
+        )
+        
+        assert result is not None
+        call_kwargs = mock_requests.get.call_args[1]
+        assert call_kwargs["auth"] == mock_auth
+
+    @patch('kessel.rbac.v2.requests')
+    def test_invalid_json_response(self, mock_requests):
+        """Test handling of invalid JSON response"""
+        mock_response = Mock()
+        mock_response.json.side_effect = ValueError("Invalid JSON")
+        mock_response.raise_for_status = Mock()
+        mock_requests.get.return_value = mock_response
+        
+        with pytest.raises(ValueError, match="Invalid JSON"):
+            fetch_default_workspace(
+                rbac_base_endpoint="http://example.com",
+                org_id="org123"
+            )
+
+
+class TestFetchRootWorkspace:
+    @patch('kessel.rbac.v2.requests')
+    def test_successful_root_workspace_fetch(self, mock_requests):
+        """Test successful fetch of root workspace"""
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "data": [{
+                "id": "root-ws-456",
+                "name": "Root Workspace",
+                "type": "root",
+                "description": "Organization root workspace"
+            }]
+        }
+        mock_response.raise_for_status = Mock()
+        mock_requests.get.return_value = mock_response
+        
+        result = fetch_root_workspace(
+            rbac_base_endpoint="http://example.com",
+            org_id="org123"
+        )
+        
+        assert result is not None
+        assert result.id == "root-ws-456"
+        assert result.name == "Root Workspace"
+        assert result.type == "root"
+        assert result.description == "Organization root workspace"
+        
+        call_kwargs = mock_requests.get.call_args
+        assert call_kwargs[1]["params"]["type"] == "root"
+
+    @patch('kessel.rbac.v2.requests')
+    def test_unauthorized_error(self, mock_requests):
+        """Test handling of unauthorized error"""
+        mock_response = Mock()
+        mock_response.raise_for_status.side_effect = Exception("Unauthorized")
+        mock_requests.get.return_value = mock_response
+        
+        with pytest.raises(Exception, match="Unauthorized"):
+            fetch_root_workspace(
+                rbac_base_endpoint="http://example.com",
+                org_id="org123"
+            )
+
+    @patch('kessel.rbac.v2.requests')
+    def test_empty_root_workspace_response(self, mock_requests):
+        """Test handling of empty root workspace response"""
+        mock_response = Mock()
+        mock_response.json.return_value = {"data": []}
+        mock_response.raise_for_status = Mock()
+        mock_requests.get.return_value = mock_response
+        
+        with pytest.raises(ValueError, match="No root workspace found"):
+            fetch_root_workspace(
+                rbac_base_endpoint="http://example.com",
+                org_id="org123"
+            )
+
+    @patch('kessel.rbac.v2.requests')
+    def test_url_construction(self, mock_requests):
+        """Test correct URL construction"""
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "data": [{"id": "ws1", "name": "WS1", "type": "root", "description": ""}]
+        }
+        mock_response.raise_for_status = Mock()
+        mock_requests.get.return_value = mock_response
+        
+        fetch_root_workspace(
+            rbac_base_endpoint="http://example.com",
+            org_id="org123"
+        )
+        
+        call_args = mock_requests.get.call_args[0][0]
+        assert call_args == "http://example.com/api/rbac/v2/workspaces/"
+
+    @patch('kessel.rbac.v2.requests')
+    def test_headers_set_correctly(self, mock_requests):
+        """Test that required headers are set correctly"""
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "data": [{"id": "ws1", "name": "WS1", "type": "root", "description": ""}]
+        }
+        mock_response.raise_for_status = Mock()
+        mock_requests.get.return_value = mock_response
+        
+        fetch_root_workspace(
+            rbac_base_endpoint="http://example.com",
+            org_id="test-org-id"
+        )
+        
+        call_kwargs = mock_requests.get.call_args[1]
+        assert call_kwargs["headers"]["x-rh-rbac-org-id"] == "test-org-id"
+        assert call_kwargs["headers"]["Content-Type"] == "application/json"
 
