@@ -1,4 +1,7 @@
-from typing import Self
+from typing import Self, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from kessel.auth import OAuth2ClientCredentials
 
 from grpc import (
     ChannelCredentials,
@@ -29,7 +32,7 @@ class ClientBuilder:
 
     def oauth2_client_authenticated(
         self,
-        oauth2_client_credentials: "kessel.auth.OAuth2ClientCredentials",
+        oauth2_client_credentials: "OAuth2ClientCredentials",
         channel_credentials: ChannelCredentials = None,
     ) -> Self:
         self._call_credentials = oauth2_call_credentials(oauth2_client_credentials)

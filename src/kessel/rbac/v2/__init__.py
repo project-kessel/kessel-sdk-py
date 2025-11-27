@@ -251,7 +251,8 @@ def list_workspaces(
 ) -> Iterable[StreamedListObjectsResponse]:
     """
     Lists all workspaces that a subject has a specific relation to.
-    This function queries the inventory service to find workspaces based on the subject's permissions.
+    This function queries the inventory service to find workspaces
+    based on the subject's permissions.
 
     Args:
         subject: The subject to check permissions for
@@ -297,7 +298,8 @@ async def list_workspaces_async(
 ) -> AsyncIterator[StreamedListObjectsResponse]:
     """
     Lists all workspaces that a subject has a specific relation to.
-    This function queries the inventory service to find workspaces based on the subject's permissions.
+    This function queries the inventory service to find workspaces
+     based on the subject's permissions.
 
     Args:
         inventory: The inventory service client stub for making the request (async channel).
