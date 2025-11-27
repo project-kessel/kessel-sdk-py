@@ -1,8 +1,12 @@
 import grpc
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from kessel.auth import OAuth2ClientCredentials
 
 
 def oauth2_call_credentials(
-    credentials: "kessel.auth.OAuth2ClientCredentials",
+    credentials: "OAuth2ClientCredentials",
 ) -> grpc.CallCredentials:
     """
     Create gRPC call credentials from an OAuth2 client.
