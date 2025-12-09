@@ -96,7 +96,9 @@ class ClientBuilder:
             self._call_credentials is not None
             and self._channel_credentials is insecure_channel_credentials()
         ):
-            raise ValueError("Invalid credential configuration: can not authenticate with insecure channel")
+            raise ValueError(
+                "Invalid credential configuration: can not authenticate with insecure channel"
+            )
 
 
 def client_builder_for_stub(stub_class) -> type[ClientBuilder]:
