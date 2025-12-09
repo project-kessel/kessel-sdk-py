@@ -28,7 +28,7 @@ class ClientBuilder:
         self._channel_credentials = None
 
         if not self._target or type(self._target) is not str:
-            raise "Invalid target type"
+            raise TypeError("Invalid target type")
 
     def oauth2_client_authenticated(
         self,
@@ -96,7 +96,7 @@ class ClientBuilder:
             self._call_credentials is not None
             and self._channel_credentials is insecure_channel_credentials()
         ):
-            raise "Invalid credential configuration: can not authenticate with insecure channel"
+            raise ValueError("Invalid credential configuration: can not authenticate with insecure channel")
 
 
 def client_builder_for_stub(stub_class) -> type[ClientBuilder]:

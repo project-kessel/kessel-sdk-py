@@ -177,5 +177,5 @@ class TestClientBuilderCredentialValidation:
 
         builder = ClientBuilder("localhost:8080")
 
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             builder.oauth2_client_authenticated(Mock(), channel_credentials=mock_insecure)
