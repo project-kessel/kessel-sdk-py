@@ -7,7 +7,7 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
-class CheckResponse(_message.Message):
+class CheckSelfResponse(_message.Message):
     __slots__ = ("allowed", "consistency_token")
     ALLOWED_FIELD_NUMBER: _ClassVar[int]
     CONSISTENCY_TOKEN_FIELD_NUMBER: _ClassVar[int]
