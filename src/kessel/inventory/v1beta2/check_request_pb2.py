@@ -25,9 +25,10 @@ _sym_db = _symbol_database.Default()
 from buf.validate import validate_pb2 as buf_dot_validate_dot_validate__pb2
 from kessel.inventory.v1beta2 import resource_reference_pb2 as kessel_dot_inventory_dot_v1beta2_dot_resource__reference__pb2
 from kessel.inventory.v1beta2 import subject_reference_pb2 as kessel_dot_inventory_dot_v1beta2_dot_subject__reference__pb2
+from kessel.inventory.v1beta2 import consistency_pb2 as kessel_dot_inventory_dot_v1beta2_dot_consistency__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n,kessel/inventory/v1beta2/check_request.proto\x12\x18kessel.inventory.v1beta2\x1a\x1b\x62uf/validate/validate.proto\x1a\x31kessel/inventory/v1beta2/resource_reference.proto\x1a\x30kessel/inventory/v1beta2/subject_reference.proto\"\xce\x01\n\x0c\x43heckRequest\x12K\n\x06object\x18\x01 \x01(\x0b\x32+.kessel.inventory.v1beta2.ResourceReferenceB\x06\xbaH\x03\xc8\x01\x01R\x06object\x12#\n\x08relation\x18\x02 \x01(\tB\x07\xbaH\x04r\x02\x10\x01R\x08relation\x12L\n\x07subject\x18\x03 \x01(\x0b\x32*.kessel.inventory.v1beta2.SubjectReferenceB\x06\xbaH\x03\xc8\x01\x01R\x07subjectBr\n(org.project_kessel.api.inventory.v1beta2P\x01ZDgithub.com/project-kessel/inventory-api/api/kessel/inventory/v1beta2b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n,kessel/inventory/v1beta2/check_request.proto\x12\x18kessel.inventory.v1beta2\x1a\x1b\x62uf/validate/validate.proto\x1a\x31kessel/inventory/v1beta2/resource_reference.proto\x1a\x30kessel/inventory/v1beta2/subject_reference.proto\x1a*kessel/inventory/v1beta2/consistency.proto\"\xac\x02\n\x0c\x43heckRequest\x12K\n\x06object\x18\x01 \x01(\x0b\x32+.kessel.inventory.v1beta2.ResourceReferenceB\x06\xbaH\x03\xc8\x01\x01R\x06object\x12#\n\x08relation\x18\x02 \x01(\tB\x07\xbaH\x04r\x02\x10\x01R\x08relation\x12L\n\x07subject\x18\x03 \x01(\x0b\x32*.kessel.inventory.v1beta2.SubjectReferenceB\x06\xbaH\x03\xc8\x01\x01R\x07subject\x12L\n\x0b\x63onsistency\x18\x04 \x01(\x0b\x32%.kessel.inventory.v1beta2.ConsistencyH\x00R\x0b\x63onsistency\x88\x01\x01\x42\x0e\n\x0c_consistencyBr\n(org.project_kessel.api.inventory.v1beta2P\x01ZDgithub.com/project-kessel/inventory-api/api/kessel/inventory/v1beta2b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -41,6 +42,6 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_CHECKREQUEST'].fields_by_name['relation']._serialized_options = b'\272H\004r\002\020\001'
   _globals['_CHECKREQUEST'].fields_by_name['subject']._loaded_options = None
   _globals['_CHECKREQUEST'].fields_by_name['subject']._serialized_options = b'\272H\003\310\001\001'
-  _globals['_CHECKREQUEST']._serialized_start=205
-  _globals['_CHECKREQUEST']._serialized_end=411
+  _globals['_CHECKREQUEST']._serialized_start=249
+  _globals['_CHECKREQUEST']._serialized_end=549
 # @@protoc_insertion_point(module_scope)

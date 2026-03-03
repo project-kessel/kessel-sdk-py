@@ -25,7 +25,7 @@ _sym_db = _symbol_database.Default()
 from google.api import annotations_pb2 as google_dot_api_dot_annotations__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n kessel/inventory/v1/health.proto\x12\x13kessel.inventory.v1\x1a\x1cgoogle/api/annotations.proto\"\x11\n\x0fGetLivezRequest\">\n\x10GetLivezResponse\x12\x16\n\x06status\x18\x01 \x01(\tR\x06status\x12\x12\n\x04\x63ode\x18\x02 \x01(\rR\x04\x63ode\"\x12\n\x10GetReadyzRequest\"?\n\x11GetReadyzResponse\x12\x16\n\x06status\x18\x01 \x01(\tR\x06status\x12\x12\n\x04\x63ode\x18\x02 \x01(\rR\x04\x63ode2\x96\x02\n\x1cKesselInventoryHealthService\x12x\n\x08GetLivez\x12$.kessel.inventory.v1.GetLivezRequest\x1a%.kessel.inventory.v1.GetLivezResponse\"\x1f\x82\xd3\xe4\x93\x02\x19\x12\x17/api/inventory/v1/livez\x12|\n\tGetReadyz\x12%.kessel.inventory.v1.GetReadyzRequest\x1a&.kessel.inventory.v1.GetReadyzResponse\" \x82\xd3\xe4\x93\x02\x1a\x12\x18/api/inventory/v1/readyzBh\n#org.project_kessel.api.inventory.v1P\x01Z?github.com/project-kessel/inventory-api/api/kessel/inventory/v1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n kessel/inventory/v1/health.proto\x12\x13kessel.inventory.v1\x1a\x1cgoogle/api/annotations.proto\"\x11\n\x0fGetLivezRequest\">\n\x10GetLivezResponse\x12\x16\n\x06status\x18\x01 \x01(\tR\x06status\x12\x12\n\x04\x63ode\x18\x02 \x01(\rR\x04\x63ode\"\x12\n\x10GetReadyzRequest\"?\n\x11GetReadyzResponse\x12\x16\n\x06status\x18\x01 \x01(\tR\x06status\x12\x12\n\x04\x63ode\x18\x02 \x01(\rR\x04\x63ode2\x90\x02\n\x1cKesselInventoryHealthService\x12u\n\x08GetLivez\x12$.kessel.inventory.v1.GetLivezRequest\x1a%.kessel.inventory.v1.GetLivezResponse\"\x1c\x82\xd3\xe4\x93\x02\x16\x12\x14/api/kessel/v1/livez\x12y\n\tGetReadyz\x12%.kessel.inventory.v1.GetReadyzRequest\x1a&.kessel.inventory.v1.GetReadyzResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/api/kessel/v1/readyzBh\n#org.project_kessel.api.inventory.v1P\x01Z?github.com/project-kessel/inventory-api/api/kessel/inventory/v1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -34,9 +34,9 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'\n#org.project_kessel.api.inventory.v1P\001Z?github.com/project-kessel/inventory-api/api/kessel/inventory/v1'
   _globals['_KESSELINVENTORYHEALTHSERVICE'].methods_by_name['GetLivez']._loaded_options = None
-  _globals['_KESSELINVENTORYHEALTHSERVICE'].methods_by_name['GetLivez']._serialized_options = b'\202\323\344\223\002\031\022\027/api/inventory/v1/livez'
+  _globals['_KESSELINVENTORYHEALTHSERVICE'].methods_by_name['GetLivez']._serialized_options = b'\202\323\344\223\002\026\022\024/api/kessel/v1/livez'
   _globals['_KESSELINVENTORYHEALTHSERVICE'].methods_by_name['GetReadyz']._loaded_options = None
-  _globals['_KESSELINVENTORYHEALTHSERVICE'].methods_by_name['GetReadyz']._serialized_options = b'\202\323\344\223\002\032\022\030/api/inventory/v1/readyz'
+  _globals['_KESSELINVENTORYHEALTHSERVICE'].methods_by_name['GetReadyz']._serialized_options = b'\202\323\344\223\002\027\022\025/api/kessel/v1/readyz'
   _globals['_GETLIVEZREQUEST']._serialized_start=87
   _globals['_GETLIVEZREQUEST']._serialized_end=104
   _globals['_GETLIVEZRESPONSE']._serialized_start=106
@@ -46,5 +46,5 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_GETREADYZRESPONSE']._serialized_start=190
   _globals['_GETREADYZRESPONSE']._serialized_end=253
   _globals['_KESSELINVENTORYHEALTHSERVICE']._serialized_start=256
-  _globals['_KESSELINVENTORYHEALTHSERVICE']._serialized_end=534
+  _globals['_KESSELINVENTORYHEALTHSERVICE']._serialized_end=528
 # @@protoc_insertion_point(module_scope)
