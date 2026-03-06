@@ -30,7 +30,7 @@ auth = [
 ]
 dev = [
     "flake8~=7.3.0",
-    "black~=25.12.0",
+    "black>=25.12,<26.4",
     "pytest",
     "pytest-asyncio",
 ]
