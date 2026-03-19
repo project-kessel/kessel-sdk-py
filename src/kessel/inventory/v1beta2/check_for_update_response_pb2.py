@@ -23,9 +23,10 @@ _sym_db = _symbol_database.Default()
 
 
 from kessel.inventory.v1beta2 import allowed_pb2 as kessel_dot_inventory_dot_v1beta2_dot_allowed__pb2
+from kessel.inventory.v1beta2 import consistency_token_pb2 as kessel_dot_inventory_dot_v1beta2_dot_consistency__token__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n8kessel/inventory/v1beta2/check_for_update_response.proto\x12\x18kessel.inventory.v1beta2\x1a&kessel/inventory/v1beta2/allowed.proto\"U\n\x16\x43heckForUpdateResponse\x12;\n\x07\x61llowed\x18\x01 \x01(\x0e\x32!.kessel.inventory.v1beta2.AllowedR\x07\x61llowedBr\n(org.project_kessel.api.inventory.v1beta2P\x01ZDgithub.com/project-kessel/inventory-api/api/kessel/inventory/v1beta2b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n8kessel/inventory/v1beta2/check_for_update_response.proto\x12\x18kessel.inventory.v1beta2\x1a&kessel/inventory/v1beta2/allowed.proto\x1a\x30kessel/inventory/v1beta2/consistency_token.proto\"\xae\x01\n\x16\x43heckForUpdateResponse\x12;\n\x07\x61llowed\x18\x01 \x01(\x0e\x32!.kessel.inventory.v1beta2.AllowedR\x07\x61llowed\x12W\n\x11\x63onsistency_token\x18\x02 \x01(\x0b\x32*.kessel.inventory.v1beta2.ConsistencyTokenR\x10\x63onsistencyTokenBr\n(org.project_kessel.api.inventory.v1beta2P\x01ZDgithub.com/project-kessel/inventory-api/api/kessel/inventory/v1beta2b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -33,6 +34,6 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'kessel.inventory.v1beta2.ch
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'\n(org.project_kessel.api.inventory.v1beta2P\001ZDgithub.com/project-kessel/inventory-api/api/kessel/inventory/v1beta2'
-  _globals['_CHECKFORUPDATERESPONSE']._serialized_start=126
-  _globals['_CHECKFORUPDATERESPONSE']._serialized_end=211
+  _globals['_CHECKFORUPDATERESPONSE']._serialized_start=177
+  _globals['_CHECKFORUPDATERESPONSE']._serialized_end=351
 # @@protoc_insertion_point(module_scope)
