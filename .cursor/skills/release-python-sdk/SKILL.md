@@ -62,7 +62,7 @@ python -m build
 
 ```bash
 git add pyproject.toml
-git commit -m "Release version ${VERSION}"
+git commit -m "chore: bump version to ${VERSION}"
 git push origin main
 ```
 
