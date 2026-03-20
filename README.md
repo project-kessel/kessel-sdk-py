@@ -308,19 +308,25 @@ This project follows [Semantic Versioning 2.0.0](https://semver.org/). Version n
 1. **Update the Version**
 
 ```bash
-# Edit pyproject.toml
-# Update the version field to the new version number
+# Edit pyproject.toml and update the version field to the new version number
 vim pyproject.toml
 ```
 
-2. **Update Dependencies (if needed)**
+2. **Set the VERSION environment variable**
+
+```bash
+export VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+echo "Releasing version: ${VERSION}"
+```
+
+3. **Update Dependencies (if needed)**
 
 ```bash
 # Regenerate gRPC code if there are updates to the Kessel Inventory API
 buf generate
 ```
 
-3. **Run Quality Checks**
+4. **Run Quality Checks**
 
 ```bash
 # Format code (excluding generated files)
@@ -333,20 +339,23 @@ flake8 --exclude '*_pb2.py,*_pb2_grpc.py' src/ examples/
 python -c "import examples.check"
 python -c "import examples.auth"
 
+# Run tests
+pytest
+
 # Build the project
 python -m build
 ```
 
-4. **Commit and Push Changes**
+5. **Commit and Push Changes**
 
 ```bash
 # Commit the version bump and any related changes
 git add pyproject.toml
-git commit -m "chore: bump version to X.Y.Z"
+git commit -m "Release version ${VERSION}"
 git push origin main # or git push upstream main
 ```
 
-5. **Build and Publish the Package**
+6. **Build and Publish the Package**
 
 ```bash
 # Clean any previous build artifacts
@@ -359,15 +368,18 @@ python -m build
 twine upload dist/*
 ```
 
-6. **Tag the Release**
+7. **Tag the Release**
 
 ```bash
-# Create and push a git tag
-git tag -a vX.Y.Z -m "Release version X.Y.Z"
-git push origin vX.Y.Z
+git tag -a v${VERSION} -m "Release version ${VERSION}"
+git push origin v${VERSION} # or git push upstream v${VERSION}
 ```
 
-7. **Create GitHub Release**
+8. **Create GitHub Release**
+
+```bash
+gh release create v${VERSION} --title "v${VERSION}" --generate-notes
+```
 
 - Go to the [GitHub Releases page](https://github.com/project-kessel/kessel-sdk-py/releases)
 - Click "Create a new release"
