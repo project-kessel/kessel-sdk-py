@@ -20,21 +20,12 @@ pip install "kessel-sdk[dev]"
 
 ### Step 1: Update the Version
 
-Edit `pyproject.toml` and set the new version:
-
-```bash
-# Set the target version
-export VERSION="X.Y.Z"
-```
-
-Then update the `version` field in `pyproject.toml` to match `$VERSION`.
-
-Follow [Semantic Versioning](https://semver.org/):
+Edit the `version` field in `pyproject.toml` to the new version number, following [Semantic Versioning](https://semver.org/):
 - **MAJOR**: incompatible API changes
 - **MINOR**: backward-compatible new functionality
 - **PATCH**: backward-compatible bug fixes
 
-Verify the update:
+Then set the `VERSION` env var from `pyproject.toml` for use in subsequent steps:
 
 ```bash
 export VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
