@@ -15,6 +15,8 @@ from kessel.inventory.v1beta2 import check_self_request_pb2 as _check_self_reque
 from kessel.inventory.v1beta2 import check_self_response_pb2 as _check_self_response_pb2
 from kessel.inventory.v1beta2 import check_self_bulk_request_pb2 as _check_self_bulk_request_pb2
 from kessel.inventory.v1beta2 import check_self_bulk_response_pb2 as _check_self_bulk_response_pb2
+from kessel.inventory.v1beta2 import check_for_update_bulk_request_pb2 as _check_for_update_bulk_request_pb2
+from kessel.inventory.v1beta2 import check_for_update_bulk_response_pb2 as _check_for_update_bulk_response_pb2
 from google.protobuf import descriptor as _descriptor
 from typing import ClassVar as _ClassVar
 

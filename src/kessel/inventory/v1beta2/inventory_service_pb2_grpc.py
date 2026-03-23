@@ -4,6 +4,8 @@ import grpc
 
 from kessel.inventory.v1beta2 import check_bulk_request_pb2 as kessel_dot_inventory_dot_v1beta2_dot_check__bulk__request__pb2
 from kessel.inventory.v1beta2 import check_bulk_response_pb2 as kessel_dot_inventory_dot_v1beta2_dot_check__bulk__response__pb2
+from kessel.inventory.v1beta2 import check_for_update_bulk_request_pb2 as kessel_dot_inventory_dot_v1beta2_dot_check__for__update__bulk__request__pb2
+from kessel.inventory.v1beta2 import check_for_update_bulk_response_pb2 as kessel_dot_inventory_dot_v1beta2_dot_check__for__update__bulk__response__pb2
 from kessel.inventory.v1beta2 import check_for_update_request_pb2 as kessel_dot_inventory_dot_v1beta2_dot_check__for__update__request__pb2
 from kessel.inventory.v1beta2 import check_for_update_response_pb2 as kessel_dot_inventory_dot_v1beta2_dot_check__for__update__response__pb2
 from kessel.inventory.v1beta2 import check_request_pb2 as kessel_dot_inventory_dot_v1beta2_dot_check__request__pb2
@@ -45,6 +47,11 @@ class KesselInventoryServiceStub(object):
                 '/kessel.inventory.v1beta2.KesselInventoryService/CheckForUpdate',
                 request_serializer=kessel_dot_inventory_dot_v1beta2_dot_check__for__update__request__pb2.CheckForUpdateRequest.SerializeToString,
                 response_deserializer=kessel_dot_inventory_dot_v1beta2_dot_check__for__update__response__pb2.CheckForUpdateResponse.FromString,
+                _registered_method=True)
+        self.CheckForUpdateBulk = channel.unary_unary(
+                '/kessel.inventory.v1beta2.KesselInventoryService/CheckForUpdateBulk',
+                request_serializer=kessel_dot_inventory_dot_v1beta2_dot_check__for__update__bulk__request__pb2.CheckForUpdateBulkRequest.SerializeToString,
+                response_deserializer=kessel_dot_inventory_dot_v1beta2_dot_check__for__update__bulk__response__pb2.CheckForUpdateBulkResponse.FromString,
                 _registered_method=True)
         self.CheckBulk = channel.unary_unary(
                 '/kessel.inventory.v1beta2.KesselInventoryService/CheckBulk',
@@ -118,6 +125,19 @@ class KesselInventoryServiceServicer(object):
 
         It is intended to be used just prior to sensitive operation (e.g., update, delete)
         which depend on the current state of the relationship.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def CheckForUpdateBulk(self, request, context):
+        """Performs bulk strongly consistent "check for update" permission checks.
+
+        This API is more efficient than making individual CheckForUpdate calls when verifying
+        update permissions for multiple resource-subject-relation combinations. Each item
+        is evaluated with strong consistency (same semantics as CheckForUpdate).
+
+        Common use cases include batch pre-authorization before bulk update or delete operations.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -242,6 +262,11 @@ def add_KesselInventoryServiceServicer_to_server(servicer, server):
                     request_deserializer=kessel_dot_inventory_dot_v1beta2_dot_check__for__update__request__pb2.CheckForUpdateRequest.FromString,
                     response_serializer=kessel_dot_inventory_dot_v1beta2_dot_check__for__update__response__pb2.CheckForUpdateResponse.SerializeToString,
             ),
+            'CheckForUpdateBulk': grpc.unary_unary_rpc_method_handler(
+                    servicer.CheckForUpdateBulk,
+                    request_deserializer=kessel_dot_inventory_dot_v1beta2_dot_check__for__update__bulk__request__pb2.CheckForUpdateBulkRequest.FromString,
+                    response_serializer=kessel_dot_inventory_dot_v1beta2_dot_check__for__update__bulk__response__pb2.CheckForUpdateBulkResponse.SerializeToString,
+            ),
             'CheckBulk': grpc.unary_unary_rpc_method_handler(
                     servicer.CheckBulk,
                     request_deserializer=kessel_dot_inventory_dot_v1beta2_dot_check__bulk__request__pb2.CheckBulkRequest.FromString,
@@ -351,6 +376,33 @@ class KesselInventoryService(object):
             '/kessel.inventory.v1beta2.KesselInventoryService/CheckForUpdate',
             kessel_dot_inventory_dot_v1beta2_dot_check__for__update__request__pb2.CheckForUpdateRequest.SerializeToString,
             kessel_dot_inventory_dot_v1beta2_dot_check__for__update__response__pb2.CheckForUpdateResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def CheckForUpdateBulk(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/kessel.inventory.v1beta2.KesselInventoryService/CheckForUpdateBulk',
+            kessel_dot_inventory_dot_v1beta2_dot_check__for__update__bulk__request__pb2.CheckForUpdateBulkRequest.SerializeToString,
+            kessel_dot_inventory_dot_v1beta2_dot_check__for__update__bulk__response__pb2.CheckForUpdateBulkResponse.FromString,
             options,
             channel_credentials,
             insecure,
