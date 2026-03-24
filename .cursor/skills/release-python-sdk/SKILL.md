@@ -21,7 +21,9 @@ pip install "kessel-sdk[dev]"
 
 ### Step 0: Preflight -- Clean Working Tree
 
-Run `git status --porcelain` to check for uncommitted changes. If the working tree is dirty, present the list of changed files and ask the user whether to discard them (`git checkout -- . && git clean -fd`) or abort the release.
+Run `git status --porcelain` to check for uncommitted changes. If the working tree is dirty, present the list of changed files and ask the user whether to:
+1. Abort the release (recommended if unsure)
+2. Stash changes for later: `git stash --include-untracked`
 
 ### Step 1: Update the Version and Create Release Branch
 
