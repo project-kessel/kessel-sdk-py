@@ -10,6 +10,7 @@ description: Release a new version of the Kessel Python SDK (kessel-sdk). Guides
 - Write access to the GitHub repository
 - PyPI account with publish access to `kessel-sdk`
 - Python 3.11+, `buf`, `build`, and `twine` installed
+- PyPI auth configured via `~/.pypirc` or `TWINE_USERNAME`/`TWINE_PASSWORD` env vars. Note: Cursor's shell may not inherit exported tokens -- if auth is not available, the `twine upload` step must be run manually in your own terminal.
 
 ```bash
 pip install build twine
@@ -18,18 +19,23 @@ pip install "kessel-sdk[dev]"
 
 ## Release Process
 
-### Step 1: Update the Version
+### Step 0: Preflight -- Clean Working Tree
+
+Run `git status --porcelain` to check for uncommitted changes. If the working tree is dirty, present the list of changed files and ask the user whether to discard them (`git checkout -- . && git clean -fd`) or abort the release.
+
+### Step 1: Update the Version and Create Release Branch
 
 Edit the `version` field in `pyproject.toml` to the new version number, following [Semantic Versioning](https://semver.org/):
 - **MAJOR**: incompatible API changes
 - **MINOR**: backward-compatible new functionality
 - **PATCH**: backward-compatible bug fixes
 
-Then set the `VERSION` env var from `pyproject.toml` for use in subsequent steps:
+Then set the `VERSION` env var from `pyproject.toml` and create a release branch:
 
 ```bash
 export VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
 echo "Releasing version: ${VERSION}"
+git checkout -b release/${VERSION}
 ```
 
 ### Step 2: Update Dependencies (if needed)
@@ -49,7 +55,16 @@ pytest
 python -m build
 ```
 
-### Step 4: Review Changes
+### Step 4: Documentation Audit (optional)
+
+Check if the README is up to date with the current codebase:
+
+1. **Examples:** Compare the files in `examples/*.py` against the "Examples" section in the README. Flag any examples that exist on disk but are not listed in the README.
+2. **Available Services:** If a local Kessel instance is running, list endpoints with `grpcurl -plaintext localhost:9081 list kessel.inventory.v1beta2.KesselInventoryService` and compare against the "Available Services" section in the README. Flag any undocumented endpoints.
+
+Present any gaps to the user and ask if they'd like to update the README before releasing. Skip the grpcurl check if no local instance is available.
+
+### Step 5: Review Changes
 
 Before committing, summarize the release for the user and ask for confirmation.
 
@@ -61,37 +76,45 @@ Before committing, summarize the release for the user and ask for confirmation.
    - Quality check results
 4. **Wait for user confirmation before proceeding.**
 
-### Step 5: Commit and Push
+### Step 6: Commit, Push Branch, and Create PR
 
 ```bash
 git add pyproject.toml
 git commit -m "chore: bump version to ${VERSION}"
-git push origin main
+git push -u origin release/${VERSION}
+gh pr create --title "Release v${VERSION}" --body "Release version ${VERSION}"
 ```
 
 Include any other changed files (generated code, lock files) in the commit.
 
-### Step 6: Build and Publish to PyPI
+**The remaining steps (publish, tag, GitHub release) should be performed after the PR is merged to main.**
+
+### Step 7: Build and Publish to PyPI
+
+After the PR is merged, switch back to main and pull:
 
 ```bash
+git checkout main && git pull origin main
 rm -rf dist/ build/
 python -m build
 ```
 
 Before publishing, show the built artifacts (`ls -lh dist/`) and **ask the user to confirm** before running `twine upload`, since PyPI publishes are effectively irreversible.
 
+Check if PyPI auth is available (look for `~/.pypirc` or `TWINE_USERNAME` env var). If auth is not configured, instruct the user to run the upload manually in their own terminal:
+
 ```bash
 twine upload dist/*
 ```
 
-### Step 7: Tag the Release
+### Step 8: Tag the Release
 
 ```bash
 git tag -a v${VERSION} -m "Release version ${VERSION}"
 git push origin v${VERSION}
 ```
 
-### Step 8: Create GitHub Release
+### Step 9: Create GitHub Release
 
 ```bash
 gh release create v${VERSION} --title "v${VERSION}" --generate-notes
@@ -108,12 +131,16 @@ Or manually:
 
 ```
 Release v${VERSION}:
+- [ ] Preflight: clean working tree
 - [ ] Update version in pyproject.toml and derive VERSION from it
+- [ ] Create release/${VERSION} branch
 - [ ] Regenerate gRPC code if needed (buf generate)
 - [ ] Run black, flake8, example imports, pytest
 - [ ] Build succeeds (python -m build)
+- [ ] Documentation audit (optional, check examples + services in README)
 - [ ] Review changes and get user confirmation
-- [ ] Commit and push version bump
+- [ ] Commit, push branch, create PR
+- [ ] Merge PR to main
 - [ ] Clean build, confirm with user, publish to PyPI
 - [ ] Create and push git tag (v${VERSION})
 - [ ] Create GitHub release
