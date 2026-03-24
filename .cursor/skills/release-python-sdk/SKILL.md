@@ -108,7 +108,7 @@ Or manually:
 
 ```
 Release v${VERSION}:
-- [ ] Set VERSION and update pyproject.toml
+- [ ] Update version in pyproject.toml and derive VERSION from it
 - [ ] Regenerate gRPC code if needed (buf generate)
 - [ ] Run black, flake8, example imports, pytest
 - [ ] Build succeeds (python -m build)
