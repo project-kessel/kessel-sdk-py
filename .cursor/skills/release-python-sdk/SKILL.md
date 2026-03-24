@@ -49,7 +49,19 @@ pytest
 python -m build
 ```
 
-### Step 4: Commit and Push
+### Step 4: Review Changes
+
+Before committing, summarize the release for the user and ask for confirmation.
+
+1. Run `git diff --stat` and `git status` to gather all pending changes.
+2. Compare `$VERSION` against the latest git tag (`git describe --tags --abbrev=0`) to determine the bump type (major/minor/patch).
+3. Present a summary to the user including:
+   - The version being released and the bump type
+   - List of files that will be committed
+   - Quality check results
+4. **Wait for user confirmation before proceeding.**
+
+### Step 5: Commit and Push
 
 ```bash
 git add pyproject.toml
@@ -59,22 +71,27 @@ git push origin main
 
 Include any other changed files (generated code, lock files) in the commit.
 
-### Step 5: Build and Publish to PyPI
+### Step 6: Build and Publish to PyPI
 
 ```bash
 rm -rf dist/ build/
 python -m build
+```
+
+Before publishing, show the built artifacts (`ls -lh dist/`) and **ask the user to confirm** before running `twine upload`, since PyPI publishes are effectively irreversible.
+
+```bash
 twine upload dist/*
 ```
 
-### Step 6: Tag the Release
+### Step 7: Tag the Release
 
 ```bash
 git tag -a v${VERSION} -m "Release version ${VERSION}"
 git push origin v${VERSION}
 ```
 
-### Step 7: Create GitHub Release
+### Step 8: Create GitHub Release
 
 ```bash
 gh release create v${VERSION} --title "v${VERSION}" --generate-notes
@@ -95,8 +112,9 @@ Release v${VERSION}:
 - [ ] Regenerate gRPC code if needed (buf generate)
 - [ ] Run black, flake8, example imports, pytest
 - [ ] Build succeeds (python -m build)
+- [ ] Review changes and get user confirmation
 - [ ] Commit and push version bump
-- [ ] Clean build and publish to PyPI (twine upload dist/*)
+- [ ] Clean build, confirm with user, publish to PyPI
 - [ ] Create and push git tag (v${VERSION})
 - [ ] Create GitHub release
 ```
