@@ -20,6 +20,8 @@ from kessel.inventory.v1beta2 import report_resource_request_pb2 as kessel_dot_i
 from kessel.inventory.v1beta2 import report_resource_response_pb2 as kessel_dot_inventory_dot_v1beta2_dot_report__resource__response__pb2
 from kessel.inventory.v1beta2 import streamed_list_objects_request_pb2 as kessel_dot_inventory_dot_v1beta2_dot_streamed__list__objects__request__pb2
 from kessel.inventory.v1beta2 import streamed_list_objects_response_pb2 as kessel_dot_inventory_dot_v1beta2_dot_streamed__list__objects__response__pb2
+from kessel.inventory.v1beta2 import streamed_list_subjects_request_pb2 as kessel_dot_inventory_dot_v1beta2_dot_streamed__list__subjects__request__pb2
+from kessel.inventory.v1beta2 import streamed_list_subjects_response_pb2 as kessel_dot_inventory_dot_v1beta2_dot_streamed__list__subjects__response__pb2
 
 
 class KesselInventoryServiceStub(object):
@@ -77,6 +79,11 @@ class KesselInventoryServiceStub(object):
                 '/kessel.inventory.v1beta2.KesselInventoryService/StreamedListObjects',
                 request_serializer=kessel_dot_inventory_dot_v1beta2_dot_streamed__list__objects__request__pb2.StreamedListObjectsRequest.SerializeToString,
                 response_deserializer=kessel_dot_inventory_dot_v1beta2_dot_streamed__list__objects__response__pb2.StreamedListObjectsResponse.FromString,
+                _registered_method=True)
+        self.StreamedListSubjects = channel.unary_stream(
+                '/kessel.inventory.v1beta2.KesselInventoryService/StreamedListSubjects',
+                request_serializer=kessel_dot_inventory_dot_v1beta2_dot_streamed__list__subjects__request__pb2.StreamedListSubjectsRequest.SerializeToString,
+                response_deserializer=kessel_dot_inventory_dot_v1beta2_dot_streamed__list__subjects__response__pb2.StreamedListSubjectsResponse.FromString,
                 _registered_method=True)
 
 
@@ -244,6 +251,22 @@ class KesselInventoryServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def StreamedListSubjects(self, request, context):
+        """Streams a list of subjects that have the specified relation to a resource.
+
+        This relationship query answers the question:
+        "Which subjects of type *X* have relation *Y* to resource *Z*?"
+
+        It is often used for access auditing, troubleshooting permissions, or
+        displaying lists of users/principals with specific access to a resource.
+        The result is streamed incrementally to support large datasets.
+
+        Pagination and consistency controls allow fine-tuned performance and data freshness.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_KesselInventoryServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -291,6 +314,11 @@ def add_KesselInventoryServiceServicer_to_server(servicer, server):
                     servicer.StreamedListObjects,
                     request_deserializer=kessel_dot_inventory_dot_v1beta2_dot_streamed__list__objects__request__pb2.StreamedListObjectsRequest.FromString,
                     response_serializer=kessel_dot_inventory_dot_v1beta2_dot_streamed__list__objects__response__pb2.StreamedListObjectsResponse.SerializeToString,
+            ),
+            'StreamedListSubjects': grpc.unary_stream_rpc_method_handler(
+                    servicer.StreamedListSubjects,
+                    request_deserializer=kessel_dot_inventory_dot_v1beta2_dot_streamed__list__subjects__request__pb2.StreamedListSubjectsRequest.FromString,
+                    response_serializer=kessel_dot_inventory_dot_v1beta2_dot_streamed__list__subjects__response__pb2.StreamedListSubjectsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -538,6 +566,33 @@ class KesselInventoryService(object):
             '/kessel.inventory.v1beta2.KesselInventoryService/StreamedListObjects',
             kessel_dot_inventory_dot_v1beta2_dot_streamed__list__objects__request__pb2.StreamedListObjectsRequest.SerializeToString,
             kessel_dot_inventory_dot_v1beta2_dot_streamed__list__objects__response__pb2.StreamedListObjectsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def StreamedListSubjects(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/kessel.inventory.v1beta2.KesselInventoryService/StreamedListSubjects',
+            kessel_dot_inventory_dot_v1beta2_dot_streamed__list__subjects__request__pb2.StreamedListSubjectsRequest.SerializeToString,
+            kessel_dot_inventory_dot_v1beta2_dot_streamed__list__subjects__response__pb2.StreamedListSubjectsResponse.FromString,
             options,
             channel_credentials,
             insecure,
