@@ -1,5 +1,5 @@
-import grpc
 import os
+from connectrpc.errors import ConnectError
 
 from kessel.inventory.v1beta2 import (
     delete_resource_request_pb2,
@@ -29,10 +29,10 @@ def run():
             response = stub.DeleteResource(delete_request)
             print("Resource deleted successfully")
             print(response)
-        except grpc.RpcError as e:
-            print("gRPC error occurred:")
-            print(f"Code: {e.code()}")
-            print(f"Details: {e.details()}")
+        except ConnectError as e:
+            print("RPC error occurred:")
+            print(f"Code: {e.code}")
+            print(f"Message: {e.message}")
 
 
 if __name__ == "__main__":

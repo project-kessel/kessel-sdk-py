@@ -1,5 +1,5 @@
-import grpc
 import os
+from connectrpc.errors import ConnectError
 
 from kessel.inventory.v1beta2 import (
     check_for_update_request_pb2,
@@ -43,10 +43,10 @@ def run():
             checkforupdate_response = stub.CheckForUpdate(checkforupdate_request)
             print("CheckForUpdate response received successfully")
             print(checkforupdate_response)
-        except grpc.RpcError as e:
-            print("gRPC error occurred during CheckForUpdate:")
-            print(f"Code: {e.code()}")
-            print(f"Details: {e.details()}")
+        except ConnectError as e:
+            print("RPC error occurred during CheckForUpdate:")
+            print(f"Code: {e.code}")
+            print(f"Message: {e.message}")
 
 
 if __name__ == "__main__":

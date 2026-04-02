@@ -2,17 +2,15 @@ version: v2
 inputs:
   - module: buf.build/project-kessel/inventory-api
 plugins:
+  # Standard protobuf Python stubs (type hints)
   - remote: buf.build/protocolbuffers/pyi:v31.1
     out: src
-    # Include imports so that buf.validate protos are compiled also.
-    # This is necessary because while buf publishes packages for these,
-    # they are not available on pypi.
-    # pyproject.toml has no standard way to import from external indexes
-    # for setuptools.
     include_imports: true
+  # Standard protobuf Python message classes
   - remote: buf.build/protocolbuffers/python:v31.1
     out: src
     include_imports: true
-  - remote: buf.build/grpc/python:v1.73.1
+  # Connect-Python plugin (pure Python, no C compilation)
+  - remote: buf.build/connectrpc/python:v0.9.0
     out: src
     include_imports: true

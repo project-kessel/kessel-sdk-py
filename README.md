@@ -170,8 +170,8 @@ curl -sSL "https://github.com/bufbuild/buf/releases/latest/download/buf-$(uname 
 ### Setup
 
 ```bash
-# Install additional development dependencies
-pip install "kessel-sdk[dev]"
+# Install local development dependencies
+pip install ".[dev]"
 
 # Generate gRPC code from Kessel Inventory API
 buf generate

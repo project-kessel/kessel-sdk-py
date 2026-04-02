@@ -1,5 +1,5 @@
-import grpc
 import os
+from connectrpc.errors import ConnectError
 
 from kessel.inventory.v1beta2 import (
     representation_type_pb2,
@@ -41,10 +41,10 @@ def run():
             for response in responses:
                 print(response)
 
-        except grpc.RpcError as e:
-            print("gRPC error occurred:")
-            print(f"Code: {e.code()}")
-            print(f"Details: {e.details()}")
+        except ConnectError as e:
+            print("RPC error occurred:")
+            print(f"Code: {e.code}")
+            print(f"Message: {e.message}")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-from typing import Optional, AsyncIterator, Iterable
+from typing import Optional, AsyncIterator, Iterable, TYPE_CHECKING
 from requests.auth import AuthBase
 import requests
 
@@ -9,7 +9,9 @@ from kessel.inventory.v1beta2.reporter_reference_pb2 import ReporterReference
 from kessel.inventory.v1beta2.streamed_list_objects_request_pb2 import StreamedListObjectsRequest
 from kessel.inventory.v1beta2.streamed_list_objects_response_pb2 import StreamedListObjectsResponse
 from kessel.inventory.v1beta2.request_pagination_pb2 import RequestPagination
-from kessel.inventory.v1beta2.inventory_service_pb2_grpc import KesselInventoryServiceStub
+
+if TYPE_CHECKING:
+    from kessel.inventory.connect_wrapper import StubWrapper, AsyncStubWrapper
 
 
 class Workspace:
@@ -244,7 +246,7 @@ def subject(resource_ref: ResourceReference, relation: Optional[str] = None) -> 
 
 
 def list_workspaces(
-    inventory: KesselInventoryServiceStub,
+    inventory: "StubWrapper",
     subject: SubjectReference,
     relation: str,
     continuation_token: Optional[str] = None,
@@ -291,7 +293,7 @@ def list_workspaces(
 
 
 async def list_workspaces_async(
-    inventory: KesselInventoryServiceStub,
+    inventory: "AsyncStubWrapper",
     subject: SubjectReference,
     relation: str,
     continuation_token: Optional[str] = None,

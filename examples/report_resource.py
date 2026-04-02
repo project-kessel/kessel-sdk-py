@@ -1,5 +1,5 @@
-import grpc
 import os
+from connectrpc.errors import ConnectError
 from google.protobuf import struct_pb2
 from kessel.inventory.v1beta2 import (
     report_resource_request_pb2,
@@ -53,5 +53,5 @@ with channel:
     try:
         response = stub.ReportResource(request)
         print("Resource reported successfully")
-    except grpc.RpcError as e:
-        print(f"Error reporting resource: {e.details()}")
+    except ConnectError as e:
+        print(f"Error reporting resource: {e.message}")
