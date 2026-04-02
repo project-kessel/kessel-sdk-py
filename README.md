@@ -126,10 +126,15 @@ The library includes the following gRPC services:
 
 - **KesselInventoryService**: Main inventory service
   - `Check(CheckRequest)` - Check permissions
+  - `CheckBulk(CheckBulkRequest)` - Check permissions for multiple resource/subject pairs
   - `CheckForUpdate(CheckForUpdateRequest)` - Check for resource updates
+  - `CheckForUpdateBulk(CheckForUpdateBulkRequest)` - Bulk check for resource updates
+  - `CheckSelf(CheckSelfRequest)` - Check permissions for the calling principal
+  - `CheckSelfBulk(CheckSelfBulkRequest)` - Bulk check permissions for the calling principal
   - `ReportResource(ReportResourceRequest)` - Report resource state
   - `DeleteResource(DeleteResourceRequest)` - Delete a resource
   - `StreamedListObjects(StreamedListObjectsRequest)` - Stream resource listings
+  - `StreamedListSubjects(StreamedListSubjectsRequest)` - Stream subject listings
 
 ### Generated Classes
 
@@ -224,11 +229,15 @@ pytest
 The `examples/` directory contains working examples:
 
 - `auth.py` - OAuth 2.0 authentication via a secure connection
+- `auth_async.py` - Async OAuth 2.0 authentication
 - `auth_insecure.py` - OAuth 2.0 authentication via an insecure connection
 - `check.py` - Permission checking
-- `report_resource.py` - Reporting resource state
-- `delete_resource.py` - Deleting resources
+- `check_bulk.py` - Bulk permission checking for multiple resource/subject pairs
 - `check_for_update.py` - Checking for updates
+- `delete_resource.py` - Deleting resources
+- `rbac_fetch_workspace.py` - Fetching default and root RBAC workspaces
+- `rbac_list_workspaces.py` - Listing RBAC workspaces (sync and async)
+- `report_resource.py` - Reporting resource state
 - `streamed_list_objects.py` - Streaming resource lists
 
 Run examples:
