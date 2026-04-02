@@ -14,7 +14,7 @@ classifiers = [
 ]
 dependencies = [
     "protobuf>=6.31.1,<7.37.0",
-    "types-protobuf~=6.30",
+    "types-protobuf>=6.30,<8.0",
     "grpcio",
 ]
 
