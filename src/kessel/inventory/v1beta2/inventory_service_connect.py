@@ -36,39 +36,100 @@ import kessel.inventory.v1beta2.streamed_list_subjects_response_pb2 as kessel_do
 
 
 class KesselInventoryService(Protocol):
-    async def check(self, request: kessel_dot_inventory_dot_v1beta2_dot_check__request__pb2.CheckRequest, ctx: RequestContext) -> kessel_dot_inventory_dot_v1beta2_dot_check__response__pb2.CheckResponse:
+    async def check(
+        self,
+        request: kessel_dot_inventory_dot_v1beta2_dot_check__request__pb2.CheckRequest,
+        ctx: RequestContext,
+    ) -> kessel_dot_inventory_dot_v1beta2_dot_check__response__pb2.CheckResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def check_self(self, request: kessel_dot_inventory_dot_v1beta2_dot_check__self__request__pb2.CheckSelfRequest, ctx: RequestContext) -> kessel_dot_inventory_dot_v1beta2_dot_check__self__response__pb2.CheckSelfResponse:
+    async def check_self(
+        self,
+        request: kessel_dot_inventory_dot_v1beta2_dot_check__self__request__pb2.CheckSelfRequest,
+        ctx: RequestContext,
+    ) -> kessel_dot_inventory_dot_v1beta2_dot_check__self__response__pb2.CheckSelfResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def check_for_update(self, request: kessel_dot_inventory_dot_v1beta2_dot_check__for__update__request__pb2.CheckForUpdateRequest, ctx: RequestContext) -> kessel_dot_inventory_dot_v1beta2_dot_check__for__update__response__pb2.CheckForUpdateResponse:
+    async def check_for_update(
+        self,
+        request: kessel_dot_inventory_dot_v1beta2_dot_check__for__update__request__pb2.CheckForUpdateRequest,
+        ctx: RequestContext,
+    ) -> (
+        kessel_dot_inventory_dot_v1beta2_dot_check__for__update__response__pb2.CheckForUpdateResponse
+    ):
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def check_for_update_bulk(self, request: kessel_dot_inventory_dot_v1beta2_dot_check__for__update__bulk__request__pb2.CheckForUpdateBulkRequest, ctx: RequestContext) -> kessel_dot_inventory_dot_v1beta2_dot_check__for__update__bulk__response__pb2.CheckForUpdateBulkResponse:
+    async def check_for_update_bulk(
+        self,
+        request: kessel_dot_inventory_dot_v1beta2_dot_check__for__update__bulk__request__pb2.CheckForUpdateBulkRequest,
+        ctx: RequestContext,
+    ) -> (
+        kessel_dot_inventory_dot_v1beta2_dot_check__for__update__bulk__response__pb2.CheckForUpdateBulkResponse
+    ):
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def check_bulk(self, request: kessel_dot_inventory_dot_v1beta2_dot_check__bulk__request__pb2.CheckBulkRequest, ctx: RequestContext) -> kessel_dot_inventory_dot_v1beta2_dot_check__bulk__response__pb2.CheckBulkResponse:
+    async def check_bulk(
+        self,
+        request: kessel_dot_inventory_dot_v1beta2_dot_check__bulk__request__pb2.CheckBulkRequest,
+        ctx: RequestContext,
+    ) -> kessel_dot_inventory_dot_v1beta2_dot_check__bulk__response__pb2.CheckBulkResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def check_self_bulk(self, request: kessel_dot_inventory_dot_v1beta2_dot_check__self__bulk__request__pb2.CheckSelfBulkRequest, ctx: RequestContext) -> kessel_dot_inventory_dot_v1beta2_dot_check__self__bulk__response__pb2.CheckSelfBulkResponse:
+    async def check_self_bulk(
+        self,
+        request: kessel_dot_inventory_dot_v1beta2_dot_check__self__bulk__request__pb2.CheckSelfBulkRequest,
+        ctx: RequestContext,
+    ) -> (
+        kessel_dot_inventory_dot_v1beta2_dot_check__self__bulk__response__pb2.CheckSelfBulkResponse
+    ):
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def report_resource(self, request: kessel_dot_inventory_dot_v1beta2_dot_report__resource__request__pb2.ReportResourceRequest, ctx: RequestContext) -> kessel_dot_inventory_dot_v1beta2_dot_report__resource__response__pb2.ReportResourceResponse:
+    async def report_resource(
+        self,
+        request: kessel_dot_inventory_dot_v1beta2_dot_report__resource__request__pb2.ReportResourceRequest,
+        ctx: RequestContext,
+    ) -> (
+        kessel_dot_inventory_dot_v1beta2_dot_report__resource__response__pb2.ReportResourceResponse
+    ):
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def delete_resource(self, request: kessel_dot_inventory_dot_v1beta2_dot_delete__resource__request__pb2.DeleteResourceRequest, ctx: RequestContext) -> kessel_dot_inventory_dot_v1beta2_dot_delete__resource__response__pb2.DeleteResourceResponse:
+    async def delete_resource(
+        self,
+        request: kessel_dot_inventory_dot_v1beta2_dot_delete__resource__request__pb2.DeleteResourceRequest,
+        ctx: RequestContext,
+    ) -> (
+        kessel_dot_inventory_dot_v1beta2_dot_delete__resource__response__pb2.DeleteResourceResponse
+    ):
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    def streamed_list_objects(self, request: kessel_dot_inventory_dot_v1beta2_dot_streamed__list__objects__request__pb2.StreamedListObjectsRequest, ctx: RequestContext) -> AsyncIterator[kessel_dot_inventory_dot_v1beta2_dot_streamed__list__objects__response__pb2.StreamedListObjectsResponse]:
+    def streamed_list_objects(
+        self,
+        request: kessel_dot_inventory_dot_v1beta2_dot_streamed__list__objects__request__pb2.StreamedListObjectsRequest,
+        ctx: RequestContext,
+    ) -> AsyncIterator[
+        kessel_dot_inventory_dot_v1beta2_dot_streamed__list__objects__response__pb2.StreamedListObjectsResponse
+    ]:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    def streamed_list_subjects(self, request: kessel_dot_inventory_dot_v1beta2_dot_streamed__list__subjects__request__pb2.StreamedListSubjectsRequest, ctx: RequestContext) -> AsyncIterator[kessel_dot_inventory_dot_v1beta2_dot_streamed__list__subjects__response__pb2.StreamedListSubjectsResponse]:
+    def streamed_list_subjects(
+        self,
+        request: kessel_dot_inventory_dot_v1beta2_dot_streamed__list__subjects__request__pb2.StreamedListSubjectsRequest,
+        ctx: RequestContext,
+    ) -> AsyncIterator[
+        kessel_dot_inventory_dot_v1beta2_dot_streamed__list__subjects__response__pb2.StreamedListSubjectsResponse
+    ]:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
 
 class KesselInventoryServiceASGIApplication(ConnectASGIApplication[KesselInventoryService]):
-    def __init__(self, service: KesselInventoryService | AsyncGenerator[KesselInventoryService], *, interceptors: Iterable[Interceptor]=(), read_max_bytes: int | None = None, compressions: Iterable[Compression] | None = None) -> None:
+    def __init__(
+        self,
+        service: KesselInventoryService | AsyncGenerator[KesselInventoryService],
+        *,
+        interceptors: Iterable[Interceptor] = (),
+        read_max_bytes: int | None = None,
+        compressions: Iterable[Compression] | None = None,
+    ) -> None:
         super().__init__(
             service=service,
             endpoints=lambda svc: {
@@ -231,7 +292,9 @@ class KesselInventoryServiceClient(ConnectClient):
         *,
         headers: Headers | Mapping[str, str] | None = None,
         timeout_ms: int | None = None,
-    ) -> kessel_dot_inventory_dot_v1beta2_dot_check__for__update__response__pb2.CheckForUpdateResponse:
+    ) -> (
+        kessel_dot_inventory_dot_v1beta2_dot_check__for__update__response__pb2.CheckForUpdateResponse
+    ):
         return await self.execute_unary(
             request=request,
             method=MethodInfo(
@@ -251,7 +314,9 @@ class KesselInventoryServiceClient(ConnectClient):
         *,
         headers: Headers | Mapping[str, str] | None = None,
         timeout_ms: int | None = None,
-    ) -> kessel_dot_inventory_dot_v1beta2_dot_check__for__update__bulk__response__pb2.CheckForUpdateBulkResponse:
+    ) -> (
+        kessel_dot_inventory_dot_v1beta2_dot_check__for__update__bulk__response__pb2.CheckForUpdateBulkResponse
+    ):
         return await self.execute_unary(
             request=request,
             method=MethodInfo(
@@ -291,7 +356,9 @@ class KesselInventoryServiceClient(ConnectClient):
         *,
         headers: Headers | Mapping[str, str] | None = None,
         timeout_ms: int | None = None,
-    ) -> kessel_dot_inventory_dot_v1beta2_dot_check__self__bulk__response__pb2.CheckSelfBulkResponse:
+    ) -> (
+        kessel_dot_inventory_dot_v1beta2_dot_check__self__bulk__response__pb2.CheckSelfBulkResponse
+    ):
         return await self.execute_unary(
             request=request,
             method=MethodInfo(
@@ -311,7 +378,9 @@ class KesselInventoryServiceClient(ConnectClient):
         *,
         headers: Headers | Mapping[str, str] | None = None,
         timeout_ms: int | None = None,
-    ) -> kessel_dot_inventory_dot_v1beta2_dot_report__resource__response__pb2.ReportResourceResponse:
+    ) -> (
+        kessel_dot_inventory_dot_v1beta2_dot_report__resource__response__pb2.ReportResourceResponse
+    ):
         return await self.execute_unary(
             request=request,
             method=MethodInfo(
@@ -331,7 +400,9 @@ class KesselInventoryServiceClient(ConnectClient):
         *,
         headers: Headers | Mapping[str, str] | None = None,
         timeout_ms: int | None = None,
-    ) -> kessel_dot_inventory_dot_v1beta2_dot_delete__resource__response__pb2.DeleteResourceResponse:
+    ) -> (
+        kessel_dot_inventory_dot_v1beta2_dot_delete__resource__response__pb2.DeleteResourceResponse
+    ):
         return await self.execute_unary(
             request=request,
             method=MethodInfo(
@@ -351,7 +422,9 @@ class KesselInventoryServiceClient(ConnectClient):
         *,
         headers: Headers | Mapping[str, str] | None = None,
         timeout_ms: int | None = None,
-    ) -> AsyncIterator[kessel_dot_inventory_dot_v1beta2_dot_streamed__list__objects__response__pb2.StreamedListObjectsResponse]:
+    ) -> AsyncIterator[
+        kessel_dot_inventory_dot_v1beta2_dot_streamed__list__objects__response__pb2.StreamedListObjectsResponse
+    ]:
         return self.execute_server_stream(
             request=request,
             method=MethodInfo(
@@ -371,7 +444,9 @@ class KesselInventoryServiceClient(ConnectClient):
         *,
         headers: Headers | Mapping[str, str] | None = None,
         timeout_ms: int | None = None,
-    ) -> AsyncIterator[kessel_dot_inventory_dot_v1beta2_dot_streamed__list__subjects__response__pb2.StreamedListSubjectsResponse]:
+    ) -> AsyncIterator[
+        kessel_dot_inventory_dot_v1beta2_dot_streamed__list__subjects__response__pb2.StreamedListSubjectsResponse
+    ]:
         return self.execute_server_stream(
             request=request,
             method=MethodInfo(
@@ -387,30 +462,99 @@ class KesselInventoryServiceClient(ConnectClient):
 
 
 class KesselInventoryServiceSync(Protocol):
-    def check(self, request: kessel_dot_inventory_dot_v1beta2_dot_check__request__pb2.CheckRequest, ctx: RequestContext) -> kessel_dot_inventory_dot_v1beta2_dot_check__response__pb2.CheckResponse:
+    def check(
+        self,
+        request: kessel_dot_inventory_dot_v1beta2_dot_check__request__pb2.CheckRequest,
+        ctx: RequestContext,
+    ) -> kessel_dot_inventory_dot_v1beta2_dot_check__response__pb2.CheckResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def check_self(self, request: kessel_dot_inventory_dot_v1beta2_dot_check__self__request__pb2.CheckSelfRequest, ctx: RequestContext) -> kessel_dot_inventory_dot_v1beta2_dot_check__self__response__pb2.CheckSelfResponse:
+
+    def check_self(
+        self,
+        request: kessel_dot_inventory_dot_v1beta2_dot_check__self__request__pb2.CheckSelfRequest,
+        ctx: RequestContext,
+    ) -> kessel_dot_inventory_dot_v1beta2_dot_check__self__response__pb2.CheckSelfResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def check_for_update(self, request: kessel_dot_inventory_dot_v1beta2_dot_check__for__update__request__pb2.CheckForUpdateRequest, ctx: RequestContext) -> kessel_dot_inventory_dot_v1beta2_dot_check__for__update__response__pb2.CheckForUpdateResponse:
+
+    def check_for_update(
+        self,
+        request: kessel_dot_inventory_dot_v1beta2_dot_check__for__update__request__pb2.CheckForUpdateRequest,
+        ctx: RequestContext,
+    ) -> (
+        kessel_dot_inventory_dot_v1beta2_dot_check__for__update__response__pb2.CheckForUpdateResponse
+    ):
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def check_for_update_bulk(self, request: kessel_dot_inventory_dot_v1beta2_dot_check__for__update__bulk__request__pb2.CheckForUpdateBulkRequest, ctx: RequestContext) -> kessel_dot_inventory_dot_v1beta2_dot_check__for__update__bulk__response__pb2.CheckForUpdateBulkResponse:
+
+    def check_for_update_bulk(
+        self,
+        request: kessel_dot_inventory_dot_v1beta2_dot_check__for__update__bulk__request__pb2.CheckForUpdateBulkRequest,
+        ctx: RequestContext,
+    ) -> (
+        kessel_dot_inventory_dot_v1beta2_dot_check__for__update__bulk__response__pb2.CheckForUpdateBulkResponse
+    ):
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def check_bulk(self, request: kessel_dot_inventory_dot_v1beta2_dot_check__bulk__request__pb2.CheckBulkRequest, ctx: RequestContext) -> kessel_dot_inventory_dot_v1beta2_dot_check__bulk__response__pb2.CheckBulkResponse:
+
+    def check_bulk(
+        self,
+        request: kessel_dot_inventory_dot_v1beta2_dot_check__bulk__request__pb2.CheckBulkRequest,
+        ctx: RequestContext,
+    ) -> kessel_dot_inventory_dot_v1beta2_dot_check__bulk__response__pb2.CheckBulkResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def check_self_bulk(self, request: kessel_dot_inventory_dot_v1beta2_dot_check__self__bulk__request__pb2.CheckSelfBulkRequest, ctx: RequestContext) -> kessel_dot_inventory_dot_v1beta2_dot_check__self__bulk__response__pb2.CheckSelfBulkResponse:
+
+    def check_self_bulk(
+        self,
+        request: kessel_dot_inventory_dot_v1beta2_dot_check__self__bulk__request__pb2.CheckSelfBulkRequest,
+        ctx: RequestContext,
+    ) -> (
+        kessel_dot_inventory_dot_v1beta2_dot_check__self__bulk__response__pb2.CheckSelfBulkResponse
+    ):
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def report_resource(self, request: kessel_dot_inventory_dot_v1beta2_dot_report__resource__request__pb2.ReportResourceRequest, ctx: RequestContext) -> kessel_dot_inventory_dot_v1beta2_dot_report__resource__response__pb2.ReportResourceResponse:
+
+    def report_resource(
+        self,
+        request: kessel_dot_inventory_dot_v1beta2_dot_report__resource__request__pb2.ReportResourceRequest,
+        ctx: RequestContext,
+    ) -> (
+        kessel_dot_inventory_dot_v1beta2_dot_report__resource__response__pb2.ReportResourceResponse
+    ):
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def delete_resource(self, request: kessel_dot_inventory_dot_v1beta2_dot_delete__resource__request__pb2.DeleteResourceRequest, ctx: RequestContext) -> kessel_dot_inventory_dot_v1beta2_dot_delete__resource__response__pb2.DeleteResourceResponse:
+
+    def delete_resource(
+        self,
+        request: kessel_dot_inventory_dot_v1beta2_dot_delete__resource__request__pb2.DeleteResourceRequest,
+        ctx: RequestContext,
+    ) -> (
+        kessel_dot_inventory_dot_v1beta2_dot_delete__resource__response__pb2.DeleteResourceResponse
+    ):
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def streamed_list_objects(self, request: kessel_dot_inventory_dot_v1beta2_dot_streamed__list__objects__request__pb2.StreamedListObjectsRequest, ctx: RequestContext) -> Iterator[kessel_dot_inventory_dot_v1beta2_dot_streamed__list__objects__response__pb2.StreamedListObjectsResponse]:
+
+    def streamed_list_objects(
+        self,
+        request: kessel_dot_inventory_dot_v1beta2_dot_streamed__list__objects__request__pb2.StreamedListObjectsRequest,
+        ctx: RequestContext,
+    ) -> Iterator[
+        kessel_dot_inventory_dot_v1beta2_dot_streamed__list__objects__response__pb2.StreamedListObjectsResponse
+    ]:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def streamed_list_subjects(self, request: kessel_dot_inventory_dot_v1beta2_dot_streamed__list__subjects__request__pb2.StreamedListSubjectsRequest, ctx: RequestContext) -> Iterator[kessel_dot_inventory_dot_v1beta2_dot_streamed__list__subjects__response__pb2.StreamedListSubjectsResponse]:
+
+    def streamed_list_subjects(
+        self,
+        request: kessel_dot_inventory_dot_v1beta2_dot_streamed__list__subjects__request__pb2.StreamedListSubjectsRequest,
+        ctx: RequestContext,
+    ) -> Iterator[
+        kessel_dot_inventory_dot_v1beta2_dot_streamed__list__subjects__response__pb2.StreamedListSubjectsResponse
+    ]:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
 
 class KesselInventoryServiceWSGIApplication(ConnectWSGIApplication):
-    def __init__(self, service: KesselInventoryServiceSync, interceptors: Iterable[InterceptorSync]=(), read_max_bytes: int | None = None, compressions: Iterable[Compression] | None = None) -> None:
+    def __init__(
+        self,
+        service: KesselInventoryServiceSync,
+        interceptors: Iterable[InterceptorSync] = (),
+        read_max_bytes: int | None = None,
+        compressions: Iterable[Compression] | None = None,
+    ) -> None:
         super().__init__(
             endpoints={
                 "/kessel.inventory.v1beta2.KesselInventoryService/Check": EndpointSync.unary(
@@ -572,7 +716,9 @@ class KesselInventoryServiceClientSync(ConnectClientSync):
         *,
         headers: Headers | Mapping[str, str] | None = None,
         timeout_ms: int | None = None,
-    ) -> kessel_dot_inventory_dot_v1beta2_dot_check__for__update__response__pb2.CheckForUpdateResponse:
+    ) -> (
+        kessel_dot_inventory_dot_v1beta2_dot_check__for__update__response__pb2.CheckForUpdateResponse
+    ):
         return self.execute_unary(
             request=request,
             method=MethodInfo(
@@ -592,7 +738,9 @@ class KesselInventoryServiceClientSync(ConnectClientSync):
         *,
         headers: Headers | Mapping[str, str] | None = None,
         timeout_ms: int | None = None,
-    ) -> kessel_dot_inventory_dot_v1beta2_dot_check__for__update__bulk__response__pb2.CheckForUpdateBulkResponse:
+    ) -> (
+        kessel_dot_inventory_dot_v1beta2_dot_check__for__update__bulk__response__pb2.CheckForUpdateBulkResponse
+    ):
         return self.execute_unary(
             request=request,
             method=MethodInfo(
@@ -632,7 +780,9 @@ class KesselInventoryServiceClientSync(ConnectClientSync):
         *,
         headers: Headers | Mapping[str, str] | None = None,
         timeout_ms: int | None = None,
-    ) -> kessel_dot_inventory_dot_v1beta2_dot_check__self__bulk__response__pb2.CheckSelfBulkResponse:
+    ) -> (
+        kessel_dot_inventory_dot_v1beta2_dot_check__self__bulk__response__pb2.CheckSelfBulkResponse
+    ):
         return self.execute_unary(
             request=request,
             method=MethodInfo(
@@ -652,7 +802,9 @@ class KesselInventoryServiceClientSync(ConnectClientSync):
         *,
         headers: Headers | Mapping[str, str] | None = None,
         timeout_ms: int | None = None,
-    ) -> kessel_dot_inventory_dot_v1beta2_dot_report__resource__response__pb2.ReportResourceResponse:
+    ) -> (
+        kessel_dot_inventory_dot_v1beta2_dot_report__resource__response__pb2.ReportResourceResponse
+    ):
         return self.execute_unary(
             request=request,
             method=MethodInfo(
@@ -672,7 +824,9 @@ class KesselInventoryServiceClientSync(ConnectClientSync):
         *,
         headers: Headers | Mapping[str, str] | None = None,
         timeout_ms: int | None = None,
-    ) -> kessel_dot_inventory_dot_v1beta2_dot_delete__resource__response__pb2.DeleteResourceResponse:
+    ) -> (
+        kessel_dot_inventory_dot_v1beta2_dot_delete__resource__response__pb2.DeleteResourceResponse
+    ):
         return self.execute_unary(
             request=request,
             method=MethodInfo(
@@ -692,7 +846,9 @@ class KesselInventoryServiceClientSync(ConnectClientSync):
         *,
         headers: Headers | Mapping[str, str] | None = None,
         timeout_ms: int | None = None,
-    ) -> Iterator[kessel_dot_inventory_dot_v1beta2_dot_streamed__list__objects__response__pb2.StreamedListObjectsResponse]:
+    ) -> Iterator[
+        kessel_dot_inventory_dot_v1beta2_dot_streamed__list__objects__response__pb2.StreamedListObjectsResponse
+    ]:
         return self.execute_server_stream(
             request=request,
             method=MethodInfo(
@@ -712,7 +868,9 @@ class KesselInventoryServiceClientSync(ConnectClientSync):
         *,
         headers: Headers | Mapping[str, str] | None = None,
         timeout_ms: int | None = None,
-    ) -> Iterator[kessel_dot_inventory_dot_v1beta2_dot_streamed__list__subjects__response__pb2.StreamedListSubjectsResponse]:
+    ) -> Iterator[
+        kessel_dot_inventory_dot_v1beta2_dot_streamed__list__subjects__response__pb2.StreamedListSubjectsResponse
+    ]:
         return self.execute_server_stream(
             request=request,
             method=MethodInfo(

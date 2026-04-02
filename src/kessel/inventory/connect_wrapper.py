@@ -6,6 +6,7 @@ to snake_case method names (Connect-Python convention).
 
 Exceptions propagate naturally as ConnectError - no wrapping needed.
 """
+
 import re
 
 
@@ -77,9 +78,9 @@ class StubWrapper:
             snake_case string
         """
         # Insert underscore before uppercase letters (except first)
-        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+        s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
         # Insert underscore before uppercase letters preceded by lowercase/digit
-        s2 = re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1)
+        s2 = re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1)
         # Convert to lowercase
         return s2.lower()
 
@@ -127,8 +128,8 @@ class AsyncStubWrapper:
     @staticmethod
     def _to_snake_case(name: str) -> str:
         """Convert PascalCase to snake_case."""
-        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-        s2 = re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1)
+        s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
+        s2 = re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1)
         return s2.lower()
 
 
@@ -160,7 +161,7 @@ class ChannelWrapper:
 
     def close(self):
         """Close the underlying client."""
-        if hasattr(self._client, 'close'):
+        if hasattr(self._client, "close"):
             return self._client.close()
 
 
@@ -190,5 +191,5 @@ class AsyncChannelWrapper:
 
     async def close(self):
         """Close the underlying client."""
-        if hasattr(self._client, 'close'):
+        if hasattr(self._client, "close"):
             return await self._client.close()

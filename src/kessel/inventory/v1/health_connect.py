@@ -17,15 +17,32 @@ import kessel.inventory.v1.health_pb2 as kessel_dot_inventory_dot_v1_dot_health_
 
 
 class KesselInventoryHealthService(Protocol):
-    async def get_livez(self, request: kessel_dot_inventory_dot_v1_dot_health__pb2.GetLivezRequest, ctx: RequestContext) -> kessel_dot_inventory_dot_v1_dot_health__pb2.GetLivezResponse:
+    async def get_livez(
+        self,
+        request: kessel_dot_inventory_dot_v1_dot_health__pb2.GetLivezRequest,
+        ctx: RequestContext,
+    ) -> kessel_dot_inventory_dot_v1_dot_health__pb2.GetLivezResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def get_readyz(self, request: kessel_dot_inventory_dot_v1_dot_health__pb2.GetReadyzRequest, ctx: RequestContext) -> kessel_dot_inventory_dot_v1_dot_health__pb2.GetReadyzResponse:
+    async def get_readyz(
+        self,
+        request: kessel_dot_inventory_dot_v1_dot_health__pb2.GetReadyzRequest,
+        ctx: RequestContext,
+    ) -> kessel_dot_inventory_dot_v1_dot_health__pb2.GetReadyzResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
 
-class KesselInventoryHealthServiceASGIApplication(ConnectASGIApplication[KesselInventoryHealthService]):
-    def __init__(self, service: KesselInventoryHealthService | AsyncGenerator[KesselInventoryHealthService], *, interceptors: Iterable[Interceptor]=(), read_max_bytes: int | None = None, compressions: Iterable[Compression] | None = None) -> None:
+class KesselInventoryHealthServiceASGIApplication(
+    ConnectASGIApplication[KesselInventoryHealthService]
+):
+    def __init__(
+        self,
+        service: KesselInventoryHealthService | AsyncGenerator[KesselInventoryHealthService],
+        *,
+        interceptors: Iterable[Interceptor] = (),
+        read_max_bytes: int | None = None,
+        compressions: Iterable[Compression] | None = None,
+    ) -> None:
         super().__init__(
             service=service,
             endpoints=lambda svc: {
@@ -104,14 +121,29 @@ class KesselInventoryHealthServiceClient(ConnectClient):
 
 
 class KesselInventoryHealthServiceSync(Protocol):
-    def get_livez(self, request: kessel_dot_inventory_dot_v1_dot_health__pb2.GetLivezRequest, ctx: RequestContext) -> kessel_dot_inventory_dot_v1_dot_health__pb2.GetLivezResponse:
+    def get_livez(
+        self,
+        request: kessel_dot_inventory_dot_v1_dot_health__pb2.GetLivezRequest,
+        ctx: RequestContext,
+    ) -> kessel_dot_inventory_dot_v1_dot_health__pb2.GetLivezResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def get_readyz(self, request: kessel_dot_inventory_dot_v1_dot_health__pb2.GetReadyzRequest, ctx: RequestContext) -> kessel_dot_inventory_dot_v1_dot_health__pb2.GetReadyzResponse:
+
+    def get_readyz(
+        self,
+        request: kessel_dot_inventory_dot_v1_dot_health__pb2.GetReadyzRequest,
+        ctx: RequestContext,
+    ) -> kessel_dot_inventory_dot_v1_dot_health__pb2.GetReadyzResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
 
 class KesselInventoryHealthServiceWSGIApplication(ConnectWSGIApplication):
-    def __init__(self, service: KesselInventoryHealthServiceSync, interceptors: Iterable[InterceptorSync]=(), read_max_bytes: int | None = None, compressions: Iterable[Compression] | None = None) -> None:
+    def __init__(
+        self,
+        service: KesselInventoryHealthServiceSync,
+        interceptors: Iterable[InterceptorSync] = (),
+        read_max_bytes: int | None = None,
+        compressions: Iterable[Compression] | None = None,
+    ) -> None:
         super().__init__(
             endpoints={
                 "/kessel.inventory.v1.KesselInventoryHealthService/GetLivez": EndpointSync.unary(

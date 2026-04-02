@@ -4,6 +4,7 @@ ClientBuilder for Connect-Python based Kessel SDK.
 Provides a fluent builder API for creating authenticated Connect-Python clients
 while maintaining backwards compatibility with the grpcio-based API.
 """
+
 from typing import Self, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -67,7 +68,9 @@ class AsyncOAuth2Interceptor(UnaryInterceptor):
     async def intercept_unary(self, next_handler, request, ctx):
         """Add OAuth2 bearer token to async unary request."""
         # Get fresh token
-        token_response = self._credentials.get_token() # TODO: Check if there is an async version of this
+        token_response = (
+            self._credentials.get_token()
+        )  # TODO: Check if there is an async version of this
 
         # Add to headers
         ctx.request_headers()["authorization"] = f"Bearer {token_response.access_token}"
@@ -212,6 +215,7 @@ class ClientBuilder:
         # For non-TLS gRPC, configure HTTP/2 transport explicitly
         # See: https://connectrpc.com/docs/python/grpc-compatibility
         from pyqwest import SyncClient, SyncHTTPTransport, HTTPVersion
+
         http2_transport = SyncHTTPTransport(http_version=HTTPVersion.HTTP2)
         http_client = SyncClient(transport=http2_transport)
 
@@ -256,6 +260,7 @@ class ClientBuilder:
         # For non-TLS gRPC, configure HTTP/2 transport explicitly
         # See: https://connectrpc.com/docs/python/grpc-compatibility
         from pyqwest import Client, HTTPTransport, HTTPVersion
+
         http2_transport = HTTPTransport(http_version=HTTPVersion.HTTP2)
         http_client = Client(transport=http2_transport)
 

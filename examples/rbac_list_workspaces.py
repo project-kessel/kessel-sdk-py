@@ -31,9 +31,7 @@ def run_sync():
         )
 
         stub, channel = (
-            ClientBuilder(KESSEL_ENDPOINT)
-            .oauth2_client_authenticated(auth_credentials)
-            .build()
+            ClientBuilder(KESSEL_ENDPOINT).oauth2_client_authenticated(auth_credentials).build()
         )
 
         with channel:
