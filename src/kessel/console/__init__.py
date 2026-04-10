@@ -92,5 +92,9 @@ def principal_from_rh_identity_header(header: str, domain: str = "redhat") -> Su
     if not isinstance(decoded, dict):
         raise ValueError("Identity header did not decode to a JSON object")
 
-    identity = decoded.get("identity", decoded)
+    try:
+        identity = decoded["identity"]
+    except KeyError:
+        raise ValueError("Identity header is missing the 'identity' envelope key")
+
     return principal_from_rh_identity(identity, domain)

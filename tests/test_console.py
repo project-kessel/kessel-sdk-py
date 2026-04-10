@@ -129,13 +129,13 @@ class TestPrincipalFromRHIdentityHeader:
         assert ref.resource.resource_id == "redhat/7393748"
         assert ref.resource.resource_type == "principal"
 
-    def test_inner_dict_without_envelope(self):
+    def test_missing_identity_envelope(self):
         header = _encode_identity_header({
             "type": "User",
             "user": {"user_id": "42"},
         })
-        ref = principal_from_rh_identity_header(header)
-        assert ref.resource.resource_id == "redhat/42"
+        with pytest.raises(ValueError, match="missing the 'identity' envelope key"):
+            principal_from_rh_identity_header(header)
 
     def test_service_account_header(self):
         header = _encode_identity_header({
