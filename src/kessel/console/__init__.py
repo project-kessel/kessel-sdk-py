@@ -94,7 +94,7 @@ def principal_from_rh_identity_header(header: str, domain: str = "redhat") -> Su
 
     try:
         identity = decoded["identity"]
-    except KeyError:
-        raise ValueError("Identity header is missing the 'identity' envelope key")
+    except KeyError as exc:
+        raise ValueError("Identity header is missing the 'identity' envelope key") from exc
 
     return principal_from_rh_identity(identity, domain)
