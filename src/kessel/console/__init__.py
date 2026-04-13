@@ -1,0 +1,93 @@
+import json
+from base64 import b64decode
+
+from kessel.inventory.v1beta2.subject_reference_pb2 import SubjectReference
+from kessel.rbac.v2 import principal_subject
+
+_IDENTITY_TYPE_FIELDS = {
+    "User": "user",
+    "ServiceAccount": "service_account",
+}
+
+
+def _extract_user_id(identity: dict) -> str:
+    """Extract the user identifier from a parsed x-rh-identity dict.
+
+    Args:
+        identity: The inner identity dict (``{"type": "User", "user": {...}, ...}``).
+
+    Returns:
+        The resolved user identifier string.
+
+    Raises:
+        ValueError: If the identity type is unsupported or no user ID can be resolved.
+    """
+    if not isinstance(identity, dict):
+        raise ValueError("identity must be a dict")
+
+    identity_type = identity.get("type")
+    field = _IDENTITY_TYPE_FIELDS.get(identity_type)
+    if field is None:
+        supported = ", ".join(sorted(_IDENTITY_TYPE_FIELDS))
+        raise ValueError(f"Unsupported identity type: {identity_type!r} (supported: {supported})")
+
+    details = identity.get(field)
+    if not isinstance(details, dict):
+        raise ValueError(f"Identity type {identity_type!r} is missing the {field!r} field")
+
+    user_id = details.get("user_id")
+    if not user_id:
+        raise ValueError(
+            f"Unable to resolve user ID from {identity_type} identity " f"(tried: user_id)"
+        )
+
+    return user_id
+
+
+def principal_from_rh_identity(identity: dict, domain: str = "redhat") -> SubjectReference:
+    """Build a principal ``SubjectReference`` from a parsed ``x-rh-identity`` dict.
+
+    Args:
+        identity: The inner identity dict from the ``x-rh-identity`` header
+                  (e.g. ``{"type": "User", "org_id": "...", "user": {...}}``).
+        domain: The domain or organization the user belongs to.
+                Defaults to ``"redhat"``.
+
+    Returns:
+        A ``SubjectReference`` for the resolved principal.
+
+    Raises:
+        ValueError: If the user ID cannot be resolved from the identity.
+    """
+    user_id = _extract_user_id(identity)
+    return principal_subject(user_id, domain)
+
+
+def principal_from_rh_identity_header(header: str, domain: str = "redhat") -> SubjectReference:
+    """Build a principal ``SubjectReference`` from a raw ``x-rh-identity`` header.
+
+    Args:
+        header: The base64-encoded ``x-rh-identity`` header value.
+        domain: The domain or organization the user belongs to.
+                Defaults to ``"redhat"``.
+
+    Returns:
+        A ``SubjectReference`` for the resolved principal.
+
+    Raises:
+        ValueError: If the header is malformed or the user ID cannot be resolved.
+    """
+    try:
+        decoded = json.loads(b64decode(header))
+    except Exception as exc:
+        raise ValueError(f"Failed to decode identity header: {exc}") from exc
+
+    if not isinstance(decoded, dict):
+        raise ValueError("Identity header did not decode to a JSON object")
+
+    try:
+        identity = decoded["identity"]
+    except KeyError as exc:
+        raise ValueError("Identity header is missing the 'identity' envelope key") from exc
+
+    return principal_from_rh_identity(identity, domain)
