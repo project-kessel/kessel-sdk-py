@@ -1,4 +1,23 @@
-from kessel.inventory import client_builder_for_stub
-from kessel.inventory.v1beta2.inventory_service_pb2_grpc import KesselInventoryServiceStub
+"""
+Kessel Inventory v1beta2 API.
 
-ClientBuilder = client_builder_for_stub(KesselInventoryServiceStub)
+This module provides access to protobuf message types for the Kessel Inventory v1beta2 API.
+
+For creating clients, use:
+    from kessel.inventory import ClientBuilder
+
+As of v3.0, uses Connect-Python for pure Python implementation.
+"""
+
+
+# Re-export ClientBuilder from parent for convenience
+# Import is deferred to avoid circular import
+def __getattr__(name):
+    if name == "ClientBuilder":
+        from kessel.inventory import ClientBuilder
+
+        return ClientBuilder
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+
+__all__ = ["ClientBuilder"]

@@ -1,7 +1,6 @@
 import asyncio
 import os
-
-import grpc
+from connectrpc.errors import ConnectError
 
 from kessel.auth import fetch_oidc_discovery, OAuth2ClientCredentials
 from kessel.inventory.v1beta2 import (
@@ -32,9 +31,7 @@ def run_sync():
         )
 
         stub, channel = (
-            ClientBuilder(KESSEL_ENDPOINT)
-            .oauth2_client_authenticated(auth_credentials, grpc.local_channel_credentials())
-            .build()
+            ClientBuilder(KESSEL_ENDPOINT).oauth2_client_authenticated(auth_credentials).build()
         )
 
         with channel:
@@ -44,10 +41,10 @@ def run_sync():
                 print(f"{obj}")
                 print(f"{obj.pagination.continuation_token}")
 
-    except grpc.RpcError as e:
-        print("gRPC error occurred during list_workspaces (sync):")
-        print(f"Code: {e.code()}")
-        print(f"Details: {e.details()}")
+    except ConnectError as e:
+        print("RPC error occurred during list_workspaces (sync):")
+        print(f"Code: {e.code}")
+        print(f"Message: {e.message}")
 
 
 async def run_async():
@@ -63,7 +60,7 @@ async def run_async():
 
         stub, channel = (
             ClientBuilder(KESSEL_ENDPOINT)
-            .oauth2_client_authenticated(auth_credentials, grpc.local_channel_credentials())
+            .oauth2_client_authenticated(auth_credentials)
             .build_async()
         )
 
@@ -74,10 +71,10 @@ async def run_async():
                 print(f"{obj}")
                 print(f"{obj.pagination.continuation_token}")
 
-    except grpc.RpcError as e:
-        print("gRPC error occurred during list_workspaces (async):")
-        print(f"Code: {e.code()}")
-        print(f"Details: {e.details()}")
+    except ConnectError as e:
+        print("RPC error occurred during list_workspaces (async):")
+        print(f"Code: {e.code}")
+        print(f"Message: {e.message}")
 
 
 if __name__ == "__main__":

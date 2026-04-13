@@ -27,5 +27,5 @@ jobs:
     - name: Lint with flake8
       run: |
         # Lint source & examples, excluding generated protobuf files
-        flake8 --exclude '*_pb2.py,*_pb2_grpc.py' src/ examples/
+        flake8 --exclude '*_pb2.py,*_pb2_grpc.py,src/kessel/inventory/**/*_connect.py' src/ examples/
 
