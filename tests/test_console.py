@@ -32,19 +32,21 @@ class TestExtractUserId:
         }
         assert _extract_user_id(identity) == "sa-456"
 
-    def test_service_account_falls_back_to_client_id(self):
+    def test_service_account_missing_user_id(self):
         identity = {
             "type": "ServiceAccount",
             "service_account": {"client_id": "b69eaf9e"},
         }
-        assert _extract_user_id(identity) == "b69eaf9e"
+        with pytest.raises(ValueError, match="Unable to resolve user ID"):
+            _extract_user_id(identity)
 
-    def test_service_account_skips_empty_user_id(self):
+    def test_service_account_empty_user_id(self):
         identity = {
             "type": "ServiceAccount",
             "service_account": {"user_id": "", "client_id": "b69eaf9e"},
         }
-        assert _extract_user_id(identity) == "b69eaf9e"
+        with pytest.raises(ValueError, match="Unable to resolve user ID"):
+            _extract_user_id(identity)
 
     @pytest.mark.parametrize("identity_type", ["System", "X509", "Associate"])
     def test_unsupported_identity_type(self, identity_type):
@@ -96,10 +98,10 @@ class TestPrincipalFromRHIdentity:
         identity = {
             "type": "ServiceAccount",
             "org_id": "456",
-            "service_account": {"client_id": "b69eaf9e", "username": "svc-b69eaf9e"},
+            "service_account": {"user_id": "sa-456", "client_id": "b69eaf9e", "username": "svc-b69eaf9e"},
         }
         ref = principal_from_rh_identity(identity)
-        assert ref.resource.resource_id == "redhat/b69eaf9e"
+        assert ref.resource.resource_id == "redhat/sa-456"
 
     def test_custom_domain(self):
         identity = {"type": "User", "user": {"user_id": "42"}}
@@ -205,10 +207,11 @@ class TestPrincipalFromRHIdentityHeader:
                 "org_id": "456",
                 "type": "ServiceAccount",
                 "service_account": {
+                    "user_id": "sa-b69eaf9e",
                     "client_id": "b69eaf9e-e6a6-4f9e-805e-02987daddfbd",
                     "username": "service-account-b69eaf9e-e6a6-4f9e-805e-02987daddfbd",
                 },
             }
         })
         ref = principal_from_rh_identity_header(header)
-        assert ref.resource.resource_id == "redhat/b69eaf9e-e6a6-4f9e-805e-02987daddfbd"
+        assert ref.resource.resource_id == "redhat/sa-b69eaf9e"

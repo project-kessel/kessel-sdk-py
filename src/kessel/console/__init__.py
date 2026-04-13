@@ -9,11 +9,6 @@ _IDENTITY_TYPE_FIELDS = {
     "ServiceAccount": "service_account",
 }
 
-_USER_ID_KEYS = {
-    "User": ("user_id",),
-    "ServiceAccount": ("user_id", "client_id"),
-}
-
 
 def _extract_user_id(identity: dict) -> str:
     """Extract the user identifier from a parsed x-rh-identity dict.
@@ -40,15 +35,13 @@ def _extract_user_id(identity: dict) -> str:
     if not isinstance(details, dict):
         raise ValueError(f"Identity type {identity_type!r} is missing the {field!r} field")
 
-    for key in _USER_ID_KEYS[identity_type]:
-        value = details.get(key)
-        if value:
-            return value
+    user_id = details.get("user_id")
+    if not user_id:
+        raise ValueError(
+            f"Unable to resolve user ID from {identity_type} identity " f"(tried: user_id)"
+        )
 
-    tried = ", ".join(_USER_ID_KEYS[identity_type])
-    raise ValueError(
-        f"Unable to resolve user ID from {identity_type} identity " f"(tried: {tried})"
-    )
+    return user_id
 
 
 def principal_from_rh_identity(identity: dict, domain: str = "redhat") -> SubjectReference:
