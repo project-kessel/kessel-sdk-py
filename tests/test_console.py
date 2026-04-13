@@ -178,6 +178,31 @@ class TestPrincipalFromRHIdentityHeader:
         with pytest.raises(ValueError, match="Unsupported identity type"):
             principal_from_rh_identity_header(header)
 
+    def test_user_header_missing_user_id(self):
+        header = _encode_identity_header({
+            "identity": {
+                "type": "User",
+                "org_id": "1979710",
+                "user": {"username": "foobar"},
+            }
+        })
+        with pytest.raises(ValueError, match="Unable to resolve user ID"):
+            principal_from_rh_identity_header(header)
+
+    def test_service_account_header_missing_user_id(self):
+        header = _encode_identity_header({
+            "identity": {
+                "type": "ServiceAccount",
+                "org_id": "456",
+                "service_account": {
+                    "client_id": "b69eaf9e",
+                    "username": "svc-b69eaf9e",
+                },
+            }
+        })
+        with pytest.raises(ValueError, match="Unable to resolve user ID"):
+            principal_from_rh_identity_header(header)
+
     def test_realistic_user_header(self):
         header = _encode_identity_header({
             "identity": {
