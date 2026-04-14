@@ -232,6 +232,7 @@ The `examples/` directory contains working examples:
 - `auth_async.py` - Async OAuth 2.0 authentication
 - `auth_insecure.py` - OAuth 2.0 authentication via an insecure connection
 - `check.py` - Permission checking
+- `console_principal.py` - Console principal extraction from RH identity headers
 - `check_bulk.py` - Bulk permission checking for multiple resource/subject pairs
 - `check_for_update.py` - Checking for updates
 - `delete_resource.py` - Deleting resources

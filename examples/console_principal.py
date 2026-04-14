@@ -19,6 +19,7 @@ def run():
         "type": "ServiceAccount",
         "org_id": "456",
         "service_account": {
+            "user_id": "12345",
             "client_id": "b69eaf9e-e6a6-4f9e-805e-02987daddfbd",
             "username": "service-account-b69eaf9e",
         },
