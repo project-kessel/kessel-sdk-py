@@ -263,12 +263,10 @@ except grpc.RpcError as err:
         print(f"Error: {err.details()}")
 ```
 
-## Roadmap
+## Documentation
 
-This is the foundational gRPC library. Future releases will include:
-
-- **High-level SDK**: Fluent client builder API
-- **Convenience Methods**: Simplified APIs for common operations
+- **[AGENTS.md](AGENTS.md)** -- Onboarding guide for AI agents working in this repository, including cross-cutting conventions, project structure, and a docs index
+- **[docs/](docs/)** -- Domain-specific guideline files covering security, performance, error handling, API contracts, testing, and integration
 
 ## Contributing
 
