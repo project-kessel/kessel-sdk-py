@@ -130,7 +130,7 @@ async for resp in list_workspaces_async(mock_inventory, subj, "member"):
     responses.append(resp)
 ```
 
-## Parametrized Tests
+## Parameterized Tests
 
 Use `@pytest.mark.parametrize` for testing the same logic with multiple inputs:
 ```python

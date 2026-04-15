@@ -188,7 +188,7 @@ Sync channels use `with channel:`, async channels use `async with channel:`. Thi
 
 ### 8.2 Place error handling inside the context manager
 
-The `try/except grpc.RpcError` block should be inside the `with channel:` block, not outside it. The channel must be open when `e.code()` and `e.details()` are accessed.
+`grpc.RpcError` captures its status code and details locally, so `e.code()` and `e.details()` work regardless of channel state. Still, place the `try/except grpc.RpcError` block inside the `with channel:` context manager for proper resource cleanup and clearer control flow.
 
 ## 9. Testing Error Scenarios
 
