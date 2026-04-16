@@ -263,6 +263,31 @@ except grpc.RpcError as err:
         print(f"Error: {err.details()}")
 ```
 
+### Listing Workspaces
+
+The `list_workspaces` helper automatically paginates through all workspaces
+a subject can access. Continuation tokens are handled internally, meaning you never
+need to manage them yourself.
+
+```python
+from kessel.rbac.v2 import list_workspaces, list_workspaces_async, principal_subject
+
+subject = principal_subject("alice", "redhat")
+
+# Lazy iteration (constant memory)
+for response in list_workspaces(inventory, subject, "viewer"):
+    print(response.object.resource_id)
+
+# Materialise into a list
+all_workspaces = list(list_workspaces(inventory, subject, "viewer"))
+
+# Async variant
+async for response in list_workspaces_async(inventory, subject, "viewer"):
+    print(response.object.resource_id)
+```
+
+See [`examples/rbac_list_workspaces.py`](./examples/rbac_list_workspaces.py) for a complete working example.
+
 ## Roadmap
 
 This is the foundational gRPC library. Future releases will include:

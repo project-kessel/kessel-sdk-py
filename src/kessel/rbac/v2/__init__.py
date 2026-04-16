@@ -254,14 +254,27 @@ def list_workspaces(
     This function queries the inventory service to find workspaces
     based on the subject's permissions.
 
+    Pagination is handled automatically meaning continuation tokens are managed
+    internally so callers never need to deal with them.
+
     Args:
-        subject: The subject to check permissions for
-        relation: The relationship type to check "member", "admin", "viewer")
-        inventory: The inventory service client stub for making the request
+        inventory: The inventory service client stub for making the request.
+        subject: The subject to check permissions for.
+        relation: The relationship type to check (e.g. "member", "admin", "viewer").
         continuation_token: Optional token to resume listing from a previous page
 
     Returns:
-        An iterator of StreamedListObjectsResponse messages
+        An iterator of StreamedListObjectsResponse messages.
+
+    Examples:
+        Iterate one-by-one (lazy, low memory)::
+
+            for response in list_workspaces(inventory, subject, "viewer"):
+                print(response.object.resource_id)
+
+        Materialise into a list (eager, all results in memory)::
+
+            all_workspaces = list(list_workspaces(inventory, subject, "viewer"))
     """
     while True:
         pagination = None
@@ -297,18 +310,34 @@ async def list_workspaces_async(
     continuation_token: Optional[str] = None,
 ) -> AsyncIterator[StreamedListObjectsResponse]:
     """
+    Async version of :func:`list_workspaces`.
+
     Lists all workspaces that a subject has a specific relation to.
     This function queries the inventory service to find workspaces
-     based on the subject's permissions.
+    based on the subject's permissions.
+    Pagination is handled automatically meaning continuation tokens are managed
+    internally.
 
     Args:
         inventory: The inventory service client stub for making the request (async channel).
         subject: The subject to check permissions for.
         relation: The relationship type to check (e.g. "member", "admin", "viewer").
-        continuation_token: Optional token to resume listing from a previous page
+        continuation_token: Optional token to resume listing from a previous position.
 
     Returns:
-        An async iterator of StreamedListObjectsResponse messages
+        An async iterator of StreamedListObjectsResponse messages.
+
+    Examples:
+        Iterate one-by-one::
+
+            async for response in list_workspaces_async(inventory, subject, "viewer"):
+                print(response.object.resource_id)
+
+        Materialise into a list::
+
+            all_workspaces = [
+                r async for r in list_workspaces_async(inventory, subject, "viewer")
+            ]
     """
     while True:
         pagination = None
