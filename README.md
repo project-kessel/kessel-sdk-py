@@ -272,17 +272,18 @@ need to manage them yourself.
 ```python
 from kessel.rbac.v2 import list_workspaces, list_workspaces_async, principal_subject
 
+# `stub` is a KesselInventoryServiceStub, created as shown in the earlier examples.
 subject = principal_subject("alice", "redhat")
 
 # Lazy iteration (constant memory)
-for response in list_workspaces(inventory, subject, "viewer"):
+for response in list_workspaces(stub, subject, "viewer"):
     print(response.object.resource_id)
 
 # Materialise into a list
-all_workspaces = list(list_workspaces(inventory, subject, "viewer"))
+all_workspaces = list(list_workspaces(stub, subject, "viewer"))
 
 # Async variant
-async for response in list_workspaces_async(inventory, subject, "viewer"):
+async for response in list_workspaces_async(stub, subject, "viewer"):
     print(response.object.resource_id)
 ```
 
