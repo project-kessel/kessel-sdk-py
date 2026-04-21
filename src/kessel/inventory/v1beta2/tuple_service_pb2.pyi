@@ -1,0 +1,12 @@
+from kessel.inventory.v1beta2 import create_tuples_request_pb2 as _create_tuples_request_pb2
+from kessel.inventory.v1beta2 import create_tuples_response_pb2 as _create_tuples_response_pb2
+from kessel.inventory.v1beta2 import read_tuples_request_pb2 as _read_tuples_request_pb2
+from kessel.inventory.v1beta2 import read_tuples_response_pb2 as _read_tuples_response_pb2
+from kessel.inventory.v1beta2 import delete_tuples_request_pb2 as _delete_tuples_request_pb2
+from kessel.inventory.v1beta2 import delete_tuples_response_pb2 as _delete_tuples_response_pb2
+from kessel.inventory.v1beta2 import acquire_lock_request_pb2 as _acquire_lock_request_pb2
+from kessel.inventory.v1beta2 import acquire_lock_response_pb2 as _acquire_lock_response_pb2
+from google.protobuf import descriptor as _descriptor
+from typing import ClassVar as _ClassVar
+
+DESCRIPTOR: _descriptor.FileDescriptor
