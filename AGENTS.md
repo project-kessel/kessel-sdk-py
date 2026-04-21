@@ -6,12 +6,12 @@ This file provides orientation for AI agents (Claude, Cursor, CodeRabbit, etc.) 
 
 The following guideline files contain in-depth, domain-specific rules. Read the relevant file before working in that area.
 
-- `docs/security-guidelines.md` -- OAuth 2.0 credentials, gRPC channel security, token management
-- `docs/performance-guidelines.md` -- Channel lifecycle, async/sync selection, streaming, bulk APIs
-- `docs/error-handling-guidelines.md` -- gRPC errors, HTTP errors, bulk per-item errors, propagation rules
-- `docs/api-contracts-guidelines.md` -- Protobuf generation, API versioning, request/response types
-- `docs/testing-guidelines.md` -- pytest conventions, mocking patterns, async tests, CI workflow
-- `docs/integration-guidelines.md` -- gRPC + REST integration, OIDC, buf.build, multi-protocol coordination
+- `docs/security-guidelines.md` -- gRPC channel security, OIDC constraints, token lifecycle, RBAC org_id validation
+- `docs/performance-guidelines.md` -- Async/sync selection, streaming pagination, bulk APIs, consistency modes
+- `docs/error-handling-guidelines.md` -- gRPC status codes, streaming errors, CheckBulk per-item errors, HTTP/auth errors
+- `docs/api-contracts-guidelines.md` -- v1beta2 type conventions, shared reference types, backward compatibility, protobuf runtime
+- `docs/testing-guidelines.md` -- Mocking patterns, async test patterns, assertions, test boundaries
+- `docs/integration-guidelines.md` -- New service setup, RBAC REST API, multi-protocol coordination, env vars
 
 ## Repository Structure
 
