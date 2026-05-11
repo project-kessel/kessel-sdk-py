@@ -1,4 +1,7 @@
+import time
+
 import pytest
+import requests
 from unittest.mock import Mock, patch
 
 from kessel.rbac.v2 import (
@@ -13,6 +16,7 @@ from kessel.rbac.v2 import (
     list_workspaces_async,
     fetch_root_workspace,
     fetch_default_workspace,
+    WorkspaceClient,
 )
 from kessel.inventory.v1beta2.streamed_list_objects_response_pb2 import StreamedListObjectsResponse
 from kessel.inventory.v1beta2.response_pagination_pb2 import ResponsePagination
@@ -77,10 +81,10 @@ def test_subject(resource_ref, relation, expect_relation, expected_relation):
         subj = subject(resource_ref, relation)
     else:
         subj = subject(resource_ref)
-    
+
     assert subj is not None
     assert subj.resource is not None
-    
+
     if expect_relation:
         assert subj.HasField("relation")
         assert subj.relation == expected_relation
@@ -92,20 +96,20 @@ class TestListWorkspaces:
     def test_builds_request_with_correct_parameters(self):
         """Test that list_workspaces builds request with correct parameters"""
         mock_inventory = Mock()
-        response = StreamedListObjectsResponse(
-            pagination=ResponsePagination(continuation_token="")
-        )
+        response = StreamedListObjectsResponse(pagination=ResponsePagination(continuation_token=""))
         mock_inventory.StreamedListObjects.return_value = iter([response])
-        
+
         subj = principal_subject("user123", "redhat")
-        
-        responses = list[StreamedListObjectsResponse](list_workspaces(mock_inventory, subj, "member"))
-        
+
+        responses = list[StreamedListObjectsResponse](
+            list_workspaces(mock_inventory, subj, "member")
+        )
+
         assert len(responses) == 1
-        
+
         assert mock_inventory.StreamedListObjects.call_count == 1
         call_args = mock_inventory.StreamedListObjects.call_args[0][0]
-        
+
         assert call_args.relation == "member"
         assert call_args.object_type.resource_type == "workspace"
         assert call_args.object_type.reporter_type == "rbac"
@@ -114,7 +118,7 @@ class TestListWorkspaces:
     def test_handles_pagination_with_continuation_token(self):
         """Test that list_workspaces handles pagination with continuation token"""
         mock_inventory = Mock()
-        
+
         # First call returns a continuation token
         response1 = StreamedListObjectsResponse(
             pagination=ResponsePagination(continuation_token="next-page-token")
@@ -123,20 +127,20 @@ class TestListWorkspaces:
         response2 = StreamedListObjectsResponse(
             pagination=ResponsePagination(continuation_token="")
         )
-        
+
         mock_inventory.StreamedListObjects.side_effect = [
             iter([response1]),
             iter([response2]),
         ]
-        
+
         subj = principal_subject("user123", "redhat")
-        
+
         responses = list(list_workspaces(mock_inventory, subj, "viewer"))
-        
+
         assert len(responses) == 2
-        
+
         assert mock_inventory.StreamedListObjects.call_count == 2
-        
+
         second_call_args = mock_inventory.StreamedListObjects.call_args_list[1][0][0]
         assert second_call_args.pagination is not None
         assert second_call_args.pagination.continuation_token == "next-page-token"
@@ -144,15 +148,13 @@ class TestListWorkspaces:
     def test_stops_when_no_continuation_token(self):
         """Test that list_workspaces stops when no continuation token is present"""
         mock_inventory = Mock()
-        response = StreamedListObjectsResponse(
-            pagination=ResponsePagination(continuation_token="")
-        )
+        response = StreamedListObjectsResponse(pagination=ResponsePagination(continuation_token=""))
         mock_inventory.StreamedListObjects.return_value = iter([response])
-        
+
         subj = principal_subject("user123", "redhat")
-        
+
         responses = list(list_workspaces(mock_inventory, subj, "admin"))
-        
+
         assert mock_inventory.StreamedListObjects.call_count == 1
         assert len(responses) == 1
 
@@ -160,31 +162,26 @@ class TestListWorkspaces:
         """Test that list_workspaces properly propagates stream errors"""
         mock_inventory = Mock()
         mock_inventory.StreamedListObjects.side_effect = Exception("stream failed")
-        
+
         subj = principal_subject("user123", "redhat")
-        
+
         with pytest.raises(Exception, match="stream failed"):
             list(list_workspaces(mock_inventory, subj, "member"))
 
     def test_uses_provided_continuation_token(self):
         """Test that list_workspaces uses provided continuation token"""
         mock_inventory = Mock()
-        response = StreamedListObjectsResponse(
-            pagination=ResponsePagination(continuation_token="")
-        )
+        response = StreamedListObjectsResponse(pagination=ResponsePagination(continuation_token=""))
         mock_inventory.StreamedListObjects.return_value = iter([response])
-        
+
         subj = principal_subject("user123", "redhat")
-        
-        responses = list(list_workspaces(
-            mock_inventory, 
-            subj, 
-            "member", 
-            continuation_token="resume-from-here"
-        ))
-        
+
+        responses = list(
+            list_workspaces(mock_inventory, subj, "member", continuation_token="resume-from-here")
+        )
+
         assert len(responses) == 1
-        
+
         call_args = mock_inventory.StreamedListObjects.call_args[0][0]
         assert call_args.pagination is not None
         assert call_args.pagination.continuation_token == "resume-from-here"
@@ -192,20 +189,18 @@ class TestListWorkspaces:
     def test_handles_none_continuation_token_initial_request(self):
         """Test that list_workspaces handles None continuation token correctly"""
         mock_inventory = Mock()
-        response = StreamedListObjectsResponse(
-            pagination=ResponsePagination(continuation_token="")
-        )
+        response = StreamedListObjectsResponse(pagination=ResponsePagination(continuation_token=""))
         mock_inventory.StreamedListObjects.return_value = iter([response])
-        
+
         subj = principal_subject("user123", "redhat")
-        
+
         responses = list(list_workspaces(mock_inventory, subj, "member", continuation_token=None))
-        
+
         assert len(responses) == 1
-        
-        # Verify the request had no pagination field set 
+
+        # Verify the request had no pagination field set
         call_args = mock_inventory.StreamedListObjects.call_args[0][0]
-        if hasattr(call_args, 'HasField'):
+        if hasattr(call_args, "HasField"):
             assert not call_args.HasField("pagination")
         else:
             assert call_args.pagination is None
@@ -216,26 +211,24 @@ class TestListWorkspacesAsync:
     async def test_builds_request_with_correct_parameters(self):
         """Test that list_workspaces_async builds request with correct parameters"""
         mock_inventory = Mock()
-        response = StreamedListObjectsResponse(
-            pagination=ResponsePagination(continuation_token="")
-        )
-        
+        response = StreamedListObjectsResponse(pagination=ResponsePagination(continuation_token=""))
+
         async def async_iter():
             yield response
-        
+
         mock_inventory.StreamedListObjects.return_value = async_iter()
-        
+
         subj = principal_subject("user123", "redhat")
-        
+
         responses = []
         async for resp in list_workspaces_async(mock_inventory, subj, "member"):
             responses.append(resp)
-        
+
         assert len(responses) == 1
-        
+
         assert mock_inventory.StreamedListObjects.call_count == 1
         call_args = mock_inventory.StreamedListObjects.call_args[0][0]
-        
+
         assert call_args.relation == "member"
         assert call_args.object_type.resource_type == "workspace"
         assert call_args.object_type.reporter_type == "rbac"
@@ -245,32 +238,32 @@ class TestListWorkspacesAsync:
     async def test_handles_pagination_with_continuation_token(self):
         """Test that list_workspaces_async handles pagination with continuation token"""
         mock_inventory = Mock()
-        
+
         response1 = StreamedListObjectsResponse(
             pagination=ResponsePagination(continuation_token="next-page-token")
         )
         response2 = StreamedListObjectsResponse(
             pagination=ResponsePagination(continuation_token="")
         )
-        
+
         async def async_iter1():
             yield response1
-        
+
         async def async_iter2():
             yield response2
-        
+
         mock_inventory.StreamedListObjects.side_effect = [async_iter1(), async_iter2()]
-        
+
         subj = principal_subject("user123", "redhat")
-        
+
         responses = []
         async for resp in list_workspaces_async(mock_inventory, subj, "viewer"):
             responses.append(resp)
-        
+
         assert len(responses) == 2
-        
+
         assert mock_inventory.StreamedListObjects.call_count == 2
-        
+
         second_call_args = mock_inventory.StreamedListObjects.call_args_list[1][0][0]
         assert second_call_args.pagination is not None
         assert second_call_args.pagination.continuation_token == "next-page-token"
@@ -279,21 +272,19 @@ class TestListWorkspacesAsync:
     async def test_stops_when_no_continuation_token(self):
         """Test that list_workspaces_async stops when no continuation token is present"""
         mock_inventory = Mock()
-        response = StreamedListObjectsResponse(
-            pagination=ResponsePagination(continuation_token="")
-        )
-        
+        response = StreamedListObjectsResponse(pagination=ResponsePagination(continuation_token=""))
+
         async def async_iter():
             yield response
-        
+
         mock_inventory.StreamedListObjects.return_value = async_iter()
-        
+
         subj = principal_subject("user123", "redhat")
-        
+
         responses = []
         async for resp in list_workspaces_async(mock_inventory, subj, "admin"):
             responses.append(resp)
-        
+
         assert mock_inventory.StreamedListObjects.call_count == 1
         assert len(responses) == 1
 
@@ -302,9 +293,9 @@ class TestListWorkspacesAsync:
         """Test that list_workspaces_async properly propagates stream errors"""
         mock_inventory = Mock()
         mock_inventory.StreamedListObjects.side_effect = Exception("stream failed")
-        
+
         subj = principal_subject("user123", "redhat")
-        
+
         with pytest.raises(Exception, match="stream failed"):
             async for _ in list_workspaces_async(mock_inventory, subj, "member"):
                 pass
@@ -313,28 +304,23 @@ class TestListWorkspacesAsync:
     async def test_uses_provided_continuation_token(self):
         """Test that list_workspaces_async uses provided continuation token"""
         mock_inventory = Mock()
-        response = StreamedListObjectsResponse(
-            pagination=ResponsePagination(continuation_token="")
-        )
-        
+        response = StreamedListObjectsResponse(pagination=ResponsePagination(continuation_token=""))
+
         async def async_iter():
             yield response
-        
+
         mock_inventory.StreamedListObjects.return_value = async_iter()
-        
+
         subj = principal_subject("user123", "redhat")
-        
+
         responses = []
         async for resp in list_workspaces_async(
-            mock_inventory, 
-            subj, 
-            "member", 
-            continuation_token="resume-from-here"
+            mock_inventory, subj, "member", continuation_token="resume-from-here"
         ):
             responses.append(resp)
-        
+
         assert len(responses) == 1
-        
+
         call_args = mock_inventory.StreamedListObjects.call_args[0][0]
         assert call_args.pagination is not None
         assert call_args.pagination.continuation_token == "resume-from-here"
@@ -343,90 +329,83 @@ class TestListWorkspacesAsync:
     async def test_handles_none_continuation_token_initial_request(self):
         """Test that list_workspaces_async handles None continuation token correctly"""
         mock_inventory = Mock()
-        response = StreamedListObjectsResponse(
-            pagination=ResponsePagination(continuation_token="")
-        )
-        
+        response = StreamedListObjectsResponse(pagination=ResponsePagination(continuation_token=""))
+
         async def async_iter():
             yield response
-        
+
         mock_inventory.StreamedListObjects.return_value = async_iter()
-        
+
         subj = principal_subject("user123", "redhat")
-        
+
         responses = []
-        async for resp in list_workspaces_async(mock_inventory, subj, "member", continuation_token=None):
+        async for resp in list_workspaces_async(
+            mock_inventory, subj, "member", continuation_token=None
+        ):
             responses.append(resp)
-        
+
         assert len(responses) == 1
-        
+
         call_args = mock_inventory.StreamedListObjects.call_args[0][0]
-        if hasattr(call_args, 'HasField'):
+        if hasattr(call_args, "HasField"):
             assert not call_args.HasField("pagination")
         else:
             assert call_args.pagination is None
 
 
 class TestFetchDefaultWorkspace:
-    @patch('kessel.rbac.v2.requests')
+    @patch("kessel.rbac.v2.requests")
     def test_successful_default_workspace_fetch(self, mock_requests):
         """Test successful fetch of default workspace"""
         mock_response = Mock()
         mock_response.json.return_value = {
-            "data": [{
-                "id": "default-ws-123",
-                "name": "Default Workspace",
-                "type": "default",
-                "description": "Organization default workspace"
-            }]
+            "data": [
+                {
+                    "id": "default-ws-123",
+                    "name": "Default Workspace",
+                    "type": "default",
+                    "description": "Organization default workspace",
+                }
+            ]
         }
         mock_response.raise_for_status = Mock()
         mock_requests.get.return_value = mock_response
-        
-        result = fetch_default_workspace(
-            rbac_base_endpoint="http://example.com",
-            org_id="org123"
-        )
-        
+
+        result = fetch_default_workspace(rbac_base_endpoint="http://example.com", org_id="org123")
+
         assert result is not None
         assert result.id == "default-ws-123"
         assert result.name == "Default Workspace"
         assert result.type == "default"
         assert result.description == "Organization default workspace"
-        
+
         mock_requests.get.assert_called_once()
         call_kwargs = mock_requests.get.call_args
         assert call_kwargs[1]["params"]["type"] == "default"
         assert call_kwargs[1]["headers"]["x-rh-rbac-org-id"] == "org123"
 
-    @patch('kessel.rbac.v2.requests')
+    @patch("kessel.rbac.v2.requests")
     def test_server_error_response(self, mock_requests):
         """Test handling of server error response"""
         mock_response = Mock()
         mock_response.raise_for_status.side_effect = Exception("Internal Server Error")
         mock_requests.get.return_value = mock_response
-        
-        with pytest.raises(Exception, match="Internal Server Error"):
-            fetch_default_workspace(
-                rbac_base_endpoint="http://example.com",
-                org_id="org123"
-            )
 
-    @patch('kessel.rbac.v2.requests')
+        with pytest.raises(Exception, match="Internal Server Error"):
+            fetch_default_workspace(rbac_base_endpoint="http://example.com", org_id="org123")
+
+    @patch("kessel.rbac.v2.requests")
     def test_empty_workspace_response(self, mock_requests):
         """Test handling of empty workspace response"""
         mock_response = Mock()
         mock_response.json.return_value = {"data": []}
         mock_response.raise_for_status = Mock()
         mock_requests.get.return_value = mock_response
-        
-        with pytest.raises(ValueError, match="No default workspace found"):
-            fetch_default_workspace(
-                rbac_base_endpoint="http://example.com",
-                org_id="org123"
-            )
 
-    @patch('kessel.rbac.v2.requests')
+        with pytest.raises(ValueError, match="No default workspace found"):
+            fetch_default_workspace(rbac_base_endpoint="http://example.com", org_id="org123")
+
+    @patch("kessel.rbac.v2.requests")
     def test_rbac_endpoint_with_trailing_slash(self, mock_requests):
         """Test that trailing slashes are handled correctly"""
         mock_response = Mock()
@@ -435,20 +414,17 @@ class TestFetchDefaultWorkspace:
         }
         mock_response.raise_for_status = Mock()
         mock_requests.get.return_value = mock_response
-        
-        result = fetch_default_workspace(
-            rbac_base_endpoint="http://example.com/",
-            org_id="org123"
-        )
-        
+
+        result = fetch_default_workspace(rbac_base_endpoint="http://example.com/", org_id="org123")
+
         assert result is not None
         assert result.id == "ws1"
-        
+
         call_args = mock_requests.get.call_args[0][0]
         assert "/api/rbac/v2/workspaces/" in call_args
         assert "//api/rbac" not in call_args
 
-    @patch('kessel.rbac.v2.requests')
+    @patch("kessel.rbac.v2.requests")
     def test_with_custom_http_client(self, mock_requests):
         """Test using custom HTTP client"""
         mock_http_client = Mock()
@@ -458,18 +434,16 @@ class TestFetchDefaultWorkspace:
         }
         mock_response.raise_for_status = Mock()
         mock_http_client.get.return_value = mock_response
-        
+
         result = fetch_default_workspace(
-            rbac_base_endpoint="http://example.com",
-            org_id="org123",
-            http_client=mock_http_client
+            rbac_base_endpoint="http://example.com", org_id="org123", http_client=mock_http_client
         )
-        
+
         assert result is not None
         mock_http_client.get.assert_called_once()
         mock_requests.get.assert_not_called()
 
-    @patch('kessel.rbac.v2.requests')
+    @patch("kessel.rbac.v2.requests")
     def test_with_auth(self, mock_requests):
         """Test fetch with authentication"""
         mock_auth = Mock()
@@ -479,90 +453,78 @@ class TestFetchDefaultWorkspace:
         }
         mock_response.raise_for_status = Mock()
         mock_requests.get.return_value = mock_response
-        
+
         result = fetch_default_workspace(
-            rbac_base_endpoint="http://example.com",
-            org_id="org123",
-            auth=mock_auth
+            rbac_base_endpoint="http://example.com", org_id="org123", auth=mock_auth
         )
-        
+
         assert result is not None
         call_kwargs = mock_requests.get.call_args[1]
         assert call_kwargs["auth"] == mock_auth
 
-    @patch('kessel.rbac.v2.requests')
+    @patch("kessel.rbac.v2.requests")
     def test_invalid_json_response(self, mock_requests):
         """Test handling of invalid JSON response"""
         mock_response = Mock()
         mock_response.json.side_effect = ValueError("Invalid JSON")
         mock_response.raise_for_status = Mock()
         mock_requests.get.return_value = mock_response
-        
+
         with pytest.raises(ValueError, match="Invalid JSON"):
-            fetch_default_workspace(
-                rbac_base_endpoint="http://example.com",
-                org_id="org123"
-            )
+            fetch_default_workspace(rbac_base_endpoint="http://example.com", org_id="org123")
 
 
 class TestFetchRootWorkspace:
-    @patch('kessel.rbac.v2.requests')
+    @patch("kessel.rbac.v2.requests")
     def test_successful_root_workspace_fetch(self, mock_requests):
         """Test successful fetch of root workspace"""
         mock_response = Mock()
         mock_response.json.return_value = {
-            "data": [{
-                "id": "root-ws-456",
-                "name": "Root Workspace",
-                "type": "root",
-                "description": "Organization root workspace"
-            }]
+            "data": [
+                {
+                    "id": "root-ws-456",
+                    "name": "Root Workspace",
+                    "type": "root",
+                    "description": "Organization root workspace",
+                }
+            ]
         }
         mock_response.raise_for_status = Mock()
         mock_requests.get.return_value = mock_response
-        
-        result = fetch_root_workspace(
-            rbac_base_endpoint="http://example.com",
-            org_id="org123"
-        )
-        
+
+        result = fetch_root_workspace(rbac_base_endpoint="http://example.com", org_id="org123")
+
         assert result is not None
         assert result.id == "root-ws-456"
         assert result.name == "Root Workspace"
         assert result.type == "root"
         assert result.description == "Organization root workspace"
-        
+
         call_kwargs = mock_requests.get.call_args
         assert call_kwargs[1]["params"]["type"] == "root"
 
-    @patch('kessel.rbac.v2.requests')
+    @patch("kessel.rbac.v2.requests")
     def test_unauthorized_error(self, mock_requests):
         """Test handling of unauthorized error"""
         mock_response = Mock()
         mock_response.raise_for_status.side_effect = Exception("Unauthorized")
         mock_requests.get.return_value = mock_response
-        
-        with pytest.raises(Exception, match="Unauthorized"):
-            fetch_root_workspace(
-                rbac_base_endpoint="http://example.com",
-                org_id="org123"
-            )
 
-    @patch('kessel.rbac.v2.requests')
+        with pytest.raises(Exception, match="Unauthorized"):
+            fetch_root_workspace(rbac_base_endpoint="http://example.com", org_id="org123")
+
+    @patch("kessel.rbac.v2.requests")
     def test_empty_root_workspace_response(self, mock_requests):
         """Test handling of empty root workspace response"""
         mock_response = Mock()
         mock_response.json.return_value = {"data": []}
         mock_response.raise_for_status = Mock()
         mock_requests.get.return_value = mock_response
-        
-        with pytest.raises(ValueError, match="No root workspace found"):
-            fetch_root_workspace(
-                rbac_base_endpoint="http://example.com",
-                org_id="org123"
-            )
 
-    @patch('kessel.rbac.v2.requests')
+        with pytest.raises(ValueError, match="No root workspace found"):
+            fetch_root_workspace(rbac_base_endpoint="http://example.com", org_id="org123")
+
+    @patch("kessel.rbac.v2.requests")
     def test_url_construction(self, mock_requests):
         """Test correct URL construction"""
         mock_response = Mock()
@@ -571,16 +533,13 @@ class TestFetchRootWorkspace:
         }
         mock_response.raise_for_status = Mock()
         mock_requests.get.return_value = mock_response
-        
-        fetch_root_workspace(
-            rbac_base_endpoint="http://example.com",
-            org_id="org123"
-        )
-        
+
+        fetch_root_workspace(rbac_base_endpoint="http://example.com", org_id="org123")
+
         call_args = mock_requests.get.call_args[0][0]
         assert call_args == "http://example.com/api/rbac/v2/workspaces/"
 
-    @patch('kessel.rbac.v2.requests')
+    @patch("kessel.rbac.v2.requests")
     def test_headers_set_correctly(self, mock_requests):
         """Test that required headers are set correctly"""
         mock_response = Mock()
@@ -589,13 +548,322 @@ class TestFetchRootWorkspace:
         }
         mock_response.raise_for_status = Mock()
         mock_requests.get.return_value = mock_response
-        
-        fetch_root_workspace(
-            rbac_base_endpoint="http://example.com",
-            org_id="test-org-id"
-        )
-        
+
+        fetch_root_workspace(rbac_base_endpoint="http://example.com", org_id="test-org-id")
+
         call_kwargs = mock_requests.get.call_args[1]
         assert call_kwargs["headers"]["x-rh-rbac-org-id"] == "test-org-id"
         assert call_kwargs["headers"]["Content-Type"] == "application/json"
 
+
+class TestWorkspaceClient:
+    def _mock_http_client(self, workspace_data):
+        mock_client = Mock()
+        mock_response = Mock()
+        mock_response.json.return_value = {"data": [workspace_data]}
+        mock_response.raise_for_status = Mock()
+        mock_client.get.return_value = mock_response
+        return mock_client
+
+    def test_fetch_default_workspace(self):
+        """Test basic fetch through the client"""
+        ws_data = {"id": "ws-1", "name": "Default", "type": "default", "description": ""}
+        mock_client = self._mock_http_client(ws_data)
+
+        client = WorkspaceClient(
+            rbac_base_endpoint="http://example.com",
+            http_client=mock_client,
+        )
+
+        result = client.fetch_default_workspace("org-1")
+
+        assert result.id == "ws-1"
+        assert result.type == "default"
+        mock_client.get.assert_called_once()
+
+    def test_fetch_root_workspace(self):
+        """Test root workspace fetch through the client"""
+        ws_data = {"id": "ws-root", "name": "Root", "type": "root", "description": ""}
+        mock_client = self._mock_http_client(ws_data)
+
+        client = WorkspaceClient(
+            rbac_base_endpoint="http://example.com",
+            http_client=mock_client,
+        )
+
+        result = client.fetch_root_workspace("org-1")
+
+        assert result.id == "ws-root"
+        call_kwargs = mock_client.get.call_args[1]
+        assert call_kwargs["params"]["type"] == "root"
+
+    def test_cache_hit(self):
+        """Test that second call for same org returns cached result"""
+        ws_data = {"id": "ws-1", "name": "Default", "type": "default", "description": ""}
+        mock_client = self._mock_http_client(ws_data)
+
+        client = WorkspaceClient(
+            rbac_base_endpoint="http://example.com",
+            http_client=mock_client,
+            cache_ttl=600,
+        )
+
+        result1 = client.fetch_default_workspace("org-1")
+        result2 = client.fetch_default_workspace("org-1")
+
+        assert result1.id == "ws-1"
+        assert result2.id == "ws-1"
+        assert mock_client.get.call_count == 1
+
+    def test_cache_separate_org_ids(self):
+        """Test that different org_ids get separate cache entries"""
+        call_count = 0
+
+        def mock_get(url, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            org_id = kwargs["headers"]["x-rh-rbac-org-id"]
+            resp = Mock()
+            resp.json.return_value = {
+                "data": [{"id": f"ws-{org_id}", "name": "WS", "type": "default", "description": ""}]
+            }
+            resp.raise_for_status = Mock()
+            return resp
+
+        mock_client = Mock()
+        mock_client.get = mock_get
+
+        client = WorkspaceClient(
+            rbac_base_endpoint="http://example.com",
+            http_client=mock_client,
+            cache_ttl=600,
+        )
+
+        r1 = client.fetch_default_workspace("org-1")
+        r2 = client.fetch_default_workspace("org-2")
+        r3 = client.fetch_default_workspace("org-1")
+
+        assert r1.id == "ws-org-1"
+        assert r2.id == "ws-org-2"
+        assert r3.id == "ws-org-1"
+        assert call_count == 2
+
+    def test_cache_separate_workspace_types(self):
+        """Test that default and root for same org are cached separately"""
+        call_count = 0
+
+        def mock_get(url, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            ws_type = kwargs["params"]["type"]
+            resp = Mock()
+            resp.json.return_value = {
+                "data": [{"id": f"ws-{ws_type}", "name": "WS", "type": ws_type, "description": ""}]
+            }
+            resp.raise_for_status = Mock()
+            return resp
+
+        mock_client = Mock()
+        mock_client.get = mock_get
+
+        client = WorkspaceClient(
+            rbac_base_endpoint="http://example.com",
+            http_client=mock_client,
+            cache_ttl=600,
+        )
+
+        r1 = client.fetch_default_workspace("org-1")
+        r2 = client.fetch_root_workspace("org-1")
+
+        assert r1.id == "ws-default"
+        assert r2.id == "ws-root"
+        assert call_count == 2
+
+    def test_cache_expiry(self):
+        """Test that expired entries trigger re-fetch"""
+        ws_data = {"id": "ws-1", "name": "Default", "type": "default", "description": ""}
+        mock_client = self._mock_http_client(ws_data)
+
+        client = WorkspaceClient(
+            rbac_base_endpoint="http://example.com",
+            http_client=mock_client,
+            cache_ttl=0,
+        )
+
+        # cache_ttl=0 means entries expire immediately, but caching is disabled
+        # Use a very short TTL to test expiry
+        client._cache_ttl = 1
+        client.fetch_default_workspace("org-1")
+
+        # Reset mock to track second call
+        mock_client.get.reset_mock()
+        mock_client.get.return_value = Mock(
+            json=Mock(return_value={"data": [ws_data]}),
+            raise_for_status=Mock(),
+        )
+
+        time.sleep(1.1)
+        client.fetch_default_workspace("org-1")
+
+        assert mock_client.get.call_count == 1
+
+    def test_cache_disabled(self):
+        """Test that cache_ttl=0 always fetches"""
+        ws_data = {"id": "ws-1", "name": "Default", "type": "default", "description": ""}
+        mock_client = self._mock_http_client(ws_data)
+
+        client = WorkspaceClient(
+            rbac_base_endpoint="http://example.com",
+            http_client=mock_client,
+            cache_ttl=0,
+        )
+
+        client.fetch_default_workspace("org-1")
+        client.fetch_default_workspace("org-1")
+
+        assert mock_client.get.call_count == 2
+
+    def test_clear_cache(self):
+        """Test that clear_cache evicts entries"""
+        ws_data = {"id": "ws-1", "name": "Default", "type": "default", "description": ""}
+        mock_client = self._mock_http_client(ws_data)
+
+        client = WorkspaceClient(
+            rbac_base_endpoint="http://example.com",
+            http_client=mock_client,
+            cache_ttl=600,
+        )
+
+        client.fetch_default_workspace("org-1")
+        assert mock_client.get.call_count == 1
+
+        client.clear_cache()
+
+        # Reset mock to track next call
+        mock_client.get.reset_mock()
+        mock_client.get.return_value = Mock(
+            json=Mock(return_value={"data": [ws_data]}),
+            raise_for_status=Mock(),
+        )
+
+        client.fetch_default_workspace("org-1")
+        assert mock_client.get.call_count == 1
+
+    def test_uses_session_by_default(self):
+        """Test that a requests.Session is created when no http_client provided"""
+        client = WorkspaceClient(rbac_base_endpoint="http://example.com")
+        assert isinstance(client._http_client, requests.Session)
+
+    def test_custom_http_client(self):
+        """Test that custom http_client is used instead of creating a Session"""
+        mock_client = Mock()
+        client = WorkspaceClient(
+            rbac_base_endpoint="http://example.com",
+            http_client=mock_client,
+        )
+        assert client._http_client is mock_client
+
+    def test_auth_passed_to_requests(self):
+        """Test that auth is forwarded to HTTP calls"""
+        ws_data = {"id": "ws-1", "name": "Default", "type": "default", "description": ""}
+        mock_client = self._mock_http_client(ws_data)
+        mock_auth = Mock()
+
+        client = WorkspaceClient(
+            rbac_base_endpoint="http://example.com",
+            http_client=mock_client,
+            auth=mock_auth,
+        )
+
+        client.fetch_default_workspace("org-1")
+
+        call_kwargs = mock_client.get.call_args[1]
+        assert call_kwargs["auth"] is mock_auth
+
+    def test_lru_eviction(self):
+        """Test that oldest entries are evicted when cache exceeds max size"""
+        call_count = 0
+
+        def mock_get(url, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            org_id = kwargs["headers"]["x-rh-rbac-org-id"]
+            resp = Mock()
+            resp.json.return_value = {
+                "data": [{"id": f"ws-{org_id}", "name": "WS", "type": "default", "description": ""}]
+            }
+            resp.raise_for_status = Mock()
+            return resp
+
+        mock_client = Mock()
+        mock_client.get = mock_get
+
+        client = WorkspaceClient(
+            rbac_base_endpoint="http://example.com",
+            http_client=mock_client,
+            cache_ttl=600,
+            cache_max_size=3,
+        )
+
+        client.fetch_default_workspace("org-1")
+        client.fetch_default_workspace("org-2")
+        client.fetch_default_workspace("org-3")
+        assert call_count == 3
+
+        # org-1 is oldest, adding org-4 should evict it
+        client.fetch_default_workspace("org-4")
+        assert call_count == 4
+        assert len(client._cache) == 3
+
+        # org-2 should still be cached
+        client.fetch_default_workspace("org-2")
+        assert call_count == 4
+
+        # org-1 should require a fresh fetch
+        client.fetch_default_workspace("org-1")
+        assert call_count == 5
+
+    def test_lru_access_refreshes_position(self):
+        """Test that accessing a cached entry moves it to most-recent"""
+        call_count = 0
+
+        def mock_get(url, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            org_id = kwargs["headers"]["x-rh-rbac-org-id"]
+            resp = Mock()
+            resp.json.return_value = {
+                "data": [{"id": f"ws-{org_id}", "name": "WS", "type": "default", "description": ""}]
+            }
+            resp.raise_for_status = Mock()
+            return resp
+
+        mock_client = Mock()
+        mock_client.get = mock_get
+
+        client = WorkspaceClient(
+            rbac_base_endpoint="http://example.com",
+            http_client=mock_client,
+            cache_ttl=600,
+            cache_max_size=3,
+        )
+
+        client.fetch_default_workspace("org-1")
+        client.fetch_default_workspace("org-2")
+        client.fetch_default_workspace("org-3")
+
+        # Access org-1 to refresh its position (now most recent)
+        client.fetch_default_workspace("org-1")
+        assert call_count == 3
+
+        # Add org-4 — should evict org-2 (now oldest), not org-1
+        client.fetch_default_workspace("org-4")
+        assert call_count == 4
+
+        # org-1 should still be cached
+        client.fetch_default_workspace("org-1")
+        assert call_count == 4
+
+        # org-2 should be evicted
+        client.fetch_default_workspace("org-2")
+        assert call_count == 5
