@@ -1,3 +1,7 @@
+import os
+import threading
+import time
+from collections import OrderedDict
 from typing import Optional, AsyncIterator, Iterable
 from requests.auth import AuthBase
 import requests
@@ -27,6 +31,93 @@ class Workspace:
         self.name = name
         self.type = type
         self.description = description
+
+
+class WorkspaceClient:
+    """Client for fetching workspace data from RBAC with optional caching and connection pooling.
+
+    Args:
+        rbac_base_endpoint: The RBAC service endpoint URL.
+        auth: Authentication object compatible with requests.
+        http_client: Optional requests-like client. If None, creates a requests.Session internally.
+        cache_ttl: Seconds to cache workspace results. 0 disables caching.
+            Falls back to KESSEL_WORKSPACE_CACHE_TTL env var if not provided.
+        cache_max_size: Maximum number of cached entries. Oldest entries are evicted when full.
+            Falls back to KESSEL_WORKSPACE_CACHE_MAX_SIZE env var if not provided.
+    """
+
+    def __init__(
+        self,
+        rbac_base_endpoint: str,
+        auth: Optional[AuthBase] = None,
+        http_client=None,
+        cache_ttl: Optional[int] = None,
+        cache_max_size: Optional[int] = None,
+    ):
+        self._rbac_base_endpoint = rbac_base_endpoint
+        self._auth = auth
+        self._http_client = http_client if http_client is not None else requests.Session()
+        self._cache_ttl = (
+            cache_ttl
+            if cache_ttl is not None
+            else int(os.environ.get("KESSEL_WORKSPACE_CACHE_TTL", "900"))
+        )
+        self._cache_max_size = (
+            cache_max_size
+            if cache_max_size is not None
+            else int(os.environ.get("KESSEL_WORKSPACE_CACHE_MAX_SIZE", "10000"))
+        )
+        self._cache: OrderedDict[tuple[str, str], tuple["Workspace", float]] = OrderedDict()
+        self._lock = threading.Lock()
+
+    def fetch_default_workspace(self, org_id: str) -> "Workspace":
+        """Fetch the default workspace for the specified organization."""
+        return self._fetch(org_id, "default")
+
+    def fetch_root_workspace(self, org_id: str) -> "Workspace":
+        """Fetch the root workspace for the specified organization."""
+        return self._fetch(org_id, "root")
+
+    def clear_cache(self):
+        """Evict all cached workspace entries."""
+        with self._lock:
+            self._cache.clear()
+
+    def _fetch(self, org_id: str, workspace_type: str) -> "Workspace":
+        if self._cache_ttl > 0:
+            key = (org_id, workspace_type)
+            cached = self._cache.get(key)
+            if cached and time.monotonic() < cached[1]:
+                with self._lock:
+                    self._cache.move_to_end(key)
+                return cached[0]
+
+            with self._lock:
+                cached = self._cache.get(key)
+                if cached and time.monotonic() < cached[1]:
+                    self._cache.move_to_end(key)
+                    return cached[0]
+
+                workspace = _fetch_workspace_by_type(
+                    rbac_base_endpoint=self._rbac_base_endpoint,
+                    org_id=org_id,
+                    workspace_type=workspace_type,
+                    auth=self._auth,
+                    http_client=self._http_client,
+                )
+                self._cache[key] = (workspace, time.monotonic() + self._cache_ttl)
+                self._cache.move_to_end(key)
+                if len(self._cache) > self._cache_max_size:
+                    self._cache.popitem(last=False)
+                return workspace
+
+        return _fetch_workspace_by_type(
+            rbac_base_endpoint=self._rbac_base_endpoint,
+            org_id=org_id,
+            workspace_type=workspace_type,
+            auth=self._auth,
+            http_client=self._http_client,
+        )
 
 
 def _fetch_workspace_by_type(
