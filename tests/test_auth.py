@@ -1,6 +1,10 @@
-import pytest
 import datetime
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from unittest.mock import Mock, patch
+
+import pytest
 from requests.exceptions import HTTPError
 
 from kessel.auth import (
@@ -416,3 +420,83 @@ def test_token_with_zero_expires_in():
         assert result.expires_at <= datetime.datetime.now(datetime.timezone.utc).replace(
             tzinfo=None
         ) + datetime.timedelta(seconds=1)
+
+
+def test_get_token_concurrent_refresh_calls_sso_once():
+    """Test that concurrent get_token() calls result in exactly one SSO fetch."""
+    credentials = OAuth2ClientCredentials(
+        "test-client", "test-secret", "https://example.com/token"
+    )
+
+    credentials._token = "expiring-token"
+    credentials._expiry = datetime.datetime.now(datetime.timezone.utc).replace(
+        tzinfo=None
+    ) + datetime.timedelta(seconds=60)
+
+    barrier = threading.Barrier(20)
+    mock_token_data = {
+        "access_token": "refreshed-token",
+        "token_type": "Bearer",
+        "expires_in": 3600,
+    }
+
+    # Simulate real SSO latency so threads have time to pile up
+    def slow_fetch(*_args, **_kwargs):
+        time.sleep(0.05)
+        return mock_token_data
+
+    original_fetch = Mock(side_effect=slow_fetch)
+
+    with patch.object(credentials._session, "fetch_token", original_fetch):
+
+        def call_get_token():
+            barrier.wait()
+            return credentials.get_token()
+
+        with ThreadPoolExecutor(max_workers=20) as executor:
+            futures = [executor.submit(call_get_token) for _ in range(20)]
+            results = [f.result() for f in as_completed(futures)]
+
+    assert original_fetch.call_count == 1
+    for result in results:
+        assert result.access_token == "refreshed-token"
+
+
+def test_get_token_concurrent_force_refresh_calls_sso_once():
+    """Test that concurrent force_refresh=True calls result in exactly one SSO fetch."""
+    credentials = OAuth2ClientCredentials(
+        "test-client", "test-secret", "https://example.com/token"
+    )
+
+    credentials._token = "expiring-token"
+    credentials._expiry = datetime.datetime.now(datetime.timezone.utc).replace(
+        tzinfo=None
+    ) + datetime.timedelta(seconds=60)
+
+    barrier = threading.Barrier(20)
+    mock_token_data = {
+        "access_token": "force-refreshed-token",
+        "token_type": "Bearer",
+        "expires_in": 3600,
+    }
+
+    # Simulate real SSO latency so threads have time to pile up
+    def slow_fetch(*_args, **_kwargs):
+        time.sleep(0.05)
+        return mock_token_data
+
+    original_fetch = Mock(side_effect=slow_fetch)
+
+    with patch.object(credentials._session, "fetch_token", original_fetch):
+
+        def call_get_token():
+            barrier.wait()
+            return credentials.get_token(force_refresh=True)
+
+        with ThreadPoolExecutor(max_workers=20) as executor:
+            futures = [executor.submit(call_get_token) for _ in range(20)]
+            results = [f.result() for f in as_completed(futures)]
+
+    assert original_fetch.call_count == 1
+    for result in results:
+        assert result.access_token == "force-refreshed-token"
