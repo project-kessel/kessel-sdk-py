@@ -1,4 +1,5 @@
 import datetime
+import threading
 
 import google.auth.credentials
 import google.auth.transport.requests
@@ -96,10 +97,23 @@ class OAuth2ClientCredentials:
 
         self._token = None
         self._expiry = None
+        self._lock = threading.Lock()
+        self._generation = 0
+
+    def _needs_refresh(self) -> bool:
+        current_time = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+        return (
+            self._token is None
+            or self._expiry is None
+            or self._expiry <= current_time + datetime.timedelta(seconds=300)
+        )
 
     def get_token(self, force_refresh: bool = False) -> RefreshTokenResponse:
         """
         Get a valid access token, refreshing if necessary or forced.
+
+        Uses double-checked locking to ensure that concurrent callers
+        coalesce into a single SSO token request per refresh cycle.
 
         Args:
             force_refresh: If True, forces token refresh regardless of expiry.
@@ -107,15 +121,20 @@ class OAuth2ClientCredentials:
         Returns:
             RefreshTokenResponse object containing access_token and expires_at.
         """
-        current_time = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+        # Snapshot the generation before the lock so we can detect if another
+        # thread refreshed while we were waiting. A changed generation means a
+        # fresh token is already available, letting us skip the SSO call.
+        generation = self._generation
 
-        if (
-            force_refresh
-            or self._token is None
-            or self._expiry is None
-            or self._expiry <= current_time + datetime.timedelta(seconds=300)
-        ):
-            # Refresh the token
+        if not force_refresh and not self._needs_refresh():
+            return RefreshTokenResponse(access_token=self._token, expires_at=self._expiry)
+
+        with self._lock:
+            # Another thread already refreshed while we waited — accept that token
+            if self._generation != generation and not self._needs_refresh():
+                return RefreshTokenResponse(access_token=self._token, expires_at=self._expiry)
+
+            current_time = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
             token_data = self._session.fetch_token(
                 token_url=self._token_endpoint,
                 client_id=self._client_id,
@@ -125,6 +144,7 @@ class OAuth2ClientCredentials:
             self._token = token_data.get("access_token")
             expires_in = token_data.get("expires_in", 0)
             self._expiry = current_time + datetime.timedelta(seconds=expires_in)
+            self._generation += 1
 
         return RefreshTokenResponse(access_token=self._token, expires_at=self._expiry)
 
