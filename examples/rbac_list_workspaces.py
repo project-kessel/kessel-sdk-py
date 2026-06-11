@@ -7,6 +7,7 @@ from kessel.auth import fetch_oidc_discovery, OAuth2ClientCredentials
 from kessel.inventory.v1beta2 import (
     ClientBuilder,
 )
+from kessel.inventory.v1beta2 import consistency_pb2
 from kessel.rbac.v2 import list_workspaces, list_workspaces_async, principal_subject
 
 
@@ -42,12 +43,24 @@ def run_sync():
             print(f"Listing workspaces (sync) for subject='{SUBJECT_ID}' relation='{RELATION}'")
 
             # Iterate one-by-one (lazy, constant memory)
-            for obj in list_workspaces(stub, subject=subject, relation=RELATION):
+            for obj in list_workspaces(
+                stub,
+                subject=subject,
+                relation=RELATION,
+                consistency=consistency_pb2.Consistency(minimize_latency=True),
+            ):
                 print(f"{obj}")
                 print(f"{obj.pagination.continuation_token}")
 
             # Materialise all workspaces into a list
-            all_workspaces = list(list_workspaces(stub, subject=subject, relation=RELATION))
+            all_workspaces = list(
+                list_workspaces(
+                    stub,
+                    subject=subject,
+                    relation=RELATION,
+                    consistency=consistency_pb2.Consistency(minimize_latency=True),
+                )
+            )
             print(f"Total workspaces (sync): {len(all_workspaces)}")
 
     except grpc.RpcError as e:
@@ -78,13 +91,24 @@ async def run_async():
             print(f"Listing workspaces (async) for subject='{SUBJECT_ID}' relation='{RELATION}'")
 
             # Iterate one-by-one (lazy, constant memory)
-            async for obj in list_workspaces_async(stub, subject=subject, relation=RELATION):
+            async for obj in list_workspaces_async(
+                stub,
+                subject=subject,
+                relation=RELATION,
+                consistency=consistency_pb2.Consistency(minimize_latency=True),
+            ):
                 print(f"{obj}")
                 print(f"{obj.pagination.continuation_token}")
 
             # Materialise all workspaces into a list
             all_workspaces = [
-                r async for r in list_workspaces_async(stub, subject=subject, relation=RELATION)
+                r
+                async for r in list_workspaces_async(
+                    stub,
+                    subject=subject,
+                    relation=RELATION,
+                    consistency=consistency_pb2.Consistency(minimize_latency=True),
+                )
             ]
             print(f"Total workspaces (async): {len(all_workspaces)}")
 
