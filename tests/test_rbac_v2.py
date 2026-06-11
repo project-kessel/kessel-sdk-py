@@ -14,6 +14,8 @@ from kessel.rbac.v2 import (
     fetch_root_workspace,
     fetch_default_workspace,
 )
+from kessel.inventory.v1beta2.consistency_pb2 import Consistency
+from kessel.inventory.v1beta2.consistency_token_pb2 import ConsistencyToken
 from kessel.inventory.v1beta2.streamed_list_objects_response_pb2 import StreamedListObjectsResponse
 from kessel.inventory.v1beta2.response_pagination_pb2 import ResponsePagination
 
@@ -196,19 +198,76 @@ class TestListWorkspaces:
             pagination=ResponsePagination(continuation_token="")
         )
         mock_inventory.StreamedListObjects.return_value = iter([response])
-        
+
         subj = principal_subject("user123", "redhat")
-        
+
         responses = list(list_workspaces(mock_inventory, subj, "member", continuation_token=None))
-        
+
         assert len(responses) == 1
-        
-        # Verify the request had no pagination field set 
+
+        # Verify the request had no pagination field set
         call_args = mock_inventory.StreamedListObjects.call_args[0][0]
         if hasattr(call_args, 'HasField'):
             assert not call_args.HasField("pagination")
         else:
             assert call_args.pagination is None
+
+    def test_passes_consistency_to_request(self):
+        """Test that list_workspaces passes consistency token through to the request"""
+        mock_inventory = Mock()
+        response = StreamedListObjectsResponse(
+            pagination=ResponsePagination(continuation_token="")
+        )
+        mock_inventory.StreamedListObjects.return_value = iter([response])
+
+        subj = principal_subject("user123", "redhat")
+        consistency = Consistency(
+            at_least_as_fresh=ConsistencyToken(token="tok-abc")
+        )
+
+        list(list_workspaces(mock_inventory, subj, "member", consistency=consistency))
+
+        call_args = mock_inventory.StreamedListObjects.call_args[0][0]
+        assert call_args.consistency == consistency
+        assert call_args.consistency.at_least_as_fresh.token == "tok-abc"
+
+    def test_no_consistency_by_default(self):
+        """Test that list_workspaces omits consistency when not provided"""
+        mock_inventory = Mock()
+        response = StreamedListObjectsResponse(
+            pagination=ResponsePagination(continuation_token="")
+        )
+        mock_inventory.StreamedListObjects.return_value = iter([response])
+
+        subj = principal_subject("user123", "redhat")
+
+        list(list_workspaces(mock_inventory, subj, "member"))
+
+        call_args = mock_inventory.StreamedListObjects.call_args[0][0]
+        assert not call_args.HasField("consistency")
+
+    def test_consistency_preserved_across_pagination(self):
+        """Test that list_workspaces passes consistency on every paginated request"""
+        mock_inventory = Mock()
+        response1 = StreamedListObjectsResponse(
+            pagination=ResponsePagination(continuation_token="page2")
+        )
+        response2 = StreamedListObjectsResponse(
+            pagination=ResponsePagination(continuation_token="")
+        )
+        mock_inventory.StreamedListObjects.side_effect = [
+            iter([response1]),
+            iter([response2]),
+        ]
+
+        subj = principal_subject("user123", "redhat")
+        consistency = Consistency(at_least_as_fresh=ConsistencyToken(token="tok-xyz"))
+
+        list(list_workspaces(mock_inventory, subj, "viewer", consistency=consistency))
+
+        assert mock_inventory.StreamedListObjects.call_count == 2
+        for call in mock_inventory.StreamedListObjects.call_args_list:
+            assert call[0][0].consistency == consistency
 
 
 class TestListWorkspacesAsync:
@@ -346,25 +405,99 @@ class TestListWorkspacesAsync:
         response = StreamedListObjectsResponse(
             pagination=ResponsePagination(continuation_token="")
         )
-        
+
         async def async_iter():
             yield response
-        
+
         mock_inventory.StreamedListObjects.return_value = async_iter()
-        
+
         subj = principal_subject("user123", "redhat")
-        
+
         responses = []
         async for resp in list_workspaces_async(mock_inventory, subj, "member", continuation_token=None):
             responses.append(resp)
-        
+
         assert len(responses) == 1
-        
+
         call_args = mock_inventory.StreamedListObjects.call_args[0][0]
         if hasattr(call_args, 'HasField'):
             assert not call_args.HasField("pagination")
         else:
             assert call_args.pagination is None
+
+    @pytest.mark.asyncio
+    async def test_passes_consistency_to_request(self):
+        """Test that list_workspaces_async passes consistency token through to the request"""
+        mock_inventory = Mock()
+        response = StreamedListObjectsResponse(
+            pagination=ResponsePagination(continuation_token="")
+        )
+
+        async def async_iter():
+            yield response
+
+        mock_inventory.StreamedListObjects.return_value = async_iter()
+
+        subj = principal_subject("user123", "redhat")
+        consistency = Consistency(at_least_as_fresh=ConsistencyToken(token="tok-abc"))
+
+        responses = []
+        async for resp in list_workspaces_async(mock_inventory, subj, "member", consistency=consistency):
+            responses.append(resp)
+
+        call_args = mock_inventory.StreamedListObjects.call_args[0][0]
+        assert call_args.consistency == consistency
+        assert call_args.consistency.at_least_as_fresh.token == "tok-abc"
+
+    @pytest.mark.asyncio
+    async def test_no_consistency_by_default(self):
+        """Test that list_workspaces_async omits consistency when not provided"""
+        mock_inventory = Mock()
+        response = StreamedListObjectsResponse(
+            pagination=ResponsePagination(continuation_token="")
+        )
+
+        async def async_iter():
+            yield response
+
+        mock_inventory.StreamedListObjects.return_value = async_iter()
+
+        subj = principal_subject("user123", "redhat")
+
+        async for _ in list_workspaces_async(mock_inventory, subj, "member"):
+            pass
+
+        call_args = mock_inventory.StreamedListObjects.call_args[0][0]
+        assert not call_args.HasField("consistency")
+
+    @pytest.mark.asyncio
+    async def test_consistency_preserved_across_pagination(self):
+        """Test that list_workspaces_async passes consistency on every paginated request"""
+        mock_inventory = Mock()
+        response1 = StreamedListObjectsResponse(
+            pagination=ResponsePagination(continuation_token="page2")
+        )
+        response2 = StreamedListObjectsResponse(
+            pagination=ResponsePagination(continuation_token="")
+        )
+
+        async def async_iter1():
+            yield response1
+
+        async def async_iter2():
+            yield response2
+
+        mock_inventory.StreamedListObjects.side_effect = [async_iter1(), async_iter2()]
+
+        subj = principal_subject("user123", "redhat")
+        consistency = Consistency(at_least_as_fresh=ConsistencyToken(token="tok-xyz"))
+
+        async for _ in list_workspaces_async(mock_inventory, subj, "viewer", consistency=consistency):
+            pass
+
+        assert mock_inventory.StreamedListObjects.call_count == 2
+        for call in mock_inventory.StreamedListObjects.call_args_list:
+            assert call[0][0].consistency == consistency
 
 
 class TestFetchDefaultWorkspace:

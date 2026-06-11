@@ -2,6 +2,7 @@ from typing import Optional, AsyncIterator, Iterable
 from requests.auth import AuthBase
 import requests
 
+from kessel.inventory.v1beta2.consistency_pb2 import Consistency
 from kessel.inventory.v1beta2.representation_type_pb2 import RepresentationType
 from kessel.inventory.v1beta2.resource_reference_pb2 import ResourceReference
 from kessel.inventory.v1beta2.subject_reference_pb2 import SubjectReference
@@ -248,6 +249,7 @@ def list_workspaces(
     subject: SubjectReference,
     relation: str,
     continuation_token: Optional[str] = None,
+    consistency: Optional[Consistency] = None,
 ) -> Iterable[StreamedListObjectsResponse]:
     """
     Lists all workspaces that a subject has a specific relation to.
@@ -262,6 +264,7 @@ def list_workspaces(
         subject: The subject to check permissions for.
         relation: The relationship type to check (e.g. "member", "admin", "viewer").
         continuation_token: Optional token to resume listing from a previous page
+        consistency: Optional consistency requirement for the request (e.g. at_least_as_fresh).
 
     Returns:
         An iterator of StreamedListObjectsResponse messages.
@@ -289,6 +292,7 @@ def list_workspaces(
             relation=relation,
             subject=subject,
             pagination=pagination,
+            consistency=consistency,
         )
 
         last_token = None
@@ -308,6 +312,7 @@ async def list_workspaces_async(
     subject: SubjectReference,
     relation: str,
     continuation_token: Optional[str] = None,
+    consistency: Optional[Consistency] = None,
 ) -> AsyncIterator[StreamedListObjectsResponse]:
     """
     Async version of :func:`list_workspaces`.
@@ -323,6 +328,7 @@ async def list_workspaces_async(
         subject: The subject to check permissions for.
         relation: The relationship type to check (e.g. "member", "admin", "viewer").
         continuation_token: Optional token to resume listing from a previous position.
+        consistency: Optional consistency requirement for the request (e.g. at_least_as_fresh).
 
     Returns:
         An async iterator of StreamedListObjectsResponse messages.
@@ -352,6 +358,7 @@ async def list_workspaces_async(
             relation=relation,
             subject=subject,
             pagination=pagination,
+            consistency=consistency,
         )
 
         last_token = None
