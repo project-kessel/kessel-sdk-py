@@ -515,22 +515,43 @@ class TestFetchDefaultWorkspace:
         }
         mock_response.raise_for_status = Mock()
         mock_requests.get.return_value = mock_response
-        
+
         result = fetch_default_workspace(
             rbac_base_endpoint="http://example.com",
             org_id="org123"
         )
-        
+
         assert result is not None
         assert result.id == "default-ws-123"
         assert result.name == "Default Workspace"
         assert result.type == "default"
         assert result.description == "Organization default workspace"
-        
+
         mock_requests.get.assert_called_once()
         call_kwargs = mock_requests.get.call_args
         assert call_kwargs[1]["params"]["type"] == "default"
+        assert call_kwargs[1]["params"]["with_ancestry"] == "true"
         assert call_kwargs[1]["headers"]["x-rh-rbac-org-id"] == "org123"
+
+    @patch('kessel.rbac.v2.requests')
+    def test_with_ancestry_false_omits_param(self, mock_requests):
+        """Test that with_ancestry=False omits with_ancestry from query params"""
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "data": [{"id": "ws1", "name": "WS1", "type": "default", "description": ""}]
+        }
+        mock_response.raise_for_status = Mock()
+        mock_requests.get.return_value = mock_response
+
+        fetch_default_workspace(
+            rbac_base_endpoint="http://example.com",
+            org_id="org123",
+            with_ancestry=False,
+        )
+
+        call_kwargs = mock_requests.get.call_args[1]
+        assert "with_ancestry" not in call_kwargs["params"]
+        assert call_kwargs["params"]["type"] == "default"
 
     @patch('kessel.rbac.v2.requests')
     def test_server_error_response(self, mock_requests):
@@ -538,7 +559,7 @@ class TestFetchDefaultWorkspace:
         mock_response = Mock()
         mock_response.raise_for_status.side_effect = Exception("Internal Server Error")
         mock_requests.get.return_value = mock_response
-        
+
         with pytest.raises(Exception, match="Internal Server Error"):
             fetch_default_workspace(
                 rbac_base_endpoint="http://example.com",
@@ -653,20 +674,41 @@ class TestFetchRootWorkspace:
         }
         mock_response.raise_for_status = Mock()
         mock_requests.get.return_value = mock_response
-        
+
         result = fetch_root_workspace(
             rbac_base_endpoint="http://example.com",
             org_id="org123"
         )
-        
+
         assert result is not None
         assert result.id == "root-ws-456"
         assert result.name == "Root Workspace"
         assert result.type == "root"
         assert result.description == "Organization root workspace"
-        
+
         call_kwargs = mock_requests.get.call_args
         assert call_kwargs[1]["params"]["type"] == "root"
+        assert call_kwargs[1]["params"]["with_ancestry"] == "true"
+
+    @patch('kessel.rbac.v2.requests')
+    def test_with_ancestry_false_omits_param(self, mock_requests):
+        """Test that with_ancestry=False omits with_ancestry from query params"""
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "data": [{"id": "ws1", "name": "WS1", "type": "root", "description": ""}]
+        }
+        mock_response.raise_for_status = Mock()
+        mock_requests.get.return_value = mock_response
+
+        fetch_root_workspace(
+            rbac_base_endpoint="http://example.com",
+            org_id="org123",
+            with_ancestry=False,
+        )
+
+        call_kwargs = mock_requests.get.call_args[1]
+        assert "with_ancestry" not in call_kwargs["params"]
+        assert call_kwargs["params"]["type"] == "root"
 
     @patch('kessel.rbac.v2.requests')
     def test_unauthorized_error(self, mock_requests):
@@ -674,7 +716,7 @@ class TestFetchRootWorkspace:
         mock_response = Mock()
         mock_response.raise_for_status.side_effect = Exception("Unauthorized")
         mock_requests.get.return_value = mock_response
-        
+
         with pytest.raises(Exception, match="Unauthorized"):
             fetch_root_workspace(
                 rbac_base_endpoint="http://example.com",
