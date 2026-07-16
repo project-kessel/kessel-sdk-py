@@ -36,6 +36,7 @@ def _fetch_workspace_by_type(
     workspace_type: str,
     auth: Optional[AuthBase] = None,
     http_client: Optional[requests] = None,
+    with_ancestry: bool = True,
 ) -> Workspace:
     """
     Internal helper to fetch a workspace by type ("root", "default").
@@ -46,6 +47,8 @@ def _fetch_workspace_by_type(
         org_id: Organization ID to use for the request.
         workspace_type: The workspace type to query for.
         http_client: Optional requests-like client. Defaults to requests.
+        with_ancestry: Include ancestry information in the response.
+            Defaults to True. When False, the with_ancestry query parameter is omitted.
 
     Returns:
         A Workspace instance of the requested type.
@@ -58,7 +61,11 @@ def _fetch_workspace_by_type(
         "Content-Type": "application/json",
     }
 
-    response = client.get(url, params={"type": workspace_type}, headers=headers, auth=auth)
+    params = {"type": workspace_type}
+    if with_ancestry:
+        params["with_ancestry"] = "true"
+
+    response = client.get(url, params=params, headers=headers, auth=auth)
     response.raise_for_status()
 
     data = response.json()
@@ -81,12 +88,13 @@ def fetch_root_workspace(
     org_id: str,
     auth: Optional[AuthBase] = None,
     http_client: Optional[requests] = None,
+    with_ancestry: bool = True,
 ) -> Workspace:
     """
     Fetches the root workspace for the specified organization.
     This function queries RBAC v2 to find the root workspace for the given org_id.
 
-    GET /api/rbac/v2/workspaces/?type=root
+    GET /api/rbac/v2/workspaces/?type=root&with_ancestry=true
 
     Args:
         auth: Authentication object compatible with requests (e.g. oauth2_auth(credentials)).
@@ -94,6 +102,8 @@ def fetch_root_workspace(
         org_id: Organization ID to use for the request.
         http_client: Optional requests module.
                     If not provided, uses the default requests module.
+        with_ancestry: Include ancestry information in the response.
+            Defaults to True. Pass False to omit the with_ancestry query parameter.
 
     Returns:
         A Workspace object representing the root workspace for the organization.
@@ -104,6 +114,7 @@ def fetch_root_workspace(
         workspace_type="root",
         auth=auth,
         http_client=http_client,
+        with_ancestry=with_ancestry,
     )
 
 
@@ -112,12 +123,13 @@ def fetch_default_workspace(
     org_id: str,
     auth: Optional[AuthBase] = None,
     http_client: Optional[requests] = None,
+    with_ancestry: bool = True,
 ) -> Workspace:
     """
     Fetches the default workspace for the specified organization.
     This function queries RBAC v2 to find the default workspace for the given org_id.
 
-    GET /api/rbac/v2/workspaces/?type=default
+    GET /api/rbac/v2/workspaces/?type=default&with_ancestry=true
 
     Args:
         auth: Authentication object compatible with requests (e.g. oauth2_auth(credentials)).
@@ -125,6 +137,8 @@ def fetch_default_workspace(
         org_id: Organization ID to use for the request.
         http_client: Optional requests module.
                     If not provided, uses the default requests module.
+        with_ancestry: Include ancestry information in the response.
+            Defaults to True. Pass False to omit the with_ancestry query parameter.
 
     Returns:
         A Workspace object representing the default workspace for the organization.
@@ -135,6 +149,7 @@ def fetch_default_workspace(
         workspace_type="default",
         auth=auth,
         http_client=http_client,
+        with_ancestry=with_ancestry,
     )
 
 
