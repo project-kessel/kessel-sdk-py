@@ -1,5 +1,6 @@
 import datetime
 import threading
+from urllib.parse import urlparse
 
 import google.auth.credentials
 import google.auth.transport.requests
@@ -45,6 +46,10 @@ def fetch_oidc_discovery(issuer_url: str) -> OIDCDiscoveryMetadata:
     This function makes a network request to the OIDC provider's discovery endpoint
     to retrieve the provider's metadata including the token endpoint.
 
+    After fetching, validates that the discovery document's ``issuer`` field matches
+    the configured *issuer_url* (with trailing-slash normalization) and that the
+    ``token_endpoint`` uses HTTPS.
+
     Args:
         issuer_url: The base URL of the OIDC provider.
 
@@ -53,12 +58,29 @@ def fetch_oidc_discovery(issuer_url: str) -> OIDCDiscoveryMetadata:
 
     Raises:
         requests.exceptions.RequestException: If the discovery document cannot be retrieved.
-        ValueError: If the response is not valid JSON.
+        ValueError: If the response is not valid JSON, the issuer does not match, or the
+            token endpoint does not use HTTPS.
     """
     discovery_url = f"{issuer_url.rstrip('/')}/.well-known/openid-configuration"
     response = requests.get(discovery_url, timeout=10)
     response.raise_for_status()
     config = response.json()
+
+    # Validate issuer matches the configured URL (trailing-slash normalization)
+    discovered_issuer = config.get("issuer", "")
+    if discovered_issuer.rstrip("/") != issuer_url.rstrip("/"):
+        raise ValueError(
+            f"OIDC discovery issuer mismatch: expected {issuer_url.rstrip('/')!r}, "
+            f"got {discovered_issuer.rstrip('/')!r}"
+        )
+
+    # Validate token_endpoint uses HTTPS
+    token_endpoint = config.get("token_endpoint", "")
+    parsed = urlparse(token_endpoint)
+    if parsed.scheme != "https":
+        raise ValueError(
+            f"OIDC discovery token_endpoint must use HTTPS, " f"got {token_endpoint!r}"
+        )
 
     return OIDCDiscoveryMetadata(config)
 

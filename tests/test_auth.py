@@ -80,6 +80,7 @@ def test_fetch_oidc_discovery_with_trailing_slash(mock_get):
     """Test OIDC discovery with trailing slash in issuer URL."""
     mock_response = Mock()
     mock_response.json.return_value = {
+        "issuer": "https://example.com",
         "token_endpoint": "https://example.com/oauth/token",
     }
     mock_response.raise_for_status = Mock()
@@ -101,6 +102,111 @@ def test_fetch_oidc_discovery_http_error(mock_get):
 
     with pytest.raises(HTTPError):
         fetch_oidc_discovery("https://invalid.example.com")
+
+
+@patch("kessel.auth.auth.requests.get")
+def test_fetch_oidc_discovery_issuer_mismatch(mock_get):
+    """Test OIDC discovery rejects mismatched issuer."""
+    mock_response = Mock()
+    mock_response.json.return_value = {
+        "issuer": "https://evil.example.com",
+        "token_endpoint": "https://evil.example.com/oauth/token",
+    }
+    mock_response.raise_for_status = Mock()
+    mock_get.return_value = mock_response
+
+    with pytest.raises(ValueError, match="OIDC discovery issuer mismatch"):
+        fetch_oidc_discovery("https://example.com")
+
+
+@patch("kessel.auth.auth.requests.get")
+def test_fetch_oidc_discovery_issuer_match_with_trailing_slash(mock_get):
+    """Test OIDC discovery accepts matching issuer with trailing-slash difference."""
+    mock_response = Mock()
+    mock_response.json.return_value = {
+        "issuer": "https://example.com/",
+        "token_endpoint": "https://example.com/oauth/token",
+    }
+    mock_response.raise_for_status = Mock()
+    mock_get.return_value = mock_response
+
+    metadata = fetch_oidc_discovery("https://example.com")
+
+    assert metadata.token_endpoint == "https://example.com/oauth/token"
+
+
+@patch("kessel.auth.auth.requests.get")
+def test_fetch_oidc_discovery_issuer_match_both_trailing_slashes(mock_get):
+    """Test OIDC discovery accepts matching issuer when both have trailing slashes."""
+    mock_response = Mock()
+    mock_response.json.return_value = {
+        "issuer": "https://example.com/",
+        "token_endpoint": "https://example.com/oauth/token",
+    }
+    mock_response.raise_for_status = Mock()
+    mock_get.return_value = mock_response
+
+    metadata = fetch_oidc_discovery("https://example.com/")
+
+    assert metadata.token_endpoint == "https://example.com/oauth/token"
+
+
+@patch("kessel.auth.auth.requests.get")
+def test_fetch_oidc_discovery_http_token_endpoint_rejected(mock_get):
+    """Test OIDC discovery rejects HTTP token endpoint."""
+    mock_response = Mock()
+    mock_response.json.return_value = {
+        "issuer": "https://example.com",
+        "token_endpoint": "http://example.com/oauth/token",
+    }
+    mock_response.raise_for_status = Mock()
+    mock_get.return_value = mock_response
+
+    with pytest.raises(ValueError, match="token_endpoint must use HTTPS"):
+        fetch_oidc_discovery("https://example.com")
+
+
+@patch("kessel.auth.auth.requests.get")
+def test_fetch_oidc_discovery_non_https_scheme_rejected(mock_get):
+    """Test OIDC discovery rejects non-HTTPS token endpoint schemes like ftp."""
+    mock_response = Mock()
+    mock_response.json.return_value = {
+        "issuer": "https://example.com",
+        "token_endpoint": "ftp://example.com/oauth/token",
+    }
+    mock_response.raise_for_status = Mock()
+    mock_get.return_value = mock_response
+
+    with pytest.raises(ValueError, match="token_endpoint must use HTTPS"):
+        fetch_oidc_discovery("https://example.com")
+
+
+@patch("kessel.auth.auth.requests.get")
+def test_fetch_oidc_discovery_empty_token_endpoint_rejected(mock_get):
+    """Test OIDC discovery rejects missing token_endpoint."""
+    mock_response = Mock()
+    mock_response.json.return_value = {
+        "issuer": "https://example.com",
+    }
+    mock_response.raise_for_status = Mock()
+    mock_get.return_value = mock_response
+
+    with pytest.raises(ValueError, match="token_endpoint must use HTTPS"):
+        fetch_oidc_discovery("https://example.com")
+
+
+@patch("kessel.auth.auth.requests.get")
+def test_fetch_oidc_discovery_missing_issuer_rejected(mock_get):
+    """Test OIDC discovery rejects missing issuer field."""
+    mock_response = Mock()
+    mock_response.json.return_value = {
+        "token_endpoint": "https://example.com/oauth/token",
+    }
+    mock_response.raise_for_status = Mock()
+    mock_get.return_value = mock_response
+
+    with pytest.raises(ValueError, match="OIDC discovery issuer mismatch"):
+        fetch_oidc_discovery("https://example.com")
 
 
 def test_get_token_initial_fetch():
