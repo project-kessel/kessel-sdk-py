@@ -1,5 +1,6 @@
 import datetime
 import threading
+from urllib.parse import urlparse
 
 import google.auth.credentials
 import google.auth.transport.requests
@@ -45,6 +46,10 @@ def fetch_oidc_discovery(issuer_url: str) -> OIDCDiscoveryMetadata:
     This function makes a network request to the OIDC provider's discovery endpoint
     to retrieve the provider's metadata including the token endpoint.
 
+    After fetching, validates that the discovery document's ``issuer`` field matches
+    the configured *issuer_url* (with trailing-slash normalization) and that the
+    ``token_endpoint`` uses HTTPS.
+
     Args:
         issuer_url: The base URL of the OIDC provider.
 
@@ -53,12 +58,36 @@ def fetch_oidc_discovery(issuer_url: str) -> OIDCDiscoveryMetadata:
 
     Raises:
         requests.exceptions.RequestException: If the discovery document cannot be retrieved.
-        ValueError: If the response is not valid JSON.
+        ValueError: If the response is not a JSON object, the issuer is missing or not a
+            string, the issuer does not match, or the token endpoint does not use HTTPS
+            or is missing a host.
     """
     discovery_url = f"{issuer_url.rstrip('/')}/.well-known/openid-configuration"
     response = requests.get(discovery_url, timeout=10)
     response.raise_for_status()
     config = response.json()
+
+    if not isinstance(config, dict):
+        raise ValueError("OIDC discovery document must be a JSON object")
+
+    # Validate issuer matches the configured URL (trailing-slash normalization)
+    discovered_issuer = config.get("issuer")
+    if not isinstance(discovered_issuer, str):
+        raise ValueError(f"OIDC discovery issuer must be a string, got {discovered_issuer!r}")
+    if discovered_issuer.rstrip("/") != issuer_url.rstrip("/"):
+        raise ValueError(
+            f"OIDC discovery issuer mismatch: expected {issuer_url.rstrip('/')!r}, "
+            f"got {discovered_issuer.rstrip('/')!r}"
+        )
+
+    # Validate token_endpoint uses HTTPS
+    token_endpoint = config.get("token_endpoint", "")
+    parsed = urlparse(token_endpoint)
+    if parsed.scheme != "https" or not parsed.hostname:
+        raise ValueError(
+            f"OIDC discovery token_endpoint must use HTTPS and include a host, "
+            f"got {token_endpoint!r}"
+        )
 
     return OIDCDiscoveryMetadata(config)
 
