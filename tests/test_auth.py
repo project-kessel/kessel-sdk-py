@@ -162,7 +162,7 @@ def test_fetch_oidc_discovery_http_token_endpoint_rejected(mock_get):
     mock_response.raise_for_status = Mock()
     mock_get.return_value = mock_response
 
-    with pytest.raises(ValueError, match="token_endpoint must use HTTPS"):
+    with pytest.raises(ValueError, match="token_endpoint must use HTTPS and include a host"):
         fetch_oidc_discovery("https://example.com")
 
 
@@ -177,7 +177,7 @@ def test_fetch_oidc_discovery_non_https_scheme_rejected(mock_get):
     mock_response.raise_for_status = Mock()
     mock_get.return_value = mock_response
 
-    with pytest.raises(ValueError, match="token_endpoint must use HTTPS"):
+    with pytest.raises(ValueError, match="token_endpoint must use HTTPS and include a host"):
         fetch_oidc_discovery("https://example.com")
 
 
@@ -191,7 +191,7 @@ def test_fetch_oidc_discovery_empty_token_endpoint_rejected(mock_get):
     mock_response.raise_for_status = Mock()
     mock_get.return_value = mock_response
 
-    with pytest.raises(ValueError, match="token_endpoint must use HTTPS"):
+    with pytest.raises(ValueError, match="token_endpoint must use HTTPS and include a host"):
         fetch_oidc_discovery("https://example.com")
 
 
@@ -205,7 +205,64 @@ def test_fetch_oidc_discovery_missing_issuer_rejected(mock_get):
     mock_response.raise_for_status = Mock()
     mock_get.return_value = mock_response
 
-    with pytest.raises(ValueError, match="OIDC discovery issuer mismatch"):
+    with pytest.raises(ValueError, match="issuer must be a string"):
+        fetch_oidc_discovery("https://example.com")
+
+
+@patch("kessel.auth.auth.requests.get")
+def test_fetch_oidc_discovery_non_dict_document_rejected(mock_get):
+    """Test OIDC discovery rejects non-object discovery document (e.g. JSON array)."""
+    mock_response = Mock()
+    mock_response.json.return_value = ["not", "a", "dict"]
+    mock_response.raise_for_status = Mock()
+    mock_get.return_value = mock_response
+
+    with pytest.raises(ValueError, match="must be a JSON object"):
+        fetch_oidc_discovery("https://example.com")
+
+
+@patch("kessel.auth.auth.requests.get")
+def test_fetch_oidc_discovery_null_issuer_rejected(mock_get):
+    """Test OIDC discovery rejects null issuer value."""
+    mock_response = Mock()
+    mock_response.json.return_value = {
+        "issuer": None,
+        "token_endpoint": "https://example.com/oauth/token",
+    }
+    mock_response.raise_for_status = Mock()
+    mock_get.return_value = mock_response
+
+    with pytest.raises(ValueError, match="issuer must be a string"):
+        fetch_oidc_discovery("https://example.com")
+
+
+@patch("kessel.auth.auth.requests.get")
+def test_fetch_oidc_discovery_numeric_issuer_rejected(mock_get):
+    """Test OIDC discovery rejects non-string issuer value."""
+    mock_response = Mock()
+    mock_response.json.return_value = {
+        "issuer": 12345,
+        "token_endpoint": "https://example.com/oauth/token",
+    }
+    mock_response.raise_for_status = Mock()
+    mock_get.return_value = mock_response
+
+    with pytest.raises(ValueError, match="issuer must be a string"):
+        fetch_oidc_discovery("https://example.com")
+
+
+@patch("kessel.auth.auth.requests.get")
+def test_fetch_oidc_discovery_https_no_host_rejected(mock_get):
+    """Test OIDC discovery rejects HTTPS token endpoint without hostname."""
+    mock_response = Mock()
+    mock_response.json.return_value = {
+        "issuer": "https://example.com",
+        "token_endpoint": "https:///oauth/token",
+    }
+    mock_response.raise_for_status = Mock()
+    mock_get.return_value = mock_response
+
+    with pytest.raises(ValueError, match="token_endpoint must use HTTPS and include a host"):
         fetch_oidc_discovery("https://example.com")
 
 
