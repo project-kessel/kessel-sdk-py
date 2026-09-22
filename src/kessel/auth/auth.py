@@ -46,12 +46,16 @@ def _validate_retry_config(retry):
 
     config = {**_DEFAULT_RETRY_CONFIG, **retry}
 
-    if not isinstance(config["max_retries"], int) or config["max_retries"] < 0:
+    if (
+        isinstance(config["max_retries"], bool)
+        or not isinstance(config["max_retries"], int)
+        or config["max_retries"] < 0
+    ):
         raise ValueError("retry max_retries must be a non-negative integer")
 
     for key in ("base_delay", "max_delay"):
         val = config[key]
-        if not isinstance(val, (int, float)) or val <= 0:
+        if isinstance(val, bool) or not isinstance(val, (int, float)) or val <= 0:
             raise ValueError(f"retry {key} must be a positive number")
         if isinstance(val, float) and not math.isfinite(val):
             raise ValueError(f"retry {key} must be finite")
@@ -315,7 +319,14 @@ class OAuth2ClientCredentials:
         """
         base = self._retry_config["base_delay"]
         max_delay = self._retry_config["max_delay"]
-        cap = min(max_delay, base * (2**retry_index))
+        # Guard against OverflowError when retry_index is very large:
+        # compute the index at which 2**n would exceed max_delay/base,
+        # and short-circuit to max_delay beyond that threshold.
+        saturation_index = math.ceil(math.log2(max_delay) - math.log2(base))
+        if retry_index >= saturation_index:
+            cap = max_delay
+        else:
+            cap = base * (2**retry_index)
 
         if self._retry_config["jitter"] == "none":
             return cap

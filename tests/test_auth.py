@@ -746,6 +746,22 @@ def test_validate_retry_config_integer_delays():
     assert config["max_delay"] == 5
 
 
+def test_validate_retry_config_rejects_boolean_max_retries():
+    """Test _validate_retry_config rejects bool max_retries (bool is subclass of int)."""
+    with pytest.raises(ValueError, match="max_retries must be a non-negative integer"):
+        _validate_retry_config({"max_retries": True})
+
+    with pytest.raises(ValueError, match="max_retries must be a non-negative integer"):
+        _validate_retry_config({"max_retries": False})
+
+
+@pytest.mark.parametrize("key", ["base_delay", "max_delay"])
+def test_validate_retry_config_rejects_boolean_delays(key):
+    """Test _validate_retry_config rejects bool delay values."""
+    with pytest.raises(ValueError, match=f"retry {key} must be a positive number"):
+        _validate_retry_config({key: True})
+
+
 # ---------------------------------------------------------------------------
 # Retryable error classification
 # ---------------------------------------------------------------------------
@@ -819,6 +835,19 @@ def test_retry_delay_full_jitter_within_bounds():
         for _ in range(50):
             delay = credentials._retry_delay(retry_index)
             assert 0 <= delay <= cap
+
+
+def test_retry_delay_large_retry_index_no_overflow():
+    """Test _retry_delay does not raise OverflowError for very large retry_index."""
+    credentials = OAuth2ClientCredentials(
+        "test-client",
+        "test-secret",
+        "https://example.com/token",
+        retry={"max_retries": 2000, "base_delay": 0.5, "max_delay": 2.0, "jitter": "none"},
+    )
+    # retry_index=1024 would cause 2**1024 * 0.5 → OverflowError without guard
+    assert credentials._retry_delay(1024) == 2.0
+    assert credentials._retry_delay(2000) == 2.0
 
 
 # ---------------------------------------------------------------------------
