@@ -1,5 +1,8 @@
 import datetime
+import math
+import random
 import threading
+import time
 from urllib.parse import urlparse
 
 import google.auth.credentials
@@ -7,6 +10,79 @@ import google.auth.transport.requests
 import requests
 from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
+
+_DEFAULT_RETRY_CONFIG = {
+    "max_retries": 3,
+    "base_delay": 0.5,
+    "max_delay": 2.0,
+    "jitter": "full",
+}
+
+_VALID_RETRY_KEYS = frozenset(_DEFAULT_RETRY_CONFIG)
+_VALID_JITTER_VALUES = ("full", "none")
+
+
+def _validate_retry_config(retry):
+    """Validate and normalize retry configuration.
+
+    Returns a new dict with defaults applied for any missing keys.
+
+    Args:
+        retry: Dict with retry options to validate.
+
+    Returns:
+        Validated config dict with all keys present.
+
+    Raises:
+        TypeError: If retry is not a dict.
+        ValueError: If any option key is unknown or any value is invalid.
+    """
+    if not isinstance(retry, dict):
+        raise TypeError("retry must be a dict")
+
+    unknown = set(retry) - _VALID_RETRY_KEYS
+    if unknown:
+        raise ValueError(f"unknown retry option: {sorted(unknown)[0]!r}")
+
+    config = {**_DEFAULT_RETRY_CONFIG, **retry}
+
+    if not isinstance(config["max_retries"], int) or config["max_retries"] < 0:
+        raise ValueError("retry max_retries must be a non-negative integer")
+
+    for key in ("base_delay", "max_delay"):
+        val = config[key]
+        if not isinstance(val, (int, float)) or val <= 0:
+            raise ValueError(f"retry {key} must be a positive number")
+        if isinstance(val, float) and not math.isfinite(val):
+            raise ValueError(f"retry {key} must be finite")
+
+    if config["jitter"] not in _VALID_JITTER_VALUES:
+        raise ValueError("retry jitter must be 'full' or 'none'")
+
+    return config
+
+
+def _is_retryable_error(error, http_status):
+    """Check whether a token fetch error is retryable.
+
+    Connection errors and timeouts are always retryable. HTTP 429 (rate
+    limited) and 5xx (server error) responses are retryable when the
+    status code was captured from the response.
+
+    Args:
+        error: The exception raised during the token fetch.
+        http_status: The HTTP status code from the response, or None.
+
+    Returns:
+        True if the error is retryable, False otherwise.
+    """
+    if isinstance(error, (requests.exceptions.ConnectionError, requests.exceptions.Timeout)):
+        return True
+
+    if http_status is not None and (http_status == 429 or 500 <= http_status <= 599):
+        return True
+
+    return False
 
 
 class RefreshTokenResponse:
@@ -101,6 +177,10 @@ class OAuth2ClientCredentials:
 
     This class only accepts a direct token URL. For OIDC discovery, use the
     fetch_oidc_discovery function to obtain the token endpoint first.
+
+    Token endpoint requests retry transient connection and timeout errors, HTTP
+    429 responses, and HTTP 5xx responses with bounded exponential backoff and
+    jitter. Other errors are returned without retrying.
     """
 
     def __init__(
@@ -108,6 +188,8 @@ class OAuth2ClientCredentials:
         client_id: str,
         client_secret: str,
         token_endpoint: str,
+        *,
+        retry=None,
     ):
         """
         Initializes the OAuth2ClientCredentials.
@@ -116,7 +198,17 @@ class OAuth2ClientCredentials:
             client_id: The client ID for the application.
             client_secret: The client secret for the application.
             token_endpoint: The direct token endpoint URL.
+            retry: Optional dict of retry settings for token endpoint requests.
+                Keys: ``max_retries`` (non-negative int, default 3; 0 disables),
+                ``base_delay`` (positive number in seconds, default 0.5),
+                ``max_delay`` (positive number in seconds, default 2.0),
+                ``jitter`` (``'full'`` or ``'none'``, default ``'full'``).
+
+        Raises:
+            TypeError: If retry is not a dict.
+            ValueError: If retry contains unknown keys or invalid values.
         """
+        self._retry_config = _validate_retry_config(retry if retry is not None else {})
         self._token_endpoint = token_endpoint
         self._client_id = client_id
         self._client_secret = client_secret
@@ -164,11 +256,7 @@ class OAuth2ClientCredentials:
                 return RefreshTokenResponse(access_token=self._token, expires_at=self._expiry)
 
             current_time = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-            token_data = self._session.fetch_token(
-                token_url=self._token_endpoint,
-                client_id=self._client_id,
-                client_secret=self._client_secret,
-            )
+            token_data = self._fetch_token_with_retries()
 
             self._token = token_data.get("access_token")
             expires_in = token_data.get("expires_in", 0)
@@ -176,6 +264,63 @@ class OAuth2ClientCredentials:
             self._generation += 1
 
         return RefreshTokenResponse(access_token=self._token, expires_at=self._expiry)
+
+    def _fetch_token_with_retries(self):
+        """Fetch a token, retrying on transient failures.
+
+        Retries connection errors, timeouts, HTTP 429, and HTTP 5xx responses
+        with exponential backoff and optional jitter. A response hook captures
+        the HTTP status code so that server errors are detected even when the
+        OAuth library raises a generic exception.
+        """
+        max_retries = self._retry_config["max_retries"]
+        fetch_kwargs = dict(
+            token_url=self._token_endpoint,
+            client_id=self._client_id,
+            client_secret=self._client_secret,
+        )
+
+        if max_retries == 0:
+            return self._session.fetch_token(**fetch_kwargs)
+
+        last_status = [None]
+
+        def capture_response(response, *args, **kwargs):
+            last_status[0] = response.status_code
+            return response
+
+        original_hooks = list(self._session.hooks.get("response", []))
+        self._session.hooks["response"] = [capture_response] + original_hooks
+
+        try:
+            retry_index = 0
+            while True:
+                last_status[0] = None
+                try:
+                    return self._session.fetch_token(**fetch_kwargs)
+                except Exception as e:
+                    if retry_index < max_retries and _is_retryable_error(e, last_status[0]):
+                        time.sleep(self._retry_delay(retry_index))
+                        retry_index += 1
+                    else:
+                        raise
+        finally:
+            self._session.hooks["response"] = original_hooks
+
+    def _retry_delay(self, retry_index):
+        """Calculate the delay in seconds for the given retry attempt.
+
+        Uses exponential backoff capped at ``max_delay``. With ``jitter='full'``,
+        the delay is randomized between 0 and the cap.
+        """
+        base = self._retry_config["base_delay"]
+        max_delay = self._retry_config["max_delay"]
+        cap = min(max_delay, base * (2**retry_index))
+
+        if self._retry_config["jitter"] == "none":
+            return cap
+
+        return random.random() * cap
 
 
 class GoogleOAuth2ClientCredentials(google.auth.credentials.Credentials):

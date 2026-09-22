@@ -23,11 +23,14 @@ def run():
         discovery = fetch_oidc_discovery(ISSUER_URL)
         token_endpoint = discovery.token_endpoint
 
-        # Create OAuth2 credentials with the discovered token endpoint
+        # Create OAuth2 credentials with the discovered token endpoint.
+        # Token acquisition transparently retries short-lived token-endpoint
+        # failures; callers do not need to add special retry code.
         auth_credentials = OAuth2ClientCredentials(
             client_id=CLIENT_ID,
             client_secret=CLIENT_SECRET,
             token_endpoint=token_endpoint,
+            retry={"max_retries": 3, "base_delay": 0.5, "max_delay": 2.0, "jitter": "full"},
         )
 
         stub, channel = (

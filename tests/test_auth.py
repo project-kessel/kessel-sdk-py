@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from unittest.mock import Mock, patch
 
 import pytest
+import requests.exceptions
 from requests.exceptions import HTTPError
 
 from kessel.auth import (
@@ -14,7 +15,12 @@ from kessel.auth import (
     fetch_oidc_discovery,
     oauth2_auth_request,
 )
-from kessel.auth.auth import RefreshTokenResponse, AuthRequest
+from kessel.auth.auth import (
+    RefreshTokenResponse,
+    AuthRequest,
+    _validate_retry_config,
+    _is_retryable_error,
+)
 
 
 def test_oauth2_client_credentials_initialization():
@@ -663,3 +669,383 @@ def test_get_token_concurrent_force_refresh_calls_sso_once():
     assert original_fetch.call_count == 1
     for result in results:
         assert result.access_token == "force-refreshed-token"
+
+
+# ---------------------------------------------------------------------------
+# Retry configuration validation
+# ---------------------------------------------------------------------------
+
+
+def test_validate_retry_config_defaults():
+    """Test _validate_retry_config returns full defaults for an empty dict."""
+    config = _validate_retry_config({})
+    assert config == {
+        "max_retries": 3,
+        "base_delay": 0.5,
+        "max_delay": 2.0,
+        "jitter": "full",
+    }
+
+
+def test_validate_retry_config_custom():
+    """Test _validate_retry_config merges custom values with defaults."""
+    config = _validate_retry_config({"max_retries": 5, "jitter": "none"})
+    assert config["max_retries"] == 5
+    assert config["jitter"] == "none"
+    assert config["base_delay"] == 0.5
+    assert config["max_delay"] == 2.0
+
+
+def test_validate_retry_config_not_dict():
+    """Test _validate_retry_config rejects non-dict input."""
+    with pytest.raises(TypeError, match="retry must be a dict"):
+        _validate_retry_config("not-a-dict")
+
+
+@pytest.mark.parametrize(
+    "invalid_retry",
+    [
+        {"unknown_key": 1},
+        {"max_retries": -1},
+        {"max_retries": 1.5},
+        {"max_retries": None},
+        {"base_delay": 0},
+        {"base_delay": -0.1},
+        {"base_delay": float("inf")},
+        {"max_delay": 0},
+        {"max_delay": -1},
+        {"max_delay": float("nan")},
+        {"jitter": "random"},
+        {"jitter": None},
+    ],
+    ids=[
+        "unknown_key",
+        "negative_max_retries",
+        "float_max_retries",
+        "none_max_retries",
+        "zero_base_delay",
+        "negative_base_delay",
+        "infinite_base_delay",
+        "zero_max_delay",
+        "negative_max_delay",
+        "nan_max_delay",
+        "invalid_jitter_string",
+        "none_jitter",
+    ],
+)
+def test_validate_retry_config_rejects_invalid(invalid_retry):
+    """Test _validate_retry_config rejects various invalid configurations."""
+    with pytest.raises((TypeError, ValueError)):
+        _validate_retry_config(invalid_retry)
+
+
+def test_validate_retry_config_integer_delays():
+    """Test _validate_retry_config accepts integer delay values."""
+    config = _validate_retry_config({"base_delay": 1, "max_delay": 5})
+    assert config["base_delay"] == 1
+    assert config["max_delay"] == 5
+
+
+# ---------------------------------------------------------------------------
+# Retryable error classification
+# ---------------------------------------------------------------------------
+
+
+def test_is_retryable_error_connection_error():
+    """Test _is_retryable_error returns True for ConnectionError."""
+    assert _is_retryable_error(requests.exceptions.ConnectionError(), None) is True
+
+
+def test_is_retryable_error_timeout():
+    """Test _is_retryable_error returns True for Timeout."""
+    assert _is_retryable_error(requests.exceptions.Timeout(), None) is True
+
+
+def test_is_retryable_error_http_429():
+    """Test _is_retryable_error returns True for HTTP 429."""
+    assert _is_retryable_error(Exception("rate limited"), 429) is True
+
+
+@pytest.mark.parametrize("status", [500, 502, 503, 504, 599])
+def test_is_retryable_error_http_5xx(status):
+    """Test _is_retryable_error returns True for HTTP 5xx status codes."""
+    assert _is_retryable_error(Exception("server error"), status) is True
+
+
+def test_is_retryable_error_http_400_not_retryable():
+    """Test _is_retryable_error returns False for HTTP 400."""
+    assert _is_retryable_error(Exception("bad request"), 400) is False
+
+
+def test_is_retryable_error_http_401_not_retryable():
+    """Test _is_retryable_error returns False for HTTP 401."""
+    assert _is_retryable_error(Exception("unauthorized"), 401) is False
+
+
+def test_is_retryable_error_generic_exception_not_retryable():
+    """Test _is_retryable_error returns False for generic exceptions without status."""
+    assert _is_retryable_error(Exception("unknown"), None) is False
+
+
+# ---------------------------------------------------------------------------
+# Retry delay calculation
+# ---------------------------------------------------------------------------
+
+
+def test_retry_delay_no_jitter():
+    """Test _retry_delay with jitter='none' returns deterministic exponential backoff."""
+    credentials = OAuth2ClientCredentials(
+        "test-client",
+        "test-secret",
+        "https://example.com/token",
+        retry={"jitter": "none", "base_delay": 0.5, "max_delay": 2.0},
+    )
+    assert credentials._retry_delay(0) == 0.5
+    assert credentials._retry_delay(1) == 1.0
+    assert credentials._retry_delay(2) == 2.0
+    assert credentials._retry_delay(3) == 2.0  # capped at max_delay
+
+
+def test_retry_delay_full_jitter_within_bounds():
+    """Test _retry_delay with jitter='full' returns value between 0 and cap."""
+    credentials = OAuth2ClientCredentials(
+        "test-client",
+        "test-secret",
+        "https://example.com/token",
+        retry={"jitter": "full", "base_delay": 0.5, "max_delay": 2.0},
+    )
+    for retry_index in range(4):
+        cap = min(2.0, 0.5 * (2**retry_index))
+        for _ in range(50):
+            delay = credentials._retry_delay(retry_index)
+            assert 0 <= delay <= cap
+
+
+# ---------------------------------------------------------------------------
+# Retry initialization
+# ---------------------------------------------------------------------------
+
+
+def test_default_retry_config_on_init():
+    """Test OAuth2ClientCredentials uses default retry config when none is provided."""
+    credentials = OAuth2ClientCredentials(
+        "test-client", "test-secret", "https://example.com/token"
+    )
+    assert credentials._retry_config == {
+        "max_retries": 3,
+        "base_delay": 0.5,
+        "max_delay": 2.0,
+        "jitter": "full",
+    }
+
+
+def test_custom_retry_config_on_init():
+    """Test OAuth2ClientCredentials accepts custom retry config."""
+    credentials = OAuth2ClientCredentials(
+        "test-client",
+        "test-secret",
+        "https://example.com/token",
+        retry={"max_retries": 1, "base_delay": 0.25, "max_delay": 0.75, "jitter": "none"},
+    )
+    assert credentials._retry_config == {
+        "max_retries": 1,
+        "base_delay": 0.25,
+        "max_delay": 0.75,
+        "jitter": "none",
+    }
+
+
+def test_invalid_retry_config_on_init():
+    """Test OAuth2ClientCredentials rejects invalid retry config at init time."""
+    with pytest.raises(ValueError, match="unknown retry option"):
+        OAuth2ClientCredentials(
+            "test-client",
+            "test-secret",
+            "https://example.com/token",
+            retry={"unknown": 1},
+        )
+
+
+# ---------------------------------------------------------------------------
+# Retry behavior integration
+# ---------------------------------------------------------------------------
+
+
+def test_retry_on_connection_error():
+    """Test get_token retries on ConnectionError and succeeds on later attempt."""
+    credentials = OAuth2ClientCredentials(
+        "test-client",
+        "test-secret",
+        "https://example.com/token",
+        retry={"max_retries": 3, "jitter": "none"},
+    )
+
+    mock_token_data = {
+        "access_token": "recovered-token",
+        "token_type": "Bearer",
+        "expires_in": 3600,
+    }
+    call_count = [0]
+
+    def fail_then_succeed(*args, **kwargs):
+        call_count[0] += 1
+        if call_count[0] <= 2:
+            raise requests.exceptions.ConnectionError("connection refused")
+        return mock_token_data
+
+    with patch.object(credentials._session, "fetch_token", side_effect=fail_then_succeed):
+        with patch("kessel.auth.auth.time.sleep") as mock_sleep:
+            result = credentials.get_token()
+
+    assert result.access_token == "recovered-token"
+    assert call_count[0] == 3
+    assert mock_sleep.call_count == 2
+
+
+def test_retry_on_timeout():
+    """Test get_token retries on Timeout and succeeds on later attempt."""
+    credentials = OAuth2ClientCredentials(
+        "test-client",
+        "test-secret",
+        "https://example.com/token",
+        retry={"max_retries": 3, "jitter": "none"},
+    )
+
+    mock_token_data = {
+        "access_token": "timeout-recovered",
+        "token_type": "Bearer",
+        "expires_in": 3600,
+    }
+    call_count = [0]
+
+    def fail_then_succeed(*args, **kwargs):
+        call_count[0] += 1
+        if call_count[0] == 1:
+            raise requests.exceptions.Timeout("read timed out")
+        return mock_token_data
+
+    with patch.object(credentials._session, "fetch_token", side_effect=fail_then_succeed):
+        with patch("kessel.auth.auth.time.sleep") as mock_sleep:
+            result = credentials.get_token()
+
+    assert result.access_token == "timeout-recovered"
+    assert call_count[0] == 2
+    assert mock_sleep.call_count == 1
+
+
+def test_retry_exhausted_raises():
+    """Test get_token raises after all retries are exhausted."""
+    credentials = OAuth2ClientCredentials(
+        "test-client",
+        "test-secret",
+        "https://example.com/token",
+        retry={"max_retries": 2, "jitter": "none"},
+    )
+
+    call_count = [0]
+
+    def always_fail(*args, **kwargs):
+        call_count[0] += 1
+        raise requests.exceptions.ConnectionError("connection refused")
+
+    with patch.object(credentials._session, "fetch_token", side_effect=always_fail):
+        with patch("kessel.auth.auth.time.sleep"):
+            with pytest.raises(
+                requests.exceptions.ConnectionError, match="connection refused"
+            ):
+                credentials.get_token()
+
+    assert call_count[0] == 3  # 1 initial + 2 retries
+
+
+def test_no_retry_on_permanent_error():
+    """Test get_token does not retry on non-retryable errors."""
+    credentials = OAuth2ClientCredentials(
+        "test-client",
+        "test-secret",
+        "https://example.com/token",
+        retry={"max_retries": 3},
+    )
+
+    call_count = [0]
+
+    def permanent_fail(*args, **kwargs):
+        call_count[0] += 1
+        raise ValueError("invalid_grant")
+
+    with patch.object(credentials._session, "fetch_token", side_effect=permanent_fail):
+        with patch("kessel.auth.auth.time.sleep") as mock_sleep:
+            with pytest.raises(ValueError, match="invalid_grant"):
+                credentials.get_token()
+
+    assert call_count[0] == 1
+    mock_sleep.assert_not_called()
+
+
+def test_retry_disabled_with_zero_max_retries():
+    """Test get_token does not retry when max_retries=0."""
+    credentials = OAuth2ClientCredentials(
+        "test-client",
+        "test-secret",
+        "https://example.com/token",
+        retry={"max_retries": 0},
+    )
+
+    call_count = [0]
+
+    def fail_once(*args, **kwargs):
+        call_count[0] += 1
+        raise requests.exceptions.ConnectionError("connection refused")
+
+    with patch.object(credentials._session, "fetch_token", side_effect=fail_once):
+        with patch("kessel.auth.auth.time.sleep") as mock_sleep:
+            with pytest.raises(requests.exceptions.ConnectionError):
+                credentials.get_token()
+
+    assert call_count[0] == 1
+    mock_sleep.assert_not_called()
+
+
+def test_retry_sleep_delay_values():
+    """Test that retry sleeps with correct exponential backoff delays."""
+    credentials = OAuth2ClientCredentials(
+        "test-client",
+        "test-secret",
+        "https://example.com/token",
+        retry={"max_retries": 3, "base_delay": 0.5, "max_delay": 2.0, "jitter": "none"},
+    )
+
+    def always_fail(*args, **kwargs):
+        raise requests.exceptions.ConnectionError("connection refused")
+
+    with patch.object(credentials._session, "fetch_token", side_effect=always_fail):
+        with patch("kessel.auth.auth.time.sleep") as mock_sleep:
+            with pytest.raises(requests.exceptions.ConnectionError):
+                credentials.get_token()
+
+    assert mock_sleep.call_count == 3
+    assert mock_sleep.call_args_list[0][0][0] == 0.5
+    assert mock_sleep.call_args_list[1][0][0] == 1.0
+    assert mock_sleep.call_args_list[2][0][0] == 2.0
+
+
+def test_retry_restores_session_hooks():
+    """Test that retry logic restores original session hooks after completion."""
+    credentials = OAuth2ClientCredentials(
+        "test-client",
+        "test-secret",
+        "https://example.com/token",
+        retry={"max_retries": 1},
+    )
+
+    original_hooks = list(credentials._session.hooks.get("response", []))
+
+    def always_fail(*args, **kwargs):
+        raise requests.exceptions.ConnectionError("connection refused")
+
+    with patch.object(credentials._session, "fetch_token", side_effect=always_fail):
+        with patch("kessel.auth.auth.time.sleep"):
+            with pytest.raises(requests.exceptions.ConnectionError):
+                credentials.get_token()
+
+    assert credentials._session.hooks.get("response", []) == original_hooks
