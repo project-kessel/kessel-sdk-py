@@ -1,3 +1,8 @@
+# WARNING: This example demonstrates INSECURE configuration for local development only.
+# DO NOT USE IN PRODUCTION. The grpc.local_channel_credentials() option disables TLS
+# certificate validation and encryption, leaving traffic vulnerable to interception.
+# For production use, configure proper TLS credentials with certificate verification.
+
 import os
 
 import grpc
