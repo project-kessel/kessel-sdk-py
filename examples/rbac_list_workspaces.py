@@ -1,4 +1,8 @@
 import asyncio
+# WARNING: This example uses grpc.local_channel_credentials() for local development only.
+# DO NOT USE IN PRODUCTION. This disables TLS certificate validation.
+# For production, configure proper TLS credentials with certificate verification.
+
 import os
 
 import grpc

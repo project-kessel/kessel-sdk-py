@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -28,4 +31,3 @@ jobs:
       run: |
         # Lint source & examples, excluding generated protobuf files
         flake8 --exclude '*_pb2.py,*_pb2_grpc.py' src/ examples/
-
