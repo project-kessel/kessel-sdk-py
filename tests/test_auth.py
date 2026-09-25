@@ -292,6 +292,31 @@ def test_get_token_initial_fetch():
         assert credentials._token == "new-access-token"
 
 
+def test_get_token_sends_client_credentials_in_request_body():
+    """Test get_token asks requests-oauthlib to put client credentials in the form body."""
+    credentials = OAuth2ClientCredentials(
+        "test-client-id", "test-secret", "https://example.com/token"
+    )
+
+    mock_token_data = {
+        "access_token": "access-token",
+        "token_type": "Bearer",
+        "expires_in": 3600,
+    }
+
+    with patch.object(
+        credentials._session, "fetch_token", return_value=mock_token_data
+    ) as mock_fetch:
+        credentials.get_token()
+
+        mock_fetch.assert_called_once_with(
+            token_url="https://example.com/token",
+            client_id="test-client-id",
+            client_secret="test-secret",
+            include_client_id=True,
+        )
+
+
 def test_get_token_uses_cached_token():
     """Test get_token returns cached token when still valid."""
     credentials = OAuth2ClientCredentials(

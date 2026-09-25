@@ -282,6 +282,7 @@ class OAuth2ClientCredentials:
             token_url=self._token_endpoint,
             client_id=self._client_id,
             client_secret=self._client_secret,
+            include_client_id=True,
         )
 
         if max_retries == 0:
