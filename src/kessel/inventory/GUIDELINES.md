@@ -69,7 +69,22 @@ Do not mix sync and async channels. A channel from `build()` cannot be used with
 
 ### Channel Options
 
-Both `build()` and `build_async()` apply HTTP/2 keepalive defaults on every channel to prevent idle-timeout resets behind load balancers (Classic ELB, Istio gateway):
+`build()` sets `ChannelOptions.SingleThreadedUnaryStream = 1` for sync channels, reducing thread overhead for server-streaming RPCs. `build_async()` does not set this (async event loop handles it natively).
+
+#### Keepalive (opt-in)
+
+Call `.enable_keepalive()` to add HTTP/2 keepalive options that prevent idle-timeout resets behind load balancers (Classic ELB, Istio gateway). **Only enable this when the target server and any intermediaries are confirmed to permit this policy** -- a default-configured gRPC server may close the connection with `GOAWAY` / `too_many_pings`.
+
+```python
+stub, channel = (
+    ClientBuilder(target)
+    .oauth2_client_authenticated(creds)
+    .enable_keepalive()
+    .build()
+)
+```
+
+When enabled, the following options are applied:
 
 | Option | Default | Purpose |
 |---|---|---|
@@ -78,22 +93,21 @@ Both `build()` and `build_async()` apply HTTP/2 keepalive defaults on every chan
 | `grpc.keepalive_permit_without_calls` | 1 | Send pings even with no active RPCs |
 | `grpc.http2.max_pings_without_data` | 0 | No cap on pings without data frames |
 
-`build()` additionally sets `ChannelOptions.SingleThreadedUnaryStream = 1` for sync channels, reducing thread overhead for server-streaming RPCs. `build_async()` does not set this (async event loop handles it natively).
+#### Custom channel options
 
-#### Overriding defaults
-
-Use `.channel_options()` to supply or override channel options. Caller-supplied keys win when they collide with a default:
+Use `.channel_options()` to supply or override any channel option. Caller-supplied keys win when they collide with keepalive defaults:
 
 ```python
 stub, channel = (
     ClientBuilder(target)
     .insecure()
+    .enable_keepalive()
     .channel_options([("grpc.keepalive_time_ms", 30_000)])
     .build()
 )
 ```
 
-New keys are merged in alongside the defaults:
+New keys are merged in alongside any active options:
 
 ```python
 stub, channel = (
