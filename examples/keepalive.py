@@ -5,6 +5,7 @@ Every SDK-built channel has HTTP/2 keepalive enabled by default
 Use ``ClientBuilder.keepalive()`` to override individual values.
 """
 
+import asyncio
 import os
 from datetime import timedelta
 
@@ -38,7 +39,7 @@ def run_with_custom_keepalive():
         print("  interval=30s, timeout=5s, permit_without_calls=True")
 
 
-def run_async_with_keepalive():
+async def run_async_with_keepalive():
     """Build an async channel with a custom keepalive policy."""
     stub, channel = (
         ClientBuilder(KESSEL_ENDPOINT)
@@ -46,11 +47,12 @@ def run_async_with_keepalive():
         .keepalive(interval=timedelta(seconds=60))
         .build_async()
     )
-    print("Async channel built with 60s keepalive interval")
-    print("  (remaining defaults: timeout=10s, permit_without_calls=True)")
+    async with channel:
+        print("Async channel built with 60s keepalive interval")
+        print("  (remaining defaults: timeout=10s, permit_without_calls=True)")
 
 
 if __name__ == "__main__":
     run_with_defaults()
     run_with_custom_keepalive()
-    run_async_with_keepalive()
+    asyncio.run(run_async_with_keepalive())
