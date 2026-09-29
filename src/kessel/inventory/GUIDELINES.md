@@ -67,42 +67,48 @@ Do not mix sync and async channels. A channel from `build()` cannot be used with
 
 `__init__` raises `TypeError` for empty, None, or non-string targets.
 
-### Channel Options
+### Keepalive Policy
 
-Both `build()` and `build_async()` apply HTTP/2 keepalive defaults on every channel to prevent idle-timeout resets behind load balancers (Classic ELB, Istio gateway):
+Both `build()` and `build_async()` apply an HTTP/2 keepalive policy on every channel to prevent idle-timeout resets behind load balancers (Classic ELB, Istio gateway):
 
-| Option | Default | Purpose |
+| Setting | Default | Purpose |
 |---|---|---|
-| `grpc.keepalive_time_ms` | 45 000 | Send ping after 45 s of inactivity (under 60 s LB idle timeout) |
-| `grpc.keepalive_timeout_ms` | 10 000 | Wait 10 s for ping ACK before closing |
-| `grpc.keepalive_permit_without_calls` | 1 | Send pings even with no active RPCs |
-| `grpc.http2.max_pings_without_data` | 0 | No cap on pings without data frames |
+| interval | 45 seconds | Time of inactivity before sending a keepalive ping (under 60 s LB idle timeout) |
+| timeout | 10 seconds | Time to wait for a ping ACK before closing the transport |
+| permit_without_calls | `True` | Send pings even with no active RPCs |
+| max_pings_without_data | 0 (internal) | No cap on pings without data frames (not exposed publicly) |
 
 `build()` additionally sets `ChannelOptions.SingleThreadedUnaryStream = 1` for sync channels, reducing thread overhead for server-streaming RPCs. `build_async()` does not set this (async event loop handles it natively).
 
-#### Overriding defaults
+Consumers do **not** need to call `.keepalive()` to enable keepalive — it is always on.
 
-Use `.channel_options()` to supply or override channel options. Caller-supplied keys win when they collide with a default:
+#### Customising keepalive
+
+Use `.keepalive()` with typed, named arguments to override individual settings. Omitted values retain their defaults. The method may be called more than once; each call updates only the supplied fields.
+
+```python
+from datetime import timedelta
+
+stub, channel = (
+    ClientBuilder(target)
+    .insecure()
+    .keepalive(interval=timedelta(seconds=30), timeout=timedelta(seconds=5))
+    .build()
+)
+```
+
+Disable pings when idle:
 
 ```python
 stub, channel = (
     ClientBuilder(target)
     .insecure()
-    .channel_options([("grpc.keepalive_time_ms", 30_000)])
+    .keepalive(permit_without_calls=False)
     .build()
 )
 ```
 
-New keys are merged in alongside the defaults:
-
-```python
-stub, channel = (
-    ClientBuilder(target)
-    .insecure()
-    .channel_options([("grpc.max_receive_message_length", 4 * 1024 * 1024)])
-    .build()
-)
-```
+Duration arguments must be positive `timedelta` values; `permit_without_calls` must be a `bool`. Invalid values raise `TypeError` or `ValueError`.
 
 ## Version Directories
 

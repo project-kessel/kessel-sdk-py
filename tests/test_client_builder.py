@@ -1,7 +1,14 @@
+from datetime import timedelta
+
 import pytest
 from unittest.mock import Mock, patch
 
-from kessel.inventory import ClientBuilder, _DEFAULT_KEEPALIVE_OPTIONS
+from kessel.inventory import (
+    ClientBuilder,
+    _DEFAULT_KEEPALIVE_INTERVAL_MS,
+    _DEFAULT_KEEPALIVE_TIMEOUT_MS,
+    _DEFAULT_KEEPALIVE_PERMIT_WITHOUT_CALLS,
+)
 
 
 class TestClientBuilderConstructor:
@@ -177,52 +184,149 @@ class TestClientBuilderCredentialValidation:
             builder.oauth2_client_authenticated(Mock(), channel_credentials=mock_insecure)
 
 
-class TestClientBuilderChannelOptions:
-    """Test ClientBuilder.channel_options() method."""
+class TestKeepaliveMethod:
+    """Test ClientBuilder.keepalive() typed fluent API."""
 
-    def test_channel_options_returns_self(self):
-        """Test that channel_options() returns self for method chaining."""
+    def test_keepalive_returns_self(self):
+        """Test that keepalive() returns self for method chaining."""
         builder = ClientBuilder("localhost:8080")
-        result = builder.channel_options([("grpc.keepalive_time_ms", 30_000)])
+        result = builder.keepalive(interval=timedelta(seconds=30))
         assert result is builder
 
-    def test_channel_options_stores_user_options(self):
-        """Test that channel_options() stores the provided options."""
+    def test_keepalive_sets_interval(self):
+        """Test that keepalive() sets interval in milliseconds."""
         builder = ClientBuilder("localhost:8080")
-        opts = [("grpc.keepalive_time_ms", 30_000)]
-        builder.channel_options(opts)
-        assert builder._user_channel_options == opts
+        builder.keepalive(interval=timedelta(seconds=40))
+        assert builder._keepalive_interval_ms == 40_000
 
-    def test_channel_options_copies_input_list(self):
-        """Test that channel_options() copies the list to avoid mutation."""
+    def test_keepalive_sets_timeout(self):
+        """Test that keepalive() sets timeout in milliseconds."""
         builder = ClientBuilder("localhost:8080")
-        opts = [("grpc.keepalive_time_ms", 30_000)]
-        builder.channel_options(opts)
-        opts.append(("extra_key", 1))
-        assert ("extra_key", 1) not in builder._user_channel_options
+        builder.keepalive(timeout=timedelta(seconds=15))
+        assert builder._keepalive_timeout_ms == 15_000
 
-    def test_channel_options_default_is_none(self):
-        """Test that _user_channel_options starts as None."""
+    def test_keepalive_sets_permit_without_calls(self):
+        """Test that keepalive() sets permit_without_calls flag."""
         builder = ClientBuilder("localhost:8080")
-        assert builder._user_channel_options is None
+        builder.keepalive(permit_without_calls=False)
+        assert builder._keepalive_permit_without_calls is False
+
+    def test_keepalive_omitted_values_retain_defaults(self):
+        """Test that omitted values keep their defaults."""
+        builder = ClientBuilder("localhost:8080")
+        builder.keepalive(interval=timedelta(seconds=30))
+        assert builder._keepalive_interval_ms == 30_000
+        assert builder._keepalive_timeout_ms == _DEFAULT_KEEPALIVE_TIMEOUT_MS
+        assert builder._keepalive_permit_without_calls == _DEFAULT_KEEPALIVE_PERMIT_WITHOUT_CALLS
+
+    def test_keepalive_repeated_calls_update_only_supplied_fields(self):
+        """Test that repeated keepalive() calls update only supplied fields."""
+        builder = ClientBuilder("localhost:8080")
+        builder.keepalive(interval=timedelta(seconds=30))
+        builder.keepalive(timeout=timedelta(seconds=5))
+        assert builder._keepalive_interval_ms == 30_000
+        assert builder._keepalive_timeout_ms == 5_000
+        assert builder._keepalive_permit_without_calls == _DEFAULT_KEEPALIVE_PERMIT_WITHOUT_CALLS
+
+    def test_keepalive_all_fields_at_once(self):
+        """Test that keepalive() can set all fields in a single call."""
+        builder = ClientBuilder("localhost:8080")
+        builder.keepalive(
+            interval=timedelta(seconds=60),
+            timeout=timedelta(seconds=20),
+            permit_without_calls=False,
+        )
+        assert builder._keepalive_interval_ms == 60_000
+        assert builder._keepalive_timeout_ms == 20_000
+        assert builder._keepalive_permit_without_calls is False
+
+    def test_keepalive_sub_second_interval(self):
+        """Test that keepalive() handles sub-second timedelta correctly."""
+        builder = ClientBuilder("localhost:8080")
+        builder.keepalive(interval=timedelta(milliseconds=500))
+        assert builder._keepalive_interval_ms == 500
+
+    def test_keepalive_no_args_is_noop(self):
+        """Test that keepalive() with no arguments is a no-op."""
+        builder = ClientBuilder("localhost:8080")
+        builder.keepalive()
+        assert builder._keepalive_interval_ms == _DEFAULT_KEEPALIVE_INTERVAL_MS
+        assert builder._keepalive_timeout_ms == _DEFAULT_KEEPALIVE_TIMEOUT_MS
+        assert builder._keepalive_permit_without_calls == _DEFAULT_KEEPALIVE_PERMIT_WITHOUT_CALLS
+
+
+class TestKeepaliveValidation:
+    """Test keepalive() input validation."""
+
+    def test_interval_non_timedelta_raises_type_error(self):
+        """Test that non-timedelta interval raises TypeError."""
+        builder = ClientBuilder("localhost:8080")
+        with pytest.raises(TypeError, match="interval must be a timedelta"):
+            builder.keepalive(interval=45)
+
+    def test_timeout_non_timedelta_raises_type_error(self):
+        """Test that non-timedelta timeout raises TypeError."""
+        builder = ClientBuilder("localhost:8080")
+        with pytest.raises(TypeError, match="timeout must be a timedelta"):
+            builder.keepalive(timeout="10s")
+
+    def test_permit_without_calls_non_bool_raises_type_error(self):
+        """Test that non-bool permit_without_calls raises TypeError."""
+        builder = ClientBuilder("localhost:8080")
+        with pytest.raises(TypeError, match="permit_without_calls must be a bool"):
+            builder.keepalive(permit_without_calls=1)
+
+    def test_interval_zero_raises_value_error(self):
+        """Test that zero interval raises ValueError."""
+        builder = ClientBuilder("localhost:8080")
+        with pytest.raises(ValueError, match="interval must be positive"):
+            builder.keepalive(interval=timedelta(0))
+
+    def test_interval_negative_raises_value_error(self):
+        """Test that negative interval raises ValueError."""
+        builder = ClientBuilder("localhost:8080")
+        with pytest.raises(ValueError, match="interval must be positive"):
+            builder.keepalive(interval=timedelta(seconds=-1))
+
+    def test_timeout_zero_raises_value_error(self):
+        """Test that zero timeout raises ValueError."""
+        builder = ClientBuilder("localhost:8080")
+        with pytest.raises(ValueError, match="timeout must be positive"):
+            builder.keepalive(timeout=timedelta(0))
+
+    def test_timeout_negative_raises_value_error(self):
+        """Test that negative timeout raises ValueError."""
+        builder = ClientBuilder("localhost:8080")
+        with pytest.raises(ValueError, match="timeout must be positive"):
+            builder.keepalive(timeout=timedelta(seconds=-5))
+
+    def test_interval_int_rejects_bool_subclass(self):
+        """Test that bool is rejected for interval even though bool is int subclass."""
+        builder = ClientBuilder("localhost:8080")
+        with pytest.raises(TypeError, match="interval must be a timedelta"):
+            builder.keepalive(interval=True)
 
 
 class TestBuildChannelOptions:
-    """Test ClientBuilder._build_channel_options() merge logic."""
+    """Test ClientBuilder._build_channel_options() across all channel paths."""
 
-    def test_sync_includes_keepalive_defaults(self):
+    def test_sync_defaults_include_keepalive(self):
         """Test that sync build includes all keepalive defaults."""
         builder = ClientBuilder("localhost:8080")
         options = dict(builder._build_channel_options(sync=True))
-        for key, value in _DEFAULT_KEEPALIVE_OPTIONS:
-            assert options[key] == value
+        assert options["grpc.keepalive_time_ms"] == 45_000
+        assert options["grpc.keepalive_timeout_ms"] == 10_000
+        assert options["grpc.keepalive_permit_without_calls"] == 1
+        assert options["grpc.http2.max_pings_without_data"] == 0
 
-    def test_async_includes_keepalive_defaults(self):
+    def test_async_defaults_include_keepalive(self):
         """Test that async build includes all keepalive defaults."""
         builder = ClientBuilder("localhost:8080")
         options = dict(builder._build_channel_options(sync=False))
-        for key, value in _DEFAULT_KEEPALIVE_OPTIONS:
-            assert options[key] == value
+        assert options["grpc.keepalive_time_ms"] == 45_000
+        assert options["grpc.keepalive_timeout_ms"] == 10_000
+        assert options["grpc.keepalive_permit_without_calls"] == 1
+        assert options["grpc.http2.max_pings_without_data"] == 0
 
     def test_sync_includes_single_threaded_unary_stream(self):
         """Test that sync build includes SingleThreadedUnaryStream option."""
@@ -240,61 +344,104 @@ class TestBuildChannelOptions:
         options = dict(builder._build_channel_options(sync=False))
         assert ChannelOptions.SingleThreadedUnaryStream not in options
 
-    def test_user_options_override_defaults(self):
-        """Test that caller-supplied options override keepalive defaults."""
+    def test_keepalive_override_reaches_sync_options(self):
+        """Test that keepalive() overrides reach sync channel options."""
         builder = ClientBuilder("localhost:8080")
-        builder.channel_options([("grpc.keepalive_time_ms", 20_000)])
+        builder.keepalive(
+            interval=timedelta(seconds=30),
+            timeout=timedelta(seconds=5),
+            permit_without_calls=False,
+        )
         options = dict(builder._build_channel_options(sync=True))
-        assert options["grpc.keepalive_time_ms"] == 20_000
+        assert options["grpc.keepalive_time_ms"] == 30_000
+        assert options["grpc.keepalive_timeout_ms"] == 5_000
+        assert options["grpc.keepalive_permit_without_calls"] == 0
 
-    def test_user_options_add_new_keys(self):
-        """Test that caller-supplied options can add new keys."""
+    def test_keepalive_override_reaches_async_options(self):
+        """Test that keepalive() overrides reach async channel options."""
         builder = ClientBuilder("localhost:8080")
-        builder.channel_options([("grpc.max_receive_message_length", 1024)])
-        options = dict(builder._build_channel_options(sync=True))
-        assert options["grpc.max_receive_message_length"] == 1024
-        # Keepalive defaults still present
-        assert options["grpc.keepalive_time_ms"] == 45_000
+        builder.keepalive(
+            interval=timedelta(seconds=30),
+            timeout=timedelta(seconds=5),
+            permit_without_calls=False,
+        )
+        options = dict(builder._build_channel_options(sync=False))
+        assert options["grpc.keepalive_time_ms"] == 30_000
+        assert options["grpc.keepalive_timeout_ms"] == 5_000
+        assert options["grpc.keepalive_permit_without_calls"] == 0
 
-    def test_user_options_override_single_threaded_unary_stream(self):
-        """Test that caller can override SingleThreadedUnaryStream on sync."""
-        from grpc.experimental import ChannelOptions
-
+    def test_max_pings_without_data_always_zero(self):
+        """Test that max_pings_without_data is always 0 regardless of keepalive()."""
         builder = ClientBuilder("localhost:8080")
-        builder.channel_options([(ChannelOptions.SingleThreadedUnaryStream, 0)])
-        options = dict(builder._build_channel_options(sync=True))
-        assert options[ChannelOptions.SingleThreadedUnaryStream] == 0
+        builder.keepalive(interval=timedelta(seconds=60))
+        options_sync = dict(builder._build_channel_options(sync=True))
+        options_async = dict(builder._build_channel_options(sync=False))
+        assert options_sync["grpc.http2.max_pings_without_data"] == 0
+        assert options_async["grpc.http2.max_pings_without_data"] == 0
 
-    def test_no_user_options_returns_defaults_only(self):
-        """Test that without user options, only defaults are returned."""
-        from grpc.experimental import ChannelOptions
-
+    def test_sync_option_count_with_defaults(self):
+        """Test that sync build returns exactly 5 options (4 keepalive + SingleThreaded)."""
         builder = ClientBuilder("localhost:8080")
-        options = dict(builder._build_channel_options(sync=True))
-        expected_keys = {k for k, _ in _DEFAULT_KEEPALIVE_OPTIONS}
-        expected_keys.add(ChannelOptions.SingleThreadedUnaryStream)
-        assert set(options.keys()) == expected_keys
+        options = builder._build_channel_options(sync=True)
+        assert len(options) == 5
 
-    def test_keepalive_time_ms_value(self):
+    def test_async_option_count_with_defaults(self):
+        """Test that async build returns exactly 4 options (keepalive only)."""
+        builder = ClientBuilder("localhost:8080")
+        options = builder._build_channel_options(sync=False)
+        assert len(options) == 4
+
+    def test_keepalive_time_ms_default_value(self):
         """Test that keepalive_time_ms default is 45000."""
         builder = ClientBuilder("localhost:8080")
         options = dict(builder._build_channel_options(sync=False))
         assert options["grpc.keepalive_time_ms"] == 45_000
 
-    def test_keepalive_timeout_ms_value(self):
+    def test_keepalive_timeout_ms_default_value(self):
         """Test that keepalive_timeout_ms default is 10000."""
         builder = ClientBuilder("localhost:8080")
         options = dict(builder._build_channel_options(sync=False))
         assert options["grpc.keepalive_timeout_ms"] == 10_000
 
-    def test_keepalive_permit_without_calls_value(self):
-        """Test that keepalive_permit_without_calls default is 1."""
+    def test_keepalive_permit_without_calls_default_value(self):
+        """Test that keepalive_permit_without_calls default is 1 (True)."""
         builder = ClientBuilder("localhost:8080")
         options = dict(builder._build_channel_options(sync=False))
         assert options["grpc.keepalive_permit_without_calls"] == 1
 
-    def test_max_pings_without_data_value(self):
-        """Test that http2.max_pings_without_data default is 0."""
+    def test_permit_without_calls_true_maps_to_1(self):
+        """Test that permit_without_calls=True maps to gRPC integer 1."""
         builder = ClientBuilder("localhost:8080")
+        builder.keepalive(permit_without_calls=True)
         options = dict(builder._build_channel_options(sync=False))
-        assert options["grpc.http2.max_pings_without_data"] == 0
+        assert options["grpc.keepalive_permit_without_calls"] == 1
+
+    def test_permit_without_calls_false_maps_to_0(self):
+        """Test that permit_without_calls=False maps to gRPC integer 0."""
+        builder = ClientBuilder("localhost:8080")
+        builder.keepalive(permit_without_calls=False)
+        options = dict(builder._build_channel_options(sync=False))
+        assert options["grpc.keepalive_permit_without_calls"] == 0
+
+
+class TestKeepaliveDefaults:
+    """Test that module-level keepalive defaults are correct."""
+
+    def test_default_interval_is_45_seconds(self):
+        """Test that the default keepalive interval is 45000 ms."""
+        assert _DEFAULT_KEEPALIVE_INTERVAL_MS == 45_000
+
+    def test_default_timeout_is_10_seconds(self):
+        """Test that the default keepalive timeout is 10000 ms."""
+        assert _DEFAULT_KEEPALIVE_TIMEOUT_MS == 10_000
+
+    def test_default_permit_without_calls_is_true(self):
+        """Test that keepalive pings without active RPCs are permitted by default."""
+        assert _DEFAULT_KEEPALIVE_PERMIT_WITHOUT_CALLS is True
+
+    def test_builder_initializes_with_defaults(self):
+        """Test that ClientBuilder starts with the module-level defaults."""
+        builder = ClientBuilder("localhost:8080")
+        assert builder._keepalive_interval_ms == _DEFAULT_KEEPALIVE_INTERVAL_MS
+        assert builder._keepalive_timeout_ms == _DEFAULT_KEEPALIVE_TIMEOUT_MS
+        assert builder._keepalive_permit_without_calls == _DEFAULT_KEEPALIVE_PERMIT_WITHOUT_CALLS

@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Self, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -18,16 +19,13 @@ from grpc.aio import (
 from grpc.experimental import insecure_channel_credentials, ChannelOptions
 from kessel.grpc import oauth2_call_credentials
 
-# Default HTTP/2 keepalive options for all gRPC channels.
+# Default keepalive policy applied to every SDK-built channel.
 # Keeps connections alive behind idle-timeout load balancers (e.g. 60 s
-# Classic ELB / Istio gateway).  Callers can override individual keys
-# via ClientBuilder.channel_options().
-_DEFAULT_KEEPALIVE_OPTIONS = (
-    ("grpc.keepalive_time_ms", 45_000),
-    ("grpc.keepalive_timeout_ms", 10_000),
-    ("grpc.keepalive_permit_without_calls", 1),
-    ("grpc.http2.max_pings_without_data", 0),
-)
+# Classic ELB / Istio gateway).  Callers can customise individual values
+# via the typed ClientBuilder.keepalive() method.
+_DEFAULT_KEEPALIVE_INTERVAL_MS = 45_000
+_DEFAULT_KEEPALIVE_TIMEOUT_MS = 10_000
+_DEFAULT_KEEPALIVE_PERMIT_WITHOUT_CALLS = True
 
 
 class ClientBuilder:
@@ -37,7 +35,9 @@ class ClientBuilder:
         self._target = target
         self._call_credentials = None
         self._channel_credentials = None
-        self._user_channel_options = None
+        self._keepalive_interval_ms = _DEFAULT_KEEPALIVE_INTERVAL_MS
+        self._keepalive_timeout_ms = _DEFAULT_KEEPALIVE_TIMEOUT_MS
+        self._keepalive_permit_without_calls = _DEFAULT_KEEPALIVE_PERMIT_WITHOUT_CALLS
 
         if not self._target or type(self._target) is not str:
             raise TypeError("Invalid target type")
@@ -71,18 +71,58 @@ class ClientBuilder:
         self._channel_credentials = insecure_channel_credentials()
         return self
 
-    def channel_options(self, options: list[tuple[str, object]]) -> Self:
-        """Set custom channel options that are merged with defaults.
+    def keepalive(
+        self,
+        *,
+        interval: timedelta | None = None,
+        timeout: timedelta | None = None,
+        permit_without_calls: bool | None = None,
+    ) -> Self:
+        """Customise the HTTP/2 keepalive policy for this channel.
 
-        Caller-supplied keys override the built-in keepalive defaults.
+        Keepalive is enabled by default on every SDK-built channel.
+        Calling this method overrides only the supplied fields; omitted
+        values retain their current effective defaults.  The method may
+        be called more than once — each call updates only the fields it
+        receives.
 
         Args:
-            options: List of ``(key, value)`` gRPC channel option tuples.
+            interval: Time of inactivity before sending a keepalive ping.
+                Must be a positive ``timedelta``.  Default: 45 seconds.
+            timeout: Time to wait for a keepalive ping ACK before closing
+                the transport.  Must be a positive ``timedelta``.
+                Default: 10 seconds.
+            permit_without_calls: If ``True``, send keepalive pings even
+                when there are no active RPCs on the channel.
+                Default: ``True``.
 
         Returns:
             ``self`` for method chaining.
+
+        Raises:
+            TypeError: If *interval* or *timeout* is not a ``timedelta``,
+                or *permit_without_calls* is not a ``bool``.
+            ValueError: If *interval* or *timeout* is zero or negative.
         """
-        self._user_channel_options = list(options)
+        if interval is not None:
+            if not isinstance(interval, timedelta):
+                raise TypeError("interval must be a timedelta, got " + type(interval).__name__)
+            if interval <= timedelta(0):
+                raise ValueError("interval must be positive")
+            self._keepalive_interval_ms = int(interval / timedelta(milliseconds=1))
+        if timeout is not None:
+            if not isinstance(timeout, timedelta):
+                raise TypeError("timeout must be a timedelta, got " + type(timeout).__name__)
+            if timeout <= timedelta(0):
+                raise ValueError("timeout must be positive")
+            self._keepalive_timeout_ms = int(timeout / timedelta(milliseconds=1))
+        if permit_without_calls is not None:
+            if not isinstance(permit_without_calls, bool):
+                raise TypeError(
+                    "permit_without_calls must be a bool, got "
+                    + type(permit_without_calls).__name__
+                )
+            self._keepalive_permit_without_calls = permit_without_calls
         return self
 
     def build(self):
@@ -110,16 +150,19 @@ class ClientBuilder:
         return self._stub_class(channel), channel
 
     def _build_channel_options(self, *, sync: bool) -> list[tuple]:
-        """Merge keepalive defaults, sync-only options, and caller overrides.
-
-        Caller-supplied keys win when they collide with a default.
-        """
-        merged = dict(_DEFAULT_KEEPALIVE_OPTIONS)
+        """Build the gRPC channel options list from the current keepalive policy."""
+        options = [
+            ("grpc.keepalive_time_ms", self._keepalive_interval_ms),
+            ("grpc.keepalive_timeout_ms", self._keepalive_timeout_ms),
+            (
+                "grpc.keepalive_permit_without_calls",
+                1 if self._keepalive_permit_without_calls else 0,
+            ),
+            ("grpc.http2.max_pings_without_data", 0),
+        ]
         if sync:
-            merged[ChannelOptions.SingleThreadedUnaryStream] = 1
-        if self._user_channel_options:
-            merged.update(self._user_channel_options)
-        return list(merged.items())
+            options.append((ChannelOptions.SingleThreadedUnaryStream, 1))
+        return options
 
     def _build_credentials(self):
         if self._channel_credentials is None:
