@@ -18,6 +18,17 @@ from grpc.aio import (
 from grpc.experimental import insecure_channel_credentials, ChannelOptions
 from kessel.grpc import oauth2_call_credentials
 
+# Default HTTP/2 keepalive options for all gRPC channels.
+# Keeps connections alive behind idle-timeout load balancers (e.g. 60 s
+# Classic ELB / Istio gateway).  Callers can override individual keys
+# via ClientBuilder.channel_options().
+_DEFAULT_KEEPALIVE_OPTIONS = (
+    ("grpc.keepalive_time_ms", 45_000),
+    ("grpc.keepalive_timeout_ms", 10_000),
+    ("grpc.keepalive_permit_without_calls", 1),
+    ("grpc.http2.max_pings_without_data", 0),
+)
+
 
 class ClientBuilder:
     _stub_class = None
@@ -26,6 +37,7 @@ class ClientBuilder:
         self._target = target
         self._call_credentials = None
         self._channel_credentials = None
+        self._user_channel_options = None
 
         if not self._target or type(self._target) is not str:
             raise TypeError("Invalid target type")
@@ -59,11 +71,23 @@ class ClientBuilder:
         self._channel_credentials = insecure_channel_credentials()
         return self
 
+    def channel_options(self, options: list[tuple[str, object]]) -> Self:
+        """Set custom channel options that are merged with defaults.
+
+        Caller-supplied keys override the built-in keepalive defaults.
+
+        Args:
+            options: List of ``(key, value)`` gRPC channel option tuples.
+
+        Returns:
+            ``self`` for method chaining.
+        """
+        self._user_channel_options = list(options)
+        return self
+
     def build(self):
         credentials = self._build_credentials()
-
-        # Enable single-threaded unary streams
-        channel_options = [(ChannelOptions.SingleThreadedUnaryStream, 1)]
+        channel_options = self._build_channel_options(sync=True)
 
         if self._channel_credentials is insecure_channel_credentials():
             channel = insecure_channel(self._target, options=channel_options)
@@ -74,13 +98,28 @@ class ClientBuilder:
 
     def build_async(self):
         credentials = self._build_credentials()
+        channel_options = self._build_channel_options(sync=False)
 
         if self._channel_credentials is insecure_channel_credentials():
-            channel = insecure_channel_async(self._target)
+            channel = insecure_channel_async(self._target, options=channel_options)
         else:
-            channel = secure_channel_async(self._target, credentials=credentials)
+            channel = secure_channel_async(
+                self._target, credentials=credentials, options=channel_options
+            )
 
         return self._stub_class(channel), channel
+
+    def _build_channel_options(self, *, sync: bool) -> list[tuple]:
+        """Merge keepalive defaults, sync-only options, and caller overrides.
+
+        Caller-supplied keys win when they collide with a default.
+        """
+        merged = dict(_DEFAULT_KEEPALIVE_OPTIONS)
+        if sync:
+            merged[ChannelOptions.SingleThreadedUnaryStream] = 1
+        if self._user_channel_options:
+            merged.update(self._user_channel_options)
+        return list(merged.items())
 
     def _build_credentials(self):
         if self._channel_credentials is None:

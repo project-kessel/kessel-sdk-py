@@ -69,7 +69,40 @@ Do not mix sync and async channels. A channel from `build()` cannot be used with
 
 ### Channel Options
 
-`build()` sets `ChannelOptions.SingleThreadedUnaryStream = 1` for sync channels, reducing thread overhead for server-streaming RPCs. `build_async()` does not set this (async event loop handles it natively).
+Both `build()` and `build_async()` apply HTTP/2 keepalive defaults on every channel to prevent idle-timeout resets behind load balancers (Classic ELB, Istio gateway):
+
+| Option | Default | Purpose |
+|---|---|---|
+| `grpc.keepalive_time_ms` | 45 000 | Send ping after 45 s of inactivity (under 60 s LB idle timeout) |
+| `grpc.keepalive_timeout_ms` | 10 000 | Wait 10 s for ping ACK before closing |
+| `grpc.keepalive_permit_without_calls` | 1 | Send pings even with no active RPCs |
+| `grpc.http2.max_pings_without_data` | 0 | No cap on pings without data frames |
+
+`build()` additionally sets `ChannelOptions.SingleThreadedUnaryStream = 1` for sync channels, reducing thread overhead for server-streaming RPCs. `build_async()` does not set this (async event loop handles it natively).
+
+#### Overriding defaults
+
+Use `.channel_options()` to supply or override channel options. Caller-supplied keys win when they collide with a default:
+
+```python
+stub, channel = (
+    ClientBuilder(target)
+    .insecure()
+    .channel_options([("grpc.keepalive_time_ms", 30_000)])
+    .build()
+)
+```
+
+New keys are merged in alongside the defaults:
+
+```python
+stub, channel = (
+    ClientBuilder(target)
+    .insecure()
+    .channel_options([("grpc.max_receive_message_length", 4 * 1024 * 1024)])
+    .build()
+)
+```
 
 ## Version Directories
 
