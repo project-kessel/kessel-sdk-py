@@ -18,10 +18,10 @@ from grpc.aio import (
 from grpc.experimental import insecure_channel_credentials, ChannelOptions
 from kessel.grpc import oauth2_call_credentials
 
-# HTTP/2 keepalive options applied when ClientBuilder.enable_keepalive()
-# is called.  Keeps connections alive behind idle-timeout load balancers
-# (e.g. 60 s Classic ELB / Istio gateway).  Callers can override
-# individual keys via ClientBuilder.channel_options().
+# Default HTTP/2 keepalive options for all gRPC channels.
+# Keeps connections alive behind idle-timeout load balancers (e.g. 60 s
+# Classic ELB / Istio gateway).  Callers can override individual keys
+# via ClientBuilder.channel_options().
 _DEFAULT_KEEPALIVE_OPTIONS = (
     ("grpc.keepalive_time_ms", 45_000),
     ("grpc.keepalive_timeout_ms", 10_000),
@@ -38,7 +38,6 @@ class ClientBuilder:
         self._call_credentials = None
         self._channel_credentials = None
         self._user_channel_options = None
-        self._keepalive_enabled = False
 
         if not self._target or type(self._target) is not str:
             raise TypeError("Invalid target type")
@@ -70,25 +69,6 @@ class ClientBuilder:
     def insecure(self) -> Self:
         self._call_credentials = None
         self._channel_credentials = insecure_channel_credentials()
-        return self
-
-    def enable_keepalive(self) -> Self:
-        """Enable HTTP/2 keepalive pings on the gRPC channel.
-
-        Applies aggressive keepalive settings that send pings every 45 seconds,
-        even when no RPCs are active.  This keeps connections alive behind
-        idle-timeout load balancers (e.g. 60 s Classic ELB / Istio gateway)
-        but requires the remote server to permit keepalive pings without calls
-        and at that frequency -- otherwise it may respond with ``GOAWAY`` /
-        ``too_many_pings``.
-
-        Only enable this when the target server and any intermediaries are
-        confirmed to allow this policy.
-
-        Returns:
-            ``self`` for method chaining.
-        """
-        self._keepalive_enabled = True
         return self
 
     def channel_options(self, options: list[tuple[str, object]]) -> Self:
@@ -130,14 +110,11 @@ class ClientBuilder:
         return self._stub_class(channel), channel
 
     def _build_channel_options(self, *, sync: bool) -> list[tuple]:
-        """Merge keepalive defaults (if enabled), sync-only options, and caller overrides.
+        """Merge keepalive defaults, sync-only options, and caller overrides.
 
-        Keepalive options are only included when ``enable_keepalive()`` has been
-        called.  Caller-supplied keys win when they collide with a default.
+        Caller-supplied keys win when they collide with a default.
         """
-        merged: dict = {}
-        if self._keepalive_enabled:
-            merged.update(_DEFAULT_KEEPALIVE_OPTIONS)
+        merged = dict(_DEFAULT_KEEPALIVE_OPTIONS)
         if sync:
             merged[ChannelOptions.SingleThreadedUnaryStream] = 1
         if self._user_channel_options:
