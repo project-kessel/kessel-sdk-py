@@ -67,9 +67,48 @@ Do not mix sync and async channels. A channel from `build()` cannot be used with
 
 `__init__` raises `TypeError` for empty, None, or non-string targets.
 
-### Channel Options
+### Keepalive Policy
 
-`build()` sets `ChannelOptions.SingleThreadedUnaryStream = 1` for sync channels, reducing thread overhead for server-streaming RPCs. `build_async()` does not set this (async event loop handles it natively).
+Both `build()` and `build_async()` apply an HTTP/2 keepalive policy on every channel to prevent idle-timeout resets behind load balancers (Classic ELB, Istio gateway):
+
+| Setting | Default | Purpose |
+|---|---|---|
+| interval | 45 seconds | Time of inactivity before sending a keepalive ping (under 60 s LB idle timeout) |
+| timeout | 10 seconds | Time to wait for a ping ACK before closing the transport |
+| permit_without_calls | `True` | Send pings even with no active RPCs |
+| max_pings_without_data | 0 (internal) | No cap on pings without data frames (not exposed publicly) |
+
+`build()` additionally sets `ChannelOptions.SingleThreadedUnaryStream = 1` for sync channels, reducing thread overhead for server-streaming RPCs. `build_async()` does not set this (async event loop handles it natively).
+
+Consumers do **not** need to call `.keepalive()` to enable keepalive — it is always on.
+
+#### Customising keepalive
+
+Use `.keepalive()` with typed, named arguments to override individual settings. Omitted values retain their defaults. The method may be called more than once; each call updates only the supplied fields.
+
+```python
+from datetime import timedelta
+
+stub, channel = (
+    ClientBuilder(target)
+    .insecure()
+    .keepalive(interval=timedelta(seconds=30), timeout=timedelta(seconds=5))
+    .build()
+)
+```
+
+Disable pings when idle:
+
+```python
+stub, channel = (
+    ClientBuilder(target)
+    .insecure()
+    .keepalive(permit_without_calls=False)
+    .build()
+)
+```
+
+Duration arguments must be positive `timedelta` values; `permit_without_calls` must be a `bool`. Invalid values raise `TypeError` or `ValueError`.
 
 ## Version Directories
 
