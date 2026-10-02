@@ -1,5 +1,7 @@
 # Kessel SDK for Python
 
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/project-kessel/kessel-sdk-py/badge)](https://securityscorecards.dev/viewer/?uri=github.com/project-kessel/kessel-sdk-py)
+
 A Python gRPC library for connecting to [Project Kessel](https://github.com/project-kessel) services. This provides the foundational gRPC client library for Kessel Inventory API, with plans for a higher-level SDK with fluent APIs, OAuth support, and advanced features in future releases.
 
 ## Installation
@@ -428,4 +430,3 @@ gh release create v${VERSION} --title "v${VERSION}" --generate-notes
 ## License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
-
