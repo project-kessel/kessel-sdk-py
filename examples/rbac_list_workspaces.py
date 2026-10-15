@@ -1,8 +1,8 @@
-import asyncio
 # WARNING: This example uses grpc.local_channel_credentials() for local development only.
 # DO NOT USE IN PRODUCTION. This disables TLS certificate validation.
 # For production, configure proper TLS credentials with certificate verification.
 
+import asyncio
 import os
 
 import grpc
@@ -13,7 +13,6 @@ from kessel.inventory.v1beta2 import (
 )
 from kessel.inventory.v1beta2 import consistency_pb2
 from kessel.rbac.v2 import list_workspaces, list_workspaces_async, principal_subject
-
 
 KESSEL_ENDPOINT = os.environ.get("KESSEL_ENDPOINT", "localhost:9000")
 ISSUER_URL = os.environ.get("AUTH_DISCOVERY_ISSUER_URL", "")

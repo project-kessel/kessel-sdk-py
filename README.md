@@ -395,25 +395,14 @@ git commit -m "chore: bump version to ${VERSION}"
 git push origin main # or git push upstream main
 ```
 
-6. **Build and Publish the Package**
-
-```bash
-# Clean any previous build artifacts
-rm -rf dist/ build/
-
-# Build the package
-python -m build
-
-# Publish to PyPI (requires PyPI account and package access)
-twine upload dist/*
-```
-
-7. **Tag the Release**
+6. **Tag the Release**
 
 ```bash
 git tag -a v${VERSION} -m "Release version ${VERSION}"
 git push origin v${VERSION} # or git push upstream v${VERSION}
 ```
+
+The automated publish workflow will build and publish to PyPI when the version tag is pushed.
 
 8. **Create GitHub Release**
 
