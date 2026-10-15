@@ -356,8 +356,8 @@ Before the first release, a project maintainer must configure OIDC trusted publi
    - Fill in the following fields:
      - **GitHub Owner:** `project-kessel`
      - **Repository Name:** `kessel-sdk-py`
-     - **Workflow Filename:** `.github/workflows/publish-pypi.yml` (optional, but recommended)
-     - **Environment Name:** `pypi`
+     - **Workflow Filename:** `publish-pypi.yml`
+     - **Environment Name:** `pypi` (optional)
    - Click "Save"
 
 3. **Verify the configuration:**
