@@ -1,3 +1,7 @@
+# WARNING: This example uses .insecure() for local development only.
+# DO NOT USE IN PRODUCTION. This disables TLS encryption and certificate validation.
+# For production, configure proper TLS credentials with certificate verification.
+
 import grpc
 import os
 
@@ -7,7 +11,6 @@ from kessel.inventory.v1beta2 import (
     reporter_reference_pb2,
     ClientBuilder,
 )
-
 
 KESSEL_ENDPOINT = os.environ.get("KESSEL_ENDPOINT", "localhost:9000")
 

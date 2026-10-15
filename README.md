@@ -1,5 +1,7 @@
 # Kessel SDK for Python
 
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/project-kessel/kessel-sdk-py/badge)](https://securityscorecards.dev/viewer/?uri=github.com/project-kessel/kessel-sdk-py)
+
 A Python gRPC library for connecting to [Project Kessel](https://github.com/project-kessel) services. This provides the foundational gRPC client library for Kessel Inventory API, with plans for a higher-level SDK with fluent APIs, OAuth support, and advanced features in future releases.
 
 ## Installation
@@ -323,13 +325,13 @@ This project follows [Semantic Versioning 2.0.0](https://semver.org/). Version n
 ### Prerequisites for Release
 
 - Write access to the GitHub repository
-- PyPI account with publish access to the `kessel-sdk` package
+- PyPI account with maintain/admin access to the `kessel-sdk` package (for first-time setup only)
 - Ensure quality checks are passing
 - Review and update CHANGELOG or release notes as needed
 - Python 3.11 or higher
 - Required tools installed:
   ```bash
-  pip install build twine
+  pip install build
   pip install "kessel-sdk[dev]"
   ```
 - [buf](https://github.com/bufbuild/buf) for protobuf/gRPC code generation:
@@ -340,6 +342,29 @@ This project follows [Semantic Versioning 2.0.0](https://semver.org/). Version n
   # On Linux
   curl -sSL "https://github.com/bufbuild/buf/releases/latest/download/buf-$(uname -s)-$(uname -m)" -o "/usr/local/bin/buf" && chmod +x "/usr/local/bin/buf"
   ```
+
+#### One-Time PyPI Setup: OIDC Trusted Publishing
+
+Before the first release, a project maintainer must configure OIDC trusted publishing on PyPI. This allows GitHub Actions to publish releases without storing API tokens.
+
+1. **Go to PyPI project settings:**
+   - Visit https://pypi.org/project/kessel-sdk/settings/
+
+2. **Add a Trusted Publisher:**
+   - Click "Add a new Trusted Publisher"
+   - Select **GitHub** as the publisher type
+   - Fill in the following fields:
+     - **GitHub Owner:** `project-kessel`
+     - **Repository Name:** `kessel-sdk-py`
+     - **Workflow Filename:** `publish-pypi.yml`
+     - **Environment Name:** `pypi` (optional)
+   - Click "Save"
+
+3. **Verify the configuration:**
+   - The trusted publisher should appear in the project's publisher list
+   - Future releases tagged with `v*` will automatically authenticate and publish
+
+This setup is a one-time operation. After configuration, the automated publish workflow will handle all releases without additional manual steps.
 
 ### Release Process
 
@@ -375,13 +400,10 @@ flake8 --exclude '*_pb2.py,*_pb2_grpc.py' src/ examples/
 
 # Test that examples can be imported without errors
 python -c "import examples.check"
-python -c "import examples.auth"
+python -c "import examples.check_bulk"
 
 # Run tests
 pytest
-
-# Build the project
-python -m build
 ```
 
 5. **Commit and Push Changes**
@@ -393,32 +415,27 @@ git commit -m "chore: bump version to ${VERSION}"
 git push origin main # or git push upstream main
 ```
 
-6. **Build and Publish the Package**
-
-```bash
-# Clean any previous build artifacts
-rm -rf dist/ build/
-
-# Build the package
-python -m build
-
-# Publish to PyPI (requires PyPI account and package access)
-twine upload dist/*
-```
-
-7. **Tag the Release**
+6. **Tag the Release**
 
 ```bash
 git tag -a v${VERSION} -m "Release version ${VERSION}"
 git push origin v${VERSION} # or git push upstream v${VERSION}
 ```
 
-8. **Create GitHub Release**
+**Important:** Pushing the version tag automatically triggers the publish workflow, which will:
+1. Build the package distributions
+2. Authenticate to PyPI using OIDC trusted publishing
+3. Publish to PyPI
+
+Monitor the [Actions](https://github.com/project-kessel/kessel-sdk-py/actions) tab to verify the publish workflow completes successfully.
+
+7. **Create GitHub Release (Optional)**
 
 ```bash
 gh release create v${VERSION} --title "v${VERSION}" --generate-notes
 ```
 
+Or manually:
 - Go to the [GitHub Releases page](https://github.com/project-kessel/kessel-sdk-py/releases)
 - Click "Create a new release"
 - Select the tag you just created
@@ -428,4 +445,3 @@ gh release create v${VERSION} --title "v${VERSION}" --generate-notes
 ## License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
-
