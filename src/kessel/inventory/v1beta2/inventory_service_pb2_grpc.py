@@ -2,6 +2,8 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
+from kessel.inventory.v1beta2 import add_resource_relationships_request_pb2 as kessel_dot_inventory_dot_v1beta2_dot_add__resource__relationships__request__pb2
+from kessel.inventory.v1beta2 import add_resource_relationships_response_pb2 as kessel_dot_inventory_dot_v1beta2_dot_add__resource__relationships__response__pb2
 from kessel.inventory.v1beta2 import check_bulk_request_pb2 as kessel_dot_inventory_dot_v1beta2_dot_check__bulk__request__pb2
 from kessel.inventory.v1beta2 import check_bulk_response_pb2 as kessel_dot_inventory_dot_v1beta2_dot_check__bulk__response__pb2
 from kessel.inventory.v1beta2 import check_for_update_bulk_request_pb2 as kessel_dot_inventory_dot_v1beta2_dot_check__for__update__bulk__request__pb2
@@ -16,6 +18,8 @@ from kessel.inventory.v1beta2 import check_self_request_pb2 as kessel_dot_invent
 from kessel.inventory.v1beta2 import check_self_response_pb2 as kessel_dot_inventory_dot_v1beta2_dot_check__self__response__pb2
 from kessel.inventory.v1beta2 import delete_resource_request_pb2 as kessel_dot_inventory_dot_v1beta2_dot_delete__resource__request__pb2
 from kessel.inventory.v1beta2 import delete_resource_response_pb2 as kessel_dot_inventory_dot_v1beta2_dot_delete__resource__response__pb2
+from kessel.inventory.v1beta2 import remove_resource_relationships_request_pb2 as kessel_dot_inventory_dot_v1beta2_dot_remove__resource__relationships__request__pb2
+from kessel.inventory.v1beta2 import remove_resource_relationships_response_pb2 as kessel_dot_inventory_dot_v1beta2_dot_remove__resource__relationships__response__pb2
 from kessel.inventory.v1beta2 import report_resource_request_pb2 as kessel_dot_inventory_dot_v1beta2_dot_report__resource__request__pb2
 from kessel.inventory.v1beta2 import report_resource_response_pb2 as kessel_dot_inventory_dot_v1beta2_dot_report__resource__response__pb2
 from kessel.inventory.v1beta2 import streamed_list_objects_request_pb2 as kessel_dot_inventory_dot_v1beta2_dot_streamed__list__objects__request__pb2
@@ -74,6 +78,16 @@ class KesselInventoryServiceStub(object):
                 '/kessel.inventory.v1beta2.KesselInventoryService/DeleteResource',
                 request_serializer=kessel_dot_inventory_dot_v1beta2_dot_delete__resource__request__pb2.DeleteResourceRequest.SerializeToString,
                 response_deserializer=kessel_dot_inventory_dot_v1beta2_dot_delete__resource__response__pb2.DeleteResourceResponse.FromString,
+                _registered_method=True)
+        self.AddResourceRelationships = channel.unary_unary(
+                '/kessel.inventory.v1beta2.KesselInventoryService/AddResourceRelationships',
+                request_serializer=kessel_dot_inventory_dot_v1beta2_dot_add__resource__relationships__request__pb2.AddResourceRelationshipsRequest.SerializeToString,
+                response_deserializer=kessel_dot_inventory_dot_v1beta2_dot_add__resource__relationships__response__pb2.AddResourceRelationshipsResponse.FromString,
+                _registered_method=True)
+        self.RemoveResourceRelationships = channel.unary_unary(
+                '/kessel.inventory.v1beta2.KesselInventoryService/RemoveResourceRelationships',
+                request_serializer=kessel_dot_inventory_dot_v1beta2_dot_remove__resource__relationships__request__pb2.RemoveResourceRelationshipsRequest.SerializeToString,
+                response_deserializer=kessel_dot_inventory_dot_v1beta2_dot_remove__resource__relationships__response__pb2.RemoveResourceRelationshipsResponse.FromString,
                 _registered_method=True)
         self.StreamedListObjects = channel.unary_stream(
                 '/kessel.inventory.v1beta2.KesselInventoryService/StreamedListObjects',
@@ -235,6 +249,58 @@ class KesselInventoryServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def AddResourceRelationships(self, request, context):
+        """Adds one or more relationships to an existing *Resource*.
+
+        If the *Resource* does not yet exist for this *Reporter*, it is created with
+        the provided relationship fields as its initial representation. All other
+        relationships already reported for that *Resource* are unaffected.
+
+        Unlike `ReportResource`, which asserts the complete state of a *Resource*,
+        this operation is a targeted mutation: it only touches the specific
+        relationship fields and values named in the request. Attribute fields,
+        other relationship fields, and metadata are left exactly as they were.
+
+        Only relationship-typed fields from the *Resource's* schema are accepted;
+        attribute fields are rejected.
+
+        The relationships added through this API are used to determine relationship
+        check outcomes via the Check and CheckForUpdate APIs.
+
+        This API does **not** guarantee immediate read-your-writes consistency by default.
+        If a reporter requires newly added relationships to be visible in subsequent
+        checks (e.g., `Check`), the request must explicitly set `write_visibility = IMMEDIATE`.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RemoveResourceRelationships(self, request, context):
+        """Removes one or more specific relationships from an existing *Resource*.
+
+        All other relationships for the *Resource* are unaffected. If the *Resource*
+        does not exist, this operation returns `NOT_FOUND` — matching the behaviour
+        of `DeleteResource`.
+
+        Unlike `ReportResource`, which asserts the complete state of a *Resource*,
+        this operation is a targeted mutation: it only removes the specific
+        relationship values named in the request. Attribute fields and other
+        relationship fields are left exactly as they were.
+
+        Only relationship-typed fields from the *Resource's* schema are accepted;
+        attribute fields are rejected.
+
+        The relationships removed through this API are used to determine relationship
+        check outcomes via the Check and CheckForUpdate APIs.
+
+        This API does **not** guarantee immediate read-your-writes consistency by default.
+        If a reporter requires removed relationships to no longer be visible in subsequent
+        checks (e.g., `Check`), the request must explicitly set `write_visibility = IMMEDIATE`.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def StreamedListObjects(self, request, context):
         """Streams a list of objects where the given subject has the specified relation.
 
@@ -309,6 +375,16 @@ def add_KesselInventoryServiceServicer_to_server(servicer, server):
                     servicer.DeleteResource,
                     request_deserializer=kessel_dot_inventory_dot_v1beta2_dot_delete__resource__request__pb2.DeleteResourceRequest.FromString,
                     response_serializer=kessel_dot_inventory_dot_v1beta2_dot_delete__resource__response__pb2.DeleteResourceResponse.SerializeToString,
+            ),
+            'AddResourceRelationships': grpc.unary_unary_rpc_method_handler(
+                    servicer.AddResourceRelationships,
+                    request_deserializer=kessel_dot_inventory_dot_v1beta2_dot_add__resource__relationships__request__pb2.AddResourceRelationshipsRequest.FromString,
+                    response_serializer=kessel_dot_inventory_dot_v1beta2_dot_add__resource__relationships__response__pb2.AddResourceRelationshipsResponse.SerializeToString,
+            ),
+            'RemoveResourceRelationships': grpc.unary_unary_rpc_method_handler(
+                    servicer.RemoveResourceRelationships,
+                    request_deserializer=kessel_dot_inventory_dot_v1beta2_dot_remove__resource__relationships__request__pb2.RemoveResourceRelationshipsRequest.FromString,
+                    response_serializer=kessel_dot_inventory_dot_v1beta2_dot_remove__resource__relationships__response__pb2.RemoveResourceRelationshipsResponse.SerializeToString,
             ),
             'StreamedListObjects': grpc.unary_stream_rpc_method_handler(
                     servicer.StreamedListObjects,
@@ -539,6 +615,60 @@ class KesselInventoryService(object):
             '/kessel.inventory.v1beta2.KesselInventoryService/DeleteResource',
             kessel_dot_inventory_dot_v1beta2_dot_delete__resource__request__pb2.DeleteResourceRequest.SerializeToString,
             kessel_dot_inventory_dot_v1beta2_dot_delete__resource__response__pb2.DeleteResourceResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def AddResourceRelationships(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/kessel.inventory.v1beta2.KesselInventoryService/AddResourceRelationships',
+            kessel_dot_inventory_dot_v1beta2_dot_add__resource__relationships__request__pb2.AddResourceRelationshipsRequest.SerializeToString,
+            kessel_dot_inventory_dot_v1beta2_dot_add__resource__relationships__response__pb2.AddResourceRelationshipsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RemoveResourceRelationships(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/kessel.inventory.v1beta2.KesselInventoryService/RemoveResourceRelationships',
+            kessel_dot_inventory_dot_v1beta2_dot_remove__resource__relationships__request__pb2.RemoveResourceRelationshipsRequest.SerializeToString,
+            kessel_dot_inventory_dot_v1beta2_dot_remove__resource__relationships__response__pb2.RemoveResourceRelationshipsResponse.FromString,
             options,
             channel_credentials,
             insecure,
