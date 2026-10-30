@@ -23,6 +23,14 @@ GET {rbac_base_endpoint}/api/rbac/v2/workspaces/?type={root|default}
 - The `x-rh-rbac-org-id` header is required on every request.
 - `Content-Type` is always `application/json`.
 
+### HTTP Timeouts
+
+All REST workspace requests use explicit connect and read timeouts to prevent indefinite hangs.
+The module-level `_DEFAULT_TIMEOUT = (5, 30)` sets 5 s connect / 30 s read. Both
+`fetch_root_workspace()` and `fetch_default_workspace()` accept an optional `timeout` parameter
+(a `(connect, read)` tuple or a single float) that overrides the default. Pass `timeout=None`
+(the default) to use `_DEFAULT_TIMEOUT`.
+
 ### Response Shape
 
 The REST API returns `{"data": [{...}]}`. The helper takes the first item from `data`. If `data` is empty, raise `ValueError` with a message identifying the workspace type.

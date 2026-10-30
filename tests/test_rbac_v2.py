@@ -13,6 +13,7 @@ from kessel.rbac.v2 import (
     list_workspaces_async,
     fetch_root_workspace,
     fetch_default_workspace,
+    _DEFAULT_TIMEOUT,
 )
 from kessel.inventory.v1beta2.consistency_pb2 import Consistency
 from kessel.inventory.v1beta2.consistency_token_pb2 import ConsistencyToken
@@ -773,4 +774,147 @@ class TestFetchRootWorkspace:
         call_kwargs = mock_requests.get.call_args[1]
         assert call_kwargs["headers"]["x-rh-rbac-org-id"] == "test-org-id"
         assert call_kwargs["headers"]["Content-Type"] == "application/json"
+
+
+class TestWorkspaceFetchTimeout:
+    """Tests for HTTP connect/read timeout on workspace fetch requests."""
+
+    def _mock_success(self, mock_requests):
+        """Helper to configure mock_requests for a successful response."""
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "data": [{"id": "ws1", "name": "WS1", "type": "root", "description": ""}]
+        }
+        mock_response.raise_for_status = Mock()
+        mock_requests.get.return_value = mock_response
+
+    @patch("kessel.rbac.v2.requests")
+    def test_default_timeout_applied_to_fetch_root_workspace(self, mock_requests):
+        """Test that the default timeout (5, 30) is applied when no timeout is specified"""
+        self._mock_success(mock_requests)
+
+        fetch_root_workspace(
+            rbac_base_endpoint="http://example.com",
+            org_id="org123",
+        )
+
+        call_kwargs = mock_requests.get.call_args[1]
+        assert call_kwargs["timeout"] == (5, 30)
+
+    @patch("kessel.rbac.v2.requests")
+    def test_default_timeout_applied_to_fetch_default_workspace(self, mock_requests):
+        """Test that the default timeout (5, 30) is applied when no timeout is specified"""
+        self._mock_success(mock_requests)
+
+        fetch_default_workspace(
+            rbac_base_endpoint="http://example.com",
+            org_id="org123",
+        )
+
+        call_kwargs = mock_requests.get.call_args[1]
+        assert call_kwargs["timeout"] == (5, 30)
+
+    @patch("kessel.rbac.v2.requests")
+    def test_custom_timeout_tuple_passed_through(self, mock_requests):
+        """Test that a custom (connect, read) timeout tuple is passed to client.get"""
+        self._mock_success(mock_requests)
+
+        fetch_root_workspace(
+            rbac_base_endpoint="http://example.com",
+            org_id="org123",
+            timeout=(10, 60),
+        )
+
+        call_kwargs = mock_requests.get.call_args[1]
+        assert call_kwargs["timeout"] == (10, 60)
+
+    @patch("kessel.rbac.v2.requests")
+    def test_custom_timeout_float_passed_through(self, mock_requests):
+        """Test that a single float timeout is passed to client.get"""
+        self._mock_success(mock_requests)
+
+        fetch_default_workspace(
+            rbac_base_endpoint="http://example.com",
+            org_id="org123",
+            timeout=15.0,
+        )
+
+        call_kwargs = mock_requests.get.call_args[1]
+        assert call_kwargs["timeout"] == 15.0
+
+    @patch("kessel.rbac.v2.requests")
+    def test_connect_timeout_propagated(self, mock_requests):
+        """Test that a connect timeout from the HTTP client is propagated"""
+        import requests as real_requests
+
+        mock_requests.get.side_effect = real_requests.exceptions.ConnectTimeout(
+            "Connection timed out"
+        )
+
+        with pytest.raises(real_requests.exceptions.ConnectTimeout):
+            fetch_root_workspace(
+                rbac_base_endpoint="http://example.com",
+                org_id="org123",
+            )
+
+    @patch("kessel.rbac.v2.requests")
+    def test_read_timeout_propagated(self, mock_requests):
+        """Test that a read timeout from the HTTP client is propagated"""
+        import requests as real_requests
+
+        mock_requests.get.side_effect = real_requests.exceptions.ReadTimeout(
+            "Read timed out"
+        )
+
+        with pytest.raises(real_requests.exceptions.ReadTimeout):
+            fetch_default_workspace(
+                rbac_base_endpoint="http://example.com",
+                org_id="org123",
+            )
+
+    @patch("kessel.rbac.v2.requests")
+    def test_timeout_passed_with_custom_http_client(self, mock_requests):
+        """Test that timeout is passed when using a custom HTTP client"""
+        mock_http_client = Mock()
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "data": [{"id": "ws1", "name": "WS1", "type": "root", "description": ""}]
+        }
+        mock_response.raise_for_status = Mock()
+        mock_http_client.get.return_value = mock_response
+
+        fetch_root_workspace(
+            rbac_base_endpoint="http://example.com",
+            org_id="org123",
+            http_client=mock_http_client,
+            timeout=(2, 10),
+        )
+
+        call_kwargs = mock_http_client.get.call_args[1]
+        assert call_kwargs["timeout"] == (2, 10)
+        mock_requests.get.assert_not_called()
+
+    @patch("kessel.rbac.v2.requests")
+    def test_default_timeout_with_custom_http_client(self, mock_requests):
+        """Test that default timeout is applied even with a custom HTTP client"""
+        mock_http_client = Mock()
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "data": [{"id": "ws1", "name": "WS1", "type": "default", "description": ""}]
+        }
+        mock_response.raise_for_status = Mock()
+        mock_http_client.get.return_value = mock_response
+
+        fetch_default_workspace(
+            rbac_base_endpoint="http://example.com",
+            org_id="org123",
+            http_client=mock_http_client,
+        )
+
+        call_kwargs = mock_http_client.get.call_args[1]
+        assert call_kwargs["timeout"] == _DEFAULT_TIMEOUT
+
+    def test_default_timeout_constant_value(self):
+        """Test that _DEFAULT_TIMEOUT has the expected value"""
+        assert _DEFAULT_TIMEOUT == (5, 30)
 
