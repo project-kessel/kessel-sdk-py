@@ -914,6 +914,45 @@ class TestWorkspaceFetchTimeout:
         call_kwargs = mock_http_client.get.call_args[1]
         assert call_kwargs["timeout"] == _DEFAULT_TIMEOUT
 
+    @patch("kessel.rbac.v2.requests")
+    def test_custom_timeout_returns_correct_workspace(self, mock_requests):
+        """Test that a custom timeout works end-to-end and returns a valid Workspace"""
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "data": [{"id": "ws-custom", "name": "Custom WS", "type": "root", "description": "d"}]
+        }
+        mock_response.raise_for_status = Mock()
+        mock_requests.get.return_value = mock_response
+
+        result = fetch_root_workspace(
+            rbac_base_endpoint="http://example.com",
+            org_id="org123",
+            timeout=(3, 15),
+        )
+
+        assert result is not None
+        assert result.id == "ws-custom"
+        assert result.name == "Custom WS"
+
+        call_kwargs = mock_requests.get.call_args[1]
+        assert call_kwargs["timeout"] == (3, 15)
+
+    @patch("kessel.rbac.v2.requests")
+    def test_generic_timeout_exception_propagated(self, mock_requests):
+        """Test that a generic requests.exceptions.Timeout is propagated to the caller"""
+        import requests as real_requests
+
+        mock_requests.get.side_effect = real_requests.exceptions.Timeout(
+            "Request timed out"
+        )
+
+        with pytest.raises(real_requests.exceptions.Timeout, match="Request timed out"):
+            fetch_default_workspace(
+                rbac_base_endpoint="http://example.com",
+                org_id="org123",
+                timeout=(1, 2),
+            )
+
     def test_default_timeout_constant_value(self):
         """Test that _DEFAULT_TIMEOUT has the expected value"""
         assert _DEFAULT_TIMEOUT == (5, 30)
