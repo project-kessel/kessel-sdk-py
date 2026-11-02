@@ -13,7 +13,7 @@ from kessel.rbac.v2 import (
     list_workspaces_async,
     fetch_root_workspace,
     fetch_default_workspace,
-    _DEFAULT_TIMEOUT,
+    DEFAULT_TIMEOUT,
 )
 from kessel.inventory.v1beta2.consistency_pb2 import Consistency
 from kessel.inventory.v1beta2.consistency_token_pb2 import ConsistencyToken
@@ -80,10 +80,10 @@ def test_subject(resource_ref, relation, expect_relation, expected_relation):
         subj = subject(resource_ref, relation)
     else:
         subj = subject(resource_ref)
-    
+
     assert subj is not None
     assert subj.resource is not None
-    
+
     if expect_relation:
         assert subj.HasField("relation")
         assert subj.relation == expected_relation
@@ -95,20 +95,20 @@ class TestListWorkspaces:
     def test_builds_request_with_correct_parameters(self):
         """Test that list_workspaces builds request with correct parameters"""
         mock_inventory = Mock()
-        response = StreamedListObjectsResponse(
-            pagination=ResponsePagination(continuation_token="")
-        )
+        response = StreamedListObjectsResponse(pagination=ResponsePagination(continuation_token=""))
         mock_inventory.StreamedListObjects.return_value = iter([response])
-        
+
         subj = principal_subject("user123", "redhat")
-        
-        responses = list[StreamedListObjectsResponse](list_workspaces(mock_inventory, subj, "member"))
-        
+
+        responses = list[StreamedListObjectsResponse](
+            list_workspaces(mock_inventory, subj, "member")
+        )
+
         assert len(responses) == 1
-        
+
         assert mock_inventory.StreamedListObjects.call_count == 1
         call_args = mock_inventory.StreamedListObjects.call_args[0][0]
-        
+
         assert call_args.relation == "member"
         assert call_args.object_type.resource_type == "workspace"
         assert call_args.object_type.reporter_type == "rbac"
@@ -117,7 +117,7 @@ class TestListWorkspaces:
     def test_handles_pagination_with_continuation_token(self):
         """Test that list_workspaces handles pagination with continuation token"""
         mock_inventory = Mock()
-        
+
         # First call returns a continuation token
         response1 = StreamedListObjectsResponse(
             pagination=ResponsePagination(continuation_token="next-page-token")
@@ -126,20 +126,20 @@ class TestListWorkspaces:
         response2 = StreamedListObjectsResponse(
             pagination=ResponsePagination(continuation_token="")
         )
-        
+
         mock_inventory.StreamedListObjects.side_effect = [
             iter([response1]),
             iter([response2]),
         ]
-        
+
         subj = principal_subject("user123", "redhat")
-        
+
         responses = list(list_workspaces(mock_inventory, subj, "viewer"))
-        
+
         assert len(responses) == 2
-        
+
         assert mock_inventory.StreamedListObjects.call_count == 2
-        
+
         second_call_args = mock_inventory.StreamedListObjects.call_args_list[1][0][0]
         assert second_call_args.pagination is not None
         assert second_call_args.pagination.continuation_token == "next-page-token"
@@ -147,15 +147,13 @@ class TestListWorkspaces:
     def test_stops_when_no_continuation_token(self):
         """Test that list_workspaces stops when no continuation token is present"""
         mock_inventory = Mock()
-        response = StreamedListObjectsResponse(
-            pagination=ResponsePagination(continuation_token="")
-        )
+        response = StreamedListObjectsResponse(pagination=ResponsePagination(continuation_token=""))
         mock_inventory.StreamedListObjects.return_value = iter([response])
-        
+
         subj = principal_subject("user123", "redhat")
-        
+
         responses = list(list_workspaces(mock_inventory, subj, "admin"))
-        
+
         assert mock_inventory.StreamedListObjects.call_count == 1
         assert len(responses) == 1
 
@@ -163,31 +161,26 @@ class TestListWorkspaces:
         """Test that list_workspaces properly propagates stream errors"""
         mock_inventory = Mock()
         mock_inventory.StreamedListObjects.side_effect = Exception("stream failed")
-        
+
         subj = principal_subject("user123", "redhat")
-        
+
         with pytest.raises(Exception, match="stream failed"):
             list(list_workspaces(mock_inventory, subj, "member"))
 
     def test_uses_provided_continuation_token(self):
         """Test that list_workspaces uses provided continuation token"""
         mock_inventory = Mock()
-        response = StreamedListObjectsResponse(
-            pagination=ResponsePagination(continuation_token="")
-        )
+        response = StreamedListObjectsResponse(pagination=ResponsePagination(continuation_token=""))
         mock_inventory.StreamedListObjects.return_value = iter([response])
-        
+
         subj = principal_subject("user123", "redhat")
-        
-        responses = list(list_workspaces(
-            mock_inventory, 
-            subj, 
-            "member", 
-            continuation_token="resume-from-here"
-        ))
-        
+
+        responses = list(
+            list_workspaces(mock_inventory, subj, "member", continuation_token="resume-from-here")
+        )
+
         assert len(responses) == 1
-        
+
         call_args = mock_inventory.StreamedListObjects.call_args[0][0]
         assert call_args.pagination is not None
         assert call_args.pagination.continuation_token == "resume-from-here"
@@ -195,9 +188,7 @@ class TestListWorkspaces:
     def test_handles_none_continuation_token_initial_request(self):
         """Test that list_workspaces handles None continuation token correctly"""
         mock_inventory = Mock()
-        response = StreamedListObjectsResponse(
-            pagination=ResponsePagination(continuation_token="")
-        )
+        response = StreamedListObjectsResponse(pagination=ResponsePagination(continuation_token=""))
         mock_inventory.StreamedListObjects.return_value = iter([response])
 
         subj = principal_subject("user123", "redhat")
@@ -208,7 +199,7 @@ class TestListWorkspaces:
 
         # Verify the request had no pagination field set
         call_args = mock_inventory.StreamedListObjects.call_args[0][0]
-        if hasattr(call_args, 'HasField'):
+        if hasattr(call_args, "HasField"):
             assert not call_args.HasField("pagination")
         else:
             assert call_args.pagination is None
@@ -216,15 +207,11 @@ class TestListWorkspaces:
     def test_passes_consistency_to_request(self):
         """Test that list_workspaces passes consistency token through to the request"""
         mock_inventory = Mock()
-        response = StreamedListObjectsResponse(
-            pagination=ResponsePagination(continuation_token="")
-        )
+        response = StreamedListObjectsResponse(pagination=ResponsePagination(continuation_token=""))
         mock_inventory.StreamedListObjects.return_value = iter([response])
 
         subj = principal_subject("user123", "redhat")
-        consistency = Consistency(
-            at_least_as_fresh=ConsistencyToken(token="tok-abc")
-        )
+        consistency = Consistency(at_least_as_fresh=ConsistencyToken(token="tok-abc"))
 
         list(list_workspaces(mock_inventory, subj, "member", consistency=consistency))
 
@@ -235,9 +222,7 @@ class TestListWorkspaces:
     def test_no_consistency_by_default(self):
         """Test that list_workspaces omits consistency when not provided"""
         mock_inventory = Mock()
-        response = StreamedListObjectsResponse(
-            pagination=ResponsePagination(continuation_token="")
-        )
+        response = StreamedListObjectsResponse(pagination=ResponsePagination(continuation_token=""))
         mock_inventory.StreamedListObjects.return_value = iter([response])
 
         subj = principal_subject("user123", "redhat")
@@ -276,26 +261,24 @@ class TestListWorkspacesAsync:
     async def test_builds_request_with_correct_parameters(self):
         """Test that list_workspaces_async builds request with correct parameters"""
         mock_inventory = Mock()
-        response = StreamedListObjectsResponse(
-            pagination=ResponsePagination(continuation_token="")
-        )
-        
+        response = StreamedListObjectsResponse(pagination=ResponsePagination(continuation_token=""))
+
         async def async_iter():
             yield response
-        
+
         mock_inventory.StreamedListObjects.return_value = async_iter()
-        
+
         subj = principal_subject("user123", "redhat")
-        
+
         responses = []
         async for resp in list_workspaces_async(mock_inventory, subj, "member"):
             responses.append(resp)
-        
+
         assert len(responses) == 1
-        
+
         assert mock_inventory.StreamedListObjects.call_count == 1
         call_args = mock_inventory.StreamedListObjects.call_args[0][0]
-        
+
         assert call_args.relation == "member"
         assert call_args.object_type.resource_type == "workspace"
         assert call_args.object_type.reporter_type == "rbac"
@@ -305,32 +288,32 @@ class TestListWorkspacesAsync:
     async def test_handles_pagination_with_continuation_token(self):
         """Test that list_workspaces_async handles pagination with continuation token"""
         mock_inventory = Mock()
-        
+
         response1 = StreamedListObjectsResponse(
             pagination=ResponsePagination(continuation_token="next-page-token")
         )
         response2 = StreamedListObjectsResponse(
             pagination=ResponsePagination(continuation_token="")
         )
-        
+
         async def async_iter1():
             yield response1
-        
+
         async def async_iter2():
             yield response2
-        
+
         mock_inventory.StreamedListObjects.side_effect = [async_iter1(), async_iter2()]
-        
+
         subj = principal_subject("user123", "redhat")
-        
+
         responses = []
         async for resp in list_workspaces_async(mock_inventory, subj, "viewer"):
             responses.append(resp)
-        
+
         assert len(responses) == 2
-        
+
         assert mock_inventory.StreamedListObjects.call_count == 2
-        
+
         second_call_args = mock_inventory.StreamedListObjects.call_args_list[1][0][0]
         assert second_call_args.pagination is not None
         assert second_call_args.pagination.continuation_token == "next-page-token"
@@ -339,21 +322,19 @@ class TestListWorkspacesAsync:
     async def test_stops_when_no_continuation_token(self):
         """Test that list_workspaces_async stops when no continuation token is present"""
         mock_inventory = Mock()
-        response = StreamedListObjectsResponse(
-            pagination=ResponsePagination(continuation_token="")
-        )
-        
+        response = StreamedListObjectsResponse(pagination=ResponsePagination(continuation_token=""))
+
         async def async_iter():
             yield response
-        
+
         mock_inventory.StreamedListObjects.return_value = async_iter()
-        
+
         subj = principal_subject("user123", "redhat")
-        
+
         responses = []
         async for resp in list_workspaces_async(mock_inventory, subj, "admin"):
             responses.append(resp)
-        
+
         assert mock_inventory.StreamedListObjects.call_count == 1
         assert len(responses) == 1
 
@@ -362,9 +343,9 @@ class TestListWorkspacesAsync:
         """Test that list_workspaces_async properly propagates stream errors"""
         mock_inventory = Mock()
         mock_inventory.StreamedListObjects.side_effect = Exception("stream failed")
-        
+
         subj = principal_subject("user123", "redhat")
-        
+
         with pytest.raises(Exception, match="stream failed"):
             async for _ in list_workspaces_async(mock_inventory, subj, "member"):
                 pass
@@ -373,28 +354,23 @@ class TestListWorkspacesAsync:
     async def test_uses_provided_continuation_token(self):
         """Test that list_workspaces_async uses provided continuation token"""
         mock_inventory = Mock()
-        response = StreamedListObjectsResponse(
-            pagination=ResponsePagination(continuation_token="")
-        )
-        
+        response = StreamedListObjectsResponse(pagination=ResponsePagination(continuation_token=""))
+
         async def async_iter():
             yield response
-        
+
         mock_inventory.StreamedListObjects.return_value = async_iter()
-        
+
         subj = principal_subject("user123", "redhat")
-        
+
         responses = []
         async for resp in list_workspaces_async(
-            mock_inventory, 
-            subj, 
-            "member", 
-            continuation_token="resume-from-here"
+            mock_inventory, subj, "member", continuation_token="resume-from-here"
         ):
             responses.append(resp)
-        
+
         assert len(responses) == 1
-        
+
         call_args = mock_inventory.StreamedListObjects.call_args[0][0]
         assert call_args.pagination is not None
         assert call_args.pagination.continuation_token == "resume-from-here"
@@ -403,9 +379,7 @@ class TestListWorkspacesAsync:
     async def test_handles_none_continuation_token_initial_request(self):
         """Test that list_workspaces_async handles None continuation token correctly"""
         mock_inventory = Mock()
-        response = StreamedListObjectsResponse(
-            pagination=ResponsePagination(continuation_token="")
-        )
+        response = StreamedListObjectsResponse(pagination=ResponsePagination(continuation_token=""))
 
         async def async_iter():
             yield response
@@ -415,13 +389,15 @@ class TestListWorkspacesAsync:
         subj = principal_subject("user123", "redhat")
 
         responses = []
-        async for resp in list_workspaces_async(mock_inventory, subj, "member", continuation_token=None):
+        async for resp in list_workspaces_async(
+            mock_inventory, subj, "member", continuation_token=None
+        ):
             responses.append(resp)
 
         assert len(responses) == 1
 
         call_args = mock_inventory.StreamedListObjects.call_args[0][0]
-        if hasattr(call_args, 'HasField'):
+        if hasattr(call_args, "HasField"):
             assert not call_args.HasField("pagination")
         else:
             assert call_args.pagination is None
@@ -430,9 +406,7 @@ class TestListWorkspacesAsync:
     async def test_passes_consistency_to_request(self):
         """Test that list_workspaces_async passes consistency token through to the request"""
         mock_inventory = Mock()
-        response = StreamedListObjectsResponse(
-            pagination=ResponsePagination(continuation_token="")
-        )
+        response = StreamedListObjectsResponse(pagination=ResponsePagination(continuation_token=""))
 
         async def async_iter():
             yield response
@@ -443,7 +417,9 @@ class TestListWorkspacesAsync:
         consistency = Consistency(at_least_as_fresh=ConsistencyToken(token="tok-abc"))
 
         responses = []
-        async for resp in list_workspaces_async(mock_inventory, subj, "member", consistency=consistency):
+        async for resp in list_workspaces_async(
+            mock_inventory, subj, "member", consistency=consistency
+        ):
             responses.append(resp)
 
         call_args = mock_inventory.StreamedListObjects.call_args[0][0]
@@ -454,9 +430,7 @@ class TestListWorkspacesAsync:
     async def test_no_consistency_by_default(self):
         """Test that list_workspaces_async omits consistency when not provided"""
         mock_inventory = Mock()
-        response = StreamedListObjectsResponse(
-            pagination=ResponsePagination(continuation_token="")
-        )
+        response = StreamedListObjectsResponse(pagination=ResponsePagination(continuation_token=""))
 
         async def async_iter():
             yield response
@@ -493,7 +467,9 @@ class TestListWorkspacesAsync:
         subj = principal_subject("user123", "redhat")
         consistency = Consistency(at_least_as_fresh=ConsistencyToken(token="tok-xyz"))
 
-        async for _ in list_workspaces_async(mock_inventory, subj, "viewer", consistency=consistency):
+        async for _ in list_workspaces_async(
+            mock_inventory, subj, "viewer", consistency=consistency
+        ):
             pass
 
         assert mock_inventory.StreamedListObjects.call_count == 2
@@ -502,25 +478,24 @@ class TestListWorkspacesAsync:
 
 
 class TestFetchDefaultWorkspace:
-    @patch('kessel.rbac.v2.requests')
+    @patch("kessel.rbac.v2.requests")
     def test_successful_default_workspace_fetch(self, mock_requests):
         """Test successful fetch of default workspace"""
         mock_response = Mock()
         mock_response.json.return_value = {
-            "data": [{
-                "id": "default-ws-123",
-                "name": "Default Workspace",
-                "type": "default",
-                "description": "Organization default workspace"
-            }]
+            "data": [
+                {
+                    "id": "default-ws-123",
+                    "name": "Default Workspace",
+                    "type": "default",
+                    "description": "Organization default workspace",
+                }
+            ]
         }
         mock_response.raise_for_status = Mock()
         mock_requests.get.return_value = mock_response
 
-        result = fetch_default_workspace(
-            rbac_base_endpoint="http://example.com",
-            org_id="org123"
-        )
+        result = fetch_default_workspace(rbac_base_endpoint="http://example.com", org_id="org123")
 
         assert result is not None
         assert result.id == "default-ws-123"
@@ -534,7 +509,7 @@ class TestFetchDefaultWorkspace:
         assert call_kwargs[1]["params"]["with_ancestry"] == "true"
         assert call_kwargs[1]["headers"]["x-rh-rbac-org-id"] == "org123"
 
-    @patch('kessel.rbac.v2.requests')
+    @patch("kessel.rbac.v2.requests")
     def test_with_ancestry_false_omits_param(self, mock_requests):
         """Test that with_ancestry=False omits with_ancestry from query params"""
         mock_response = Mock()
@@ -554,7 +529,7 @@ class TestFetchDefaultWorkspace:
         assert "with_ancestry" not in call_kwargs["params"]
         assert call_kwargs["params"]["type"] == "default"
 
-    @patch('kessel.rbac.v2.requests')
+    @patch("kessel.rbac.v2.requests")
     def test_server_error_response(self, mock_requests):
         """Test handling of server error response"""
         mock_response = Mock()
@@ -562,26 +537,20 @@ class TestFetchDefaultWorkspace:
         mock_requests.get.return_value = mock_response
 
         with pytest.raises(Exception, match="Internal Server Error"):
-            fetch_default_workspace(
-                rbac_base_endpoint="http://example.com",
-                org_id="org123"
-            )
+            fetch_default_workspace(rbac_base_endpoint="http://example.com", org_id="org123")
 
-    @patch('kessel.rbac.v2.requests')
+    @patch("kessel.rbac.v2.requests")
     def test_empty_workspace_response(self, mock_requests):
         """Test handling of empty workspace response"""
         mock_response = Mock()
         mock_response.json.return_value = {"data": []}
         mock_response.raise_for_status = Mock()
         mock_requests.get.return_value = mock_response
-        
-        with pytest.raises(ValueError, match="No default workspace found"):
-            fetch_default_workspace(
-                rbac_base_endpoint="http://example.com",
-                org_id="org123"
-            )
 
-    @patch('kessel.rbac.v2.requests')
+        with pytest.raises(ValueError, match="No default workspace found"):
+            fetch_default_workspace(rbac_base_endpoint="http://example.com", org_id="org123")
+
+    @patch("kessel.rbac.v2.requests")
     def test_rbac_endpoint_with_trailing_slash(self, mock_requests):
         """Test that trailing slashes are handled correctly"""
         mock_response = Mock()
@@ -590,20 +559,17 @@ class TestFetchDefaultWorkspace:
         }
         mock_response.raise_for_status = Mock()
         mock_requests.get.return_value = mock_response
-        
-        result = fetch_default_workspace(
-            rbac_base_endpoint="http://example.com/",
-            org_id="org123"
-        )
-        
+
+        result = fetch_default_workspace(rbac_base_endpoint="http://example.com/", org_id="org123")
+
         assert result is not None
         assert result.id == "ws1"
-        
+
         call_args = mock_requests.get.call_args[0][0]
         assert "/api/rbac/v2/workspaces/" in call_args
         assert "//api/rbac" not in call_args
 
-    @patch('kessel.rbac.v2.requests')
+    @patch("kessel.rbac.v2.requests")
     def test_with_custom_http_client(self, mock_requests):
         """Test using custom HTTP client"""
         mock_http_client = Mock()
@@ -613,18 +579,16 @@ class TestFetchDefaultWorkspace:
         }
         mock_response.raise_for_status = Mock()
         mock_http_client.get.return_value = mock_response
-        
+
         result = fetch_default_workspace(
-            rbac_base_endpoint="http://example.com",
-            org_id="org123",
-            http_client=mock_http_client
+            rbac_base_endpoint="http://example.com", org_id="org123", http_client=mock_http_client
         )
-        
+
         assert result is not None
         mock_http_client.get.assert_called_once()
         mock_requests.get.assert_not_called()
 
-    @patch('kessel.rbac.v2.requests')
+    @patch("kessel.rbac.v2.requests")
     def test_with_auth(self, mock_requests):
         """Test fetch with authentication"""
         mock_auth = Mock()
@@ -634,52 +598,46 @@ class TestFetchDefaultWorkspace:
         }
         mock_response.raise_for_status = Mock()
         mock_requests.get.return_value = mock_response
-        
+
         result = fetch_default_workspace(
-            rbac_base_endpoint="http://example.com",
-            org_id="org123",
-            auth=mock_auth
+            rbac_base_endpoint="http://example.com", org_id="org123", auth=mock_auth
         )
-        
+
         assert result is not None
         call_kwargs = mock_requests.get.call_args[1]
         assert call_kwargs["auth"] == mock_auth
 
-    @patch('kessel.rbac.v2.requests')
+    @patch("kessel.rbac.v2.requests")
     def test_invalid_json_response(self, mock_requests):
         """Test handling of invalid JSON response"""
         mock_response = Mock()
         mock_response.json.side_effect = ValueError("Invalid JSON")
         mock_response.raise_for_status = Mock()
         mock_requests.get.return_value = mock_response
-        
+
         with pytest.raises(ValueError, match="Invalid JSON"):
-            fetch_default_workspace(
-                rbac_base_endpoint="http://example.com",
-                org_id="org123"
-            )
+            fetch_default_workspace(rbac_base_endpoint="http://example.com", org_id="org123")
 
 
 class TestFetchRootWorkspace:
-    @patch('kessel.rbac.v2.requests')
+    @patch("kessel.rbac.v2.requests")
     def test_successful_root_workspace_fetch(self, mock_requests):
         """Test successful fetch of root workspace"""
         mock_response = Mock()
         mock_response.json.return_value = {
-            "data": [{
-                "id": "root-ws-456",
-                "name": "Root Workspace",
-                "type": "root",
-                "description": "Organization root workspace"
-            }]
+            "data": [
+                {
+                    "id": "root-ws-456",
+                    "name": "Root Workspace",
+                    "type": "root",
+                    "description": "Organization root workspace",
+                }
+            ]
         }
         mock_response.raise_for_status = Mock()
         mock_requests.get.return_value = mock_response
 
-        result = fetch_root_workspace(
-            rbac_base_endpoint="http://example.com",
-            org_id="org123"
-        )
+        result = fetch_root_workspace(rbac_base_endpoint="http://example.com", org_id="org123")
 
         assert result is not None
         assert result.id == "root-ws-456"
@@ -691,7 +649,7 @@ class TestFetchRootWorkspace:
         assert call_kwargs[1]["params"]["type"] == "root"
         assert call_kwargs[1]["params"]["with_ancestry"] == "true"
 
-    @patch('kessel.rbac.v2.requests')
+    @patch("kessel.rbac.v2.requests")
     def test_with_ancestry_false_omits_param(self, mock_requests):
         """Test that with_ancestry=False omits with_ancestry from query params"""
         mock_response = Mock()
@@ -711,7 +669,7 @@ class TestFetchRootWorkspace:
         assert "with_ancestry" not in call_kwargs["params"]
         assert call_kwargs["params"]["type"] == "root"
 
-    @patch('kessel.rbac.v2.requests')
+    @patch("kessel.rbac.v2.requests")
     def test_unauthorized_error(self, mock_requests):
         """Test handling of unauthorized error"""
         mock_response = Mock()
@@ -719,26 +677,20 @@ class TestFetchRootWorkspace:
         mock_requests.get.return_value = mock_response
 
         with pytest.raises(Exception, match="Unauthorized"):
-            fetch_root_workspace(
-                rbac_base_endpoint="http://example.com",
-                org_id="org123"
-            )
+            fetch_root_workspace(rbac_base_endpoint="http://example.com", org_id="org123")
 
-    @patch('kessel.rbac.v2.requests')
+    @patch("kessel.rbac.v2.requests")
     def test_empty_root_workspace_response(self, mock_requests):
         """Test handling of empty root workspace response"""
         mock_response = Mock()
         mock_response.json.return_value = {"data": []}
         mock_response.raise_for_status = Mock()
         mock_requests.get.return_value = mock_response
-        
-        with pytest.raises(ValueError, match="No root workspace found"):
-            fetch_root_workspace(
-                rbac_base_endpoint="http://example.com",
-                org_id="org123"
-            )
 
-    @patch('kessel.rbac.v2.requests')
+        with pytest.raises(ValueError, match="No root workspace found"):
+            fetch_root_workspace(rbac_base_endpoint="http://example.com", org_id="org123")
+
+    @patch("kessel.rbac.v2.requests")
     def test_url_construction(self, mock_requests):
         """Test correct URL construction"""
         mock_response = Mock()
@@ -747,16 +699,13 @@ class TestFetchRootWorkspace:
         }
         mock_response.raise_for_status = Mock()
         mock_requests.get.return_value = mock_response
-        
-        fetch_root_workspace(
-            rbac_base_endpoint="http://example.com",
-            org_id="org123"
-        )
-        
+
+        fetch_root_workspace(rbac_base_endpoint="http://example.com", org_id="org123")
+
         call_args = mock_requests.get.call_args[0][0]
         assert call_args == "http://example.com/api/rbac/v2/workspaces/"
 
-    @patch('kessel.rbac.v2.requests')
+    @patch("kessel.rbac.v2.requests")
     def test_headers_set_correctly(self, mock_requests):
         """Test that required headers are set correctly"""
         mock_response = Mock()
@@ -765,12 +714,9 @@ class TestFetchRootWorkspace:
         }
         mock_response.raise_for_status = Mock()
         mock_requests.get.return_value = mock_response
-        
-        fetch_root_workspace(
-            rbac_base_endpoint="http://example.com",
-            org_id="test-org-id"
-        )
-        
+
+        fetch_root_workspace(rbac_base_endpoint="http://example.com", org_id="test-org-id")
+
         call_kwargs = mock_requests.get.call_args[1]
         assert call_kwargs["headers"]["x-rh-rbac-org-id"] == "test-org-id"
         assert call_kwargs["headers"]["Content-Type"] == "application/json"
@@ -799,7 +745,7 @@ class TestWorkspaceFetchTimeout:
         )
 
         call_kwargs = mock_requests.get.call_args[1]
-        assert call_kwargs["timeout"] == (5, 30)
+        assert call_kwargs["timeout"] == (5.0, 30.0)
 
     @patch("kessel.rbac.v2.requests")
     def test_default_timeout_applied_to_fetch_default_workspace(self, mock_requests):
@@ -812,7 +758,7 @@ class TestWorkspaceFetchTimeout:
         )
 
         call_kwargs = mock_requests.get.call_args[1]
-        assert call_kwargs["timeout"] == (5, 30)
+        assert call_kwargs["timeout"] == (5.0, 30.0)
 
     @patch("kessel.rbac.v2.requests")
     def test_custom_timeout_tuple_passed_through(self, mock_requests):
@@ -862,9 +808,7 @@ class TestWorkspaceFetchTimeout:
         """Test that a read timeout from the HTTP client is propagated"""
         import requests as real_requests
 
-        mock_requests.get.side_effect = real_requests.exceptions.ReadTimeout(
-            "Read timed out"
-        )
+        mock_requests.get.side_effect = real_requests.exceptions.ReadTimeout("Read timed out")
 
         with pytest.raises(real_requests.exceptions.ReadTimeout):
             fetch_default_workspace(
@@ -912,7 +856,7 @@ class TestWorkspaceFetchTimeout:
         )
 
         call_kwargs = mock_http_client.get.call_args[1]
-        assert call_kwargs["timeout"] == _DEFAULT_TIMEOUT
+        assert call_kwargs["timeout"] == DEFAULT_TIMEOUT
 
     @patch("kessel.rbac.v2.requests")
     def test_custom_timeout_returns_correct_workspace(self, mock_requests):
@@ -942,9 +886,7 @@ class TestWorkspaceFetchTimeout:
         """Test that a generic requests.exceptions.Timeout is propagated to the caller"""
         import requests as real_requests
 
-        mock_requests.get.side_effect = real_requests.exceptions.Timeout(
-            "Request timed out"
-        )
+        mock_requests.get.side_effect = real_requests.exceptions.Timeout("Request timed out")
 
         with pytest.raises(real_requests.exceptions.Timeout, match="Request timed out"):
             fetch_default_workspace(
@@ -953,7 +895,92 @@ class TestWorkspaceFetchTimeout:
                 timeout=(1, 2),
             )
 
-    def test_default_timeout_constant_value(self):
-        """Test that _DEFAULT_TIMEOUT has the expected value"""
-        assert _DEFAULT_TIMEOUT == (5, 30)
+    @patch("kessel.rbac.v2.requests")
+    def test_timeout_none_disables_timeout_fetch_root(self, mock_requests):
+        """Test that passing timeout=None explicitly disables the timeout"""
+        self._mock_success(mock_requests)
 
+        fetch_root_workspace(
+            rbac_base_endpoint="http://example.com",
+            org_id="org123",
+            timeout=None,
+        )
+
+        call_kwargs = mock_requests.get.call_args[1]
+        assert call_kwargs["timeout"] is None
+
+    @patch("kessel.rbac.v2.requests")
+    def test_timeout_none_disables_timeout_fetch_default(self, mock_requests):
+        """Test that passing timeout=None explicitly disables the timeout"""
+        self._mock_success(mock_requests)
+
+        fetch_default_workspace(
+            rbac_base_endpoint="http://example.com",
+            org_id="org123",
+            timeout=None,
+        )
+
+        call_kwargs = mock_requests.get.call_args[1]
+        assert call_kwargs["timeout"] is None
+
+    @patch("kessel.rbac.v2.requests")
+    def test_timeout_zero_passed_through_fetch_root(self, mock_requests):
+        """Test that timeout=0 (falsy but valid) is passed as-is, not replaced by default"""
+        self._mock_success(mock_requests)
+
+        fetch_root_workspace(
+            rbac_base_endpoint="http://example.com",
+            org_id="org123",
+            timeout=0,
+        )
+
+        call_kwargs = mock_requests.get.call_args[1]
+        assert call_kwargs["timeout"] == 0
+
+    @patch("kessel.rbac.v2.requests")
+    def test_timeout_zero_passed_through_fetch_default(self, mock_requests):
+        """Test that timeout=0 (falsy but valid) is passed as-is, not replaced by default"""
+        self._mock_success(mock_requests)
+
+        fetch_default_workspace(
+            rbac_base_endpoint="http://example.com",
+            org_id="org123",
+            timeout=0,
+        )
+
+        call_kwargs = mock_requests.get.call_args[1]
+        assert call_kwargs["timeout"] == 0
+
+    @patch("kessel.rbac.v2.requests")
+    def test_connect_timeout_propagated_fetch_default(self, mock_requests):
+        """Connect timeout is propagated for fetch_default_workspace"""
+        import requests as real_requests
+
+        mock_requests.get.side_effect = real_requests.exceptions.ConnectTimeout(
+            "Connection timed out"
+        )
+
+        with pytest.raises(real_requests.exceptions.ConnectTimeout):
+            fetch_default_workspace(
+                rbac_base_endpoint="http://example.com",
+                org_id="org123",
+            )
+
+    @patch("kessel.rbac.v2.requests")
+    def test_read_timeout_propagated_fetch_root(self, mock_requests):
+        """Test that a read timeout from the HTTP client is propagated for fetch_root_workspace"""
+        import requests as real_requests
+
+        mock_requests.get.side_effect = real_requests.exceptions.ReadTimeout("Read timed out")
+
+        with pytest.raises(real_requests.exceptions.ReadTimeout):
+            fetch_root_workspace(
+                rbac_base_endpoint="http://example.com",
+                org_id="org123",
+            )
+
+    def test_default_timeout_constant_value(self):
+        """Test that DEFAULT_TIMEOUT has the expected value"""
+        assert DEFAULT_TIMEOUT == (5.0, 30.0)
+        assert isinstance(DEFAULT_TIMEOUT[0], float)
+        assert isinstance(DEFAULT_TIMEOUT[1], float)

@@ -26,10 +26,11 @@ GET {rbac_base_endpoint}/api/rbac/v2/workspaces/?type={root|default}
 ### HTTP Timeouts
 
 All REST workspace requests use explicit connect and read timeouts to prevent indefinite hangs.
-The module-level `_DEFAULT_TIMEOUT = (5, 30)` sets 5 s connect / 30 s read. Both
+The module-level `DEFAULT_TIMEOUT = (5.0, 30.0)` sets 5 s connect / 30 s read. Both
 `fetch_root_workspace()` and `fetch_default_workspace()` accept an optional `timeout` parameter
-(a `(connect, read)` tuple or a single float) that overrides the default. Pass `timeout=None`
-(the default) to use `_DEFAULT_TIMEOUT`.
+(a `(connect, read)` tuple or a single float) that overrides the default. Omitting
+the argument uses `DEFAULT_TIMEOUT`. Passing `timeout=None` explicitly disables the
+timeout entirely (the `requests` library will then wait indefinitely).
 
 ### Response Shape
 

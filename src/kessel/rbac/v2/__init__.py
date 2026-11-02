@@ -12,8 +12,11 @@ from kessel.inventory.v1beta2.streamed_list_objects_response_pb2 import Streamed
 from kessel.inventory.v1beta2.request_pagination_pb2 import RequestPagination
 from kessel.inventory.v1beta2.inventory_service_pb2_grpc import KesselInventoryServiceStub
 
+__UNSET = object()
+"""Private sentinel: distinguishes 'caller omitted timeout' from 'caller passed None'."""
+
 #: Default HTTP timeout for workspace fetch requests: (connect, read) in seconds.
-_DEFAULT_TIMEOUT: Tuple[float, float] = (5, 30)
+DEFAULT_TIMEOUT: Tuple[float, float] = (5.0, 30.0)
 
 
 class Workspace:
@@ -40,7 +43,7 @@ def _fetch_workspace_by_type(
     auth: Optional[AuthBase] = None,
     http_client: Optional[requests] = None,
     with_ancestry: bool = True,
-    timeout: Optional[Union[Tuple[float, float], float]] = None,
+    timeout: Optional[Union[Tuple[float, float], float]] = __UNSET,
 ) -> Workspace:
     """
     Internal helper to fetch a workspace by type ("root", "default").
@@ -53,16 +56,17 @@ def _fetch_workspace_by_type(
         http_client: Optional requests-like client. Defaults to requests.
         with_ancestry: Include ancestry information in the response.
             Defaults to True. When False, the with_ancestry query parameter is omitted.
-        timeout: Optional HTTP timeout in seconds. A ``(connect, read)`` tuple
-            or a single float applied to both. Defaults to :data:`_DEFAULT_TIMEOUT`
-            ``(5, 30)`` when *None*.
+        timeout: HTTP timeout in seconds. A ``(connect, read)`` tuple or a single
+            float applied to both. When omitted, :data:`DEFAULT_TIMEOUT` ``(5.0, 30.0)``
+            is used. Pass ``None`` explicitly to disable the timeout entirely
+            (the ``requests`` library will then wait indefinitely).
 
     Returns:
         A Workspace instance of the requested type.
     """
     client = http_client if http_client is not None else requests
 
-    effective_timeout = timeout if timeout is not None else _DEFAULT_TIMEOUT
+    effective_timeout = DEFAULT_TIMEOUT if timeout is __UNSET else timeout
 
     url = f"{rbac_base_endpoint.rstrip('/')}/api/rbac/v2/workspaces/"
     headers = {
@@ -98,7 +102,7 @@ def fetch_root_workspace(
     auth: Optional[AuthBase] = None,
     http_client: Optional[requests] = None,
     with_ancestry: bool = True,
-    timeout: Optional[Union[Tuple[float, float], float]] = None,
+    timeout: Optional[Union[Tuple[float, float], float]] = __UNSET,
 ) -> Workspace:
     """
     Fetches the root workspace for the specified organization.
@@ -114,8 +118,9 @@ def fetch_root_workspace(
                     If not provided, uses the default requests module.
         with_ancestry: Include ancestry information in the response.
             Defaults to True. Pass False to omit the with_ancestry query parameter.
-        timeout: Optional HTTP timeout in seconds. A ``(connect, read)`` tuple
-            or a single float applied to both. Defaults to ``(5, 30)`` when *None*.
+        timeout: HTTP timeout in seconds. A ``(connect, read)`` tuple or a single
+            float applied to both. Defaults to :data:`DEFAULT_TIMEOUT` ``(5.0, 30.0)``
+            when omitted. Pass ``None`` explicitly to disable the timeout entirely.
 
     Returns:
         A Workspace object representing the root workspace for the organization.
@@ -137,7 +142,7 @@ def fetch_default_workspace(
     auth: Optional[AuthBase] = None,
     http_client: Optional[requests] = None,
     with_ancestry: bool = True,
-    timeout: Optional[Union[Tuple[float, float], float]] = None,
+    timeout: Optional[Union[Tuple[float, float], float]] = __UNSET,
 ) -> Workspace:
     """
     Fetches the default workspace for the specified organization.
@@ -153,8 +158,9 @@ def fetch_default_workspace(
                     If not provided, uses the default requests module.
         with_ancestry: Include ancestry information in the response.
             Defaults to True. Pass False to omit the with_ancestry query parameter.
-        timeout: Optional HTTP timeout in seconds. A ``(connect, read)`` tuple
-            or a single float applied to both. Defaults to ``(5, 30)`` when *None*.
+        timeout: HTTP timeout in seconds. A ``(connect, read)`` tuple or a single
+            float applied to both. Defaults to :data:`DEFAULT_TIMEOUT` ``(5.0, 30.0)``
+            when omitted. Pass ``None`` explicitly to disable the timeout entirely.
 
     Returns:
         A Workspace object representing the default workspace for the organization.
