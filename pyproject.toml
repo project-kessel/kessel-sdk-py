@@ -29,7 +29,7 @@ auth = [
     "requests",
 ]
 dev = [
-    "flake8~=7.3.0",
+    "flake8>=7.3,<7.6",
     "black~=25.12.0",
     "pytest",
     "pytest-asyncio",
